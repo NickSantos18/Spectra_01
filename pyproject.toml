@@ -23,7 +23,7 @@ spectra-link-guard = "spectra_link_guard.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-"spectra_link_guard.web" = ["static/*"]
+"spectra_link_guard.web" = ["static/*", "parciais/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

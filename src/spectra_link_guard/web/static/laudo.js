@@ -253,7 +253,7 @@ function marcarAlerta(el, ativo, rotulo = "sinal de alerta") {
   if (ativo) el.append(elemento("span", "oculto", ` — ${rotulo}`));
 }
 
-/** Acende as fontes do trilho a partir do que a análise de fato consultou. */
+/** Acende as fontes (abaixo da busca) a partir do que a análise de fato consultou. */
 function marcarFonte(chave, estado, descricao) {
   const li = document.querySelector(`.fonte[data-fonte="${chave}"]`);
   if (!li) return;
@@ -685,26 +685,6 @@ fetch("/api/saude")
   .then((r) => r.json())
   .then((s) => { $("versao").textContent = `v${s.versao}`; })
   .catch(() => {});
-
-/* ══════════════════════════════════════════════════ conta e sessão */
-
-fetch("/api/auth/eu")
-  .then((r) => r.json())
-  .then(({ usuario }) => {
-    if (!usuario) return;
-    $("conta-inicial").textContent = usuario.nome.trim().charAt(0).toUpperCase();
-    $("conta-nome").textContent = usuario.nome;
-    $("conta").hidden = false;
-  })
-  .catch(() => {});
-
-$("sair").addEventListener("click", async () => {
-  try {
-    await fetch("/api/auth/sair", { method: "POST" });
-  } finally {
-    window.location.href = "/inicio";
-  }
-});
 
 /* ══════════════════════════════════════════════════ copiloto do laudo
  *

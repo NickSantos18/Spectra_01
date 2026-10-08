@@ -90,25 +90,44 @@ h1, h2, h3 { margin: 0; font-family: var(--fonte-titulo); font-weight: 700; line
   transition: background .16s, color .16s, border-color .16s;
 }
 .menu-item:hover { background: var(--base-2); color: var(--texto); }
-.menu-item.ativo { background: var(--base-3); border-color: var(--linha-forte); color: var(--texto); }
-.menu-marca { width: 5px; height: 5px; flex: none; background: var(--texto-3); }
-.menu-item.ativo .menu-marca { background: var(--primaria); }
+.menu-item[aria-current="page"] { background: var(--base-3); border-color: var(--linha-forte); color: var(--texto); }
 .menu-item:focus-visible { outline: 2px solid var(--primaria); outline-offset: -2px; }
 .menu-icone { width: 16px; height: 16px; flex: none; color: var(--texto-3); }
-.menu-item.ativo .menu-icone, .menu-item:hover .menu-icone { color: var(--primaria-clara); }
+.menu-item[aria-current="page"] .menu-icone, .menu-item:hover .menu-icone { color: var(--primaria-clara); }
 
-/* Sub-navegação secundária: só aparece quando há um laudo carregado — as
-   âncoras pulam para seções desta mesma página (Verificar), diferente do
-   menu principal acima, que leva a telas diferentes de verdade. */
-.submenu { display: flex; flex-direction: column; gap: 1px; margin-top: 18px; }
-.submenu-item {
-  padding: 7px 11px 7px 21px;
-  color: var(--texto-3); text-decoration: none; font-size: .78rem;
-  border-left: 2px solid var(--linha);
-  transition: color .16s, border-color .16s;
+/* "Nesta análise": atalhos para as seções do laudo, fixos abaixo da barra de
+   busca. Rolam na horizontal quando não cabem (celular). */
+.subnav-analise {
+  position: sticky; top: var(--barra-h); z-index: 15;
+  display: flex; align-items: center; gap: 6px;
+  overflow-x: auto; scrollbar-width: none;
+  padding: 8px var(--vao);
+  background: color-mix(in srgb, var(--base) 82%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--linha);
 }
-.submenu-item:hover { color: var(--texto); border-color: var(--primaria); }
-.submenu-item:focus-visible { outline: 2px solid var(--primaria); outline-offset: -2px; }
+.subnav-analise::-webkit-scrollbar { display: none; }
+.subnav-legenda { margin: 0 6px 0 0; flex: none; }
+.subnav-item {
+  flex: none;
+  padding: 6px 12px;
+  border: 1px solid var(--linha); border-radius: 999px;
+  color: var(--texto-2); text-decoration: none; font-size: .76rem; white-space: nowrap;
+  transition: border-color .16s, color .16s;
+}
+.subnav-item:hover { border-color: var(--primaria); color: var(--texto); }
+.subnav-item:focus-visible { outline: 2px solid var(--primaria); outline-offset: 2px; }
+
+.quadro, .faixa, .faixa-checklist { scroll-margin-top: calc(var(--barra-h) + 56px); }
+
+.fontes-linha {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px;
+  padding: 10px var(--vao);
+  border-bottom: 1px solid var(--linha);
+}
+.fontes-linha .legenda { margin: 0; }
+.fontes-linha .fontes { display: flex; flex-wrap: wrap; gap: 8px 18px; }
 
 .trilho-base { margin-top: auto; }
 .legenda {
@@ -559,12 +578,10 @@ h1, h2, h3 { margin: 0; font-family: var(--fonte-titulo); font-weight: 700; line
     gap: 16px; flex-wrap: wrap; border-right: none; border-bottom: 1px solid var(--linha);
   }
   .menu { flex-direction: row; flex-wrap: wrap; }
-  .submenu { flex-direction: row; flex-wrap: wrap; margin-top: 0; }
-  .submenu-item { border-left: none; border-bottom: 2px solid var(--linha); padding: 7px 9px; }
   .trilho-base { margin: 0; width: 100%; }
-  .fontes { grid-auto-flow: column; grid-template-columns: none; justify-content: start; gap: 14px; }
   .corpo { margin-left: 0; }
   .barra { position: static; height: auto; padding: var(--vao); flex-wrap: wrap; }
+  .subnav-analise { top: 0; }
   .busca { max-width: none; flex-basis: 100%; }
   .barra-estado { margin-left: 0; }
   .faixa { grid-template-columns: 1fr; }
@@ -622,12 +639,15 @@ h1, h2, h3 { margin: 0; font-family: var(--fonte-titulo); font-weight: 700; line
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .conta-sair {
-  padding: 0; border: none; background: none; text-align: left;
+  display: flex; align-items: center; gap: 6px;
+  margin-left: auto; padding: 6px;
+  border: none; background: none;
   font-family: var(--fonte-mono); font-size: .6rem;
   letter-spacing: .1em; text-transform: uppercase;
   color: var(--texto-3); cursor: pointer;
   transition: color .16s;
 }
+.conta-sair svg { width: 14px; height: 14px; }
 .conta-sair:hover { color: var(--perigo); }
 .conta-sair:focus-visible { outline: 2px solid var(--primaria); outline-offset: 2px; }
 

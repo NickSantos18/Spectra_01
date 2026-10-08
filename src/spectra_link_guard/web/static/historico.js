@@ -153,21 +153,3 @@ $("hist-filtro").addEventListener("change", renderizarTabela);
 
 window.addEventListener("spectra:tema", renderizarResumo);
 carregar();
-
-fetch("/api/auth/eu")
-  .then((r) => r.json())
-  .then(({ usuario }) => {
-    if (!usuario) return;
-    $("conta-inicial").textContent = usuario.nome.trim().charAt(0).toUpperCase();
-    $("conta-nome").textContent = usuario.nome;
-    $("conta").hidden = false;
-  })
-  .catch(() => {});
-
-$("sair").addEventListener("click", async () => {
-  try {
-    await fetch("/api/auth/sair", { method: "POST" });
-  } finally {
-    window.location.href = "/inicio";
-  }
-});

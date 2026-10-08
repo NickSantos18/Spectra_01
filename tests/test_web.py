@@ -259,3 +259,44 @@ def test_limite_de_requisicoes(cliente):
     excedente = analisar(cliente, "https://exemplo.com")
     assert excedente.status_code == 429
     assert "erro" in excedente.json()
+
+
+# --------------------------------------------------------------------------- #
+# Partes compartilhadas
+# --------------------------------------------------------------------------- #
+
+ITENS_DO_MENU = ["verificar", "historico", "aprender"]
+TELAS_DO_PAINEL = [("/painel", "verificar"), ("/painel/historico", "historico"),
+                   ("/painel/aprender", "aprender")]
+
+
+def test_telas_do_painel_trazem_parciais_e_marcam_o_item_ativo(cliente):
+    entrar(cliente)
+    for rota, ativo in TELAS_DO_PAINEL:
+        html = cliente.get(rota).text
+        assert "<!--PARCIAL" not in html, rota
+        assert 'class="trilho"' in html, rota
+        assert 'class="rodape-spectra"' in html, rota
+        assert 'id="a11y-painel"' in html, rota
+        assert f'data-menu="{ativo}" aria-current="page"' in html, rota
+        for outro in ITENS_DO_MENU:
+            if outro != ativo:
+                assert f'data-menu="{outro}" aria-current' not in html, (rota, outro)
+
+
+@pytest.mark.parametrize("rota", ["/inicio", "/privacidade", "/termos"])
+def test_paginas_publicas_trazem_rodape_e_acessibilidade_sem_menu(cliente, rota):
+    html = cliente.get(rota).text
+    assert "<!--PARCIAL" not in html
+    assert 'class="rodape-spectra"' in html
+    assert 'id="a11y-painel"' in html
+    assert 'class="trilho"' not in html
+
+
+def test_rodape_e_acessibilidade_moram_so_nos_parciais():
+    from spectra_link_guard.web.app import ESTATICOS
+
+    for pagina in ESTATICOS.glob("*.html"):
+        html = pagina.read_text(encoding="utf-8")
+        assert 'class="rodape-spectra"' not in html, pagina.name
+        assert 'id="a11y-painel"' not in html, pagina.name

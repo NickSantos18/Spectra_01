@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Spectra</title>
-<meta name="description" content="Histórico dos links já verificados nesta sessão.">
+<meta name="description" content="Histórico dos links já verificados.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -12,6 +12,8 @@
 <link rel="stylesheet" href="/static/laudo.css">
 <link rel="stylesheet" href="/static/rodape.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<script src="/static/movimento.js"></script>
+<script src="/static/acessibilidade.js"></script>
 <script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js" defer
         integrity="sha384-WBRt9V/J/erVtkEuP91HUFRv9MvHzFiFOp4/zTDp4xkcMG7aOeIv2asTV4yxFLWa" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" defer
@@ -21,43 +23,7 @@
 
 <div class="app">
 
-<aside class="trilho">
-  <a class="chancela" href="/inicio">
-    <span class="chancela-marca" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-      </svg>
-    </span>
-    <span class="chancela-texto">
-      <span class="chancela-nome">SPECTRA</span>
-      <span class="chancela-tipo">laudo de link</span>
-    </span>
-  </a>
-
-  <nav class="menu" aria-label="Navegação principal">
-    <a class="menu-item" href="/painel">
-      <i data-lucide="search-check" class="menu-icone" aria-hidden="true"></i>Verificar
-    </a>
-    <a class="menu-item ativo" href="/painel/historico" aria-current="page">
-      <i data-lucide="history" class="menu-icone" aria-hidden="true"></i>Histórico
-    </a>
-    <a class="menu-item" href="/painel/aprender">
-      <i data-lucide="book-open" class="menu-icone" aria-hidden="true"></i>Aprender
-    </a>
-  </nav>
-
-  <div class="trilho-base">
-    <div class="conta" id="conta" hidden>
-      <span class="conta-inicial" id="conta-inicial" aria-hidden="true">—</span>
-      <span class="conta-texto">
-        <span class="conta-nome" id="conta-nome">—</span>
-        <button type="button" id="sair" class="conta-sair">Sair</button>
-      </span>
-    </div>
-    <p class="legenda">Privacidade</p>
-    <p class="hist-nota">Guardamos só host, domínio, nota e horário — nunca a URL completa (pode ter dados pessoais na query).</p>
-  </div>
-</aside>
+<!--PARCIAL:menu-->
 
 <div class="corpo">
 
@@ -68,7 +34,7 @@
     <input id="hist-busca" type="search" placeholder="buscar por host ou domínio…" class="hist-busca">
     <label class="oculto" for="hist-filtro">Filtrar por veredito</label>
     <select id="hist-filtro" class="hist-filtro">
-      <option value="">todos os veredictos</option>
+      <option value="">todos os vereditos</option>
       <option value="seguro">seguro</option>
       <option value="baixo">baixo</option>
       <option value="atencao">atenção</option>
@@ -87,9 +53,10 @@
     </header>
     <div class="quadro-corpo hist-resumo-corpo">
       <div class="hist-grafico">
-        <canvas id="hist-grafico" width="160" height="160" role="img" aria-label="Gráfico com a distribuição de veredictos no histórico"></canvas>
+        <canvas id="hist-grafico" width="160" height="160" role="img" aria-label="Gráfico com a distribuição de vereditos no histórico"></canvas>
       </div>
       <ul class="hist-legenda" id="hist-legenda"></ul>
+      <p class="hist-nota">Guardamos só host, domínio, nota e horário, nunca a URL completa (ela pode ter dados pessoais na query).</p>
     </div>
   </section>
 
@@ -119,79 +86,14 @@
 
 </main>
 
-<footer class="rodape-spectra">
-  <div class="rodape-fundo" aria-hidden="true"></div>
-  <div class="rodape-conteudo">
-    <div>
-      <div class="rodape-marca" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        SPECTRA
-      </div>
-      <p class="rodape-tagline">Análise passiva de risco de links, para proteção ao consumidor.</p>
-    </div>
-    <nav aria-label="Links legais">
-      <p class="rodape-titulo-coluna">Legal</p>
-      <ul class="rodape-links">
-        <li><a href="/privacidade">Política de Privacidade</a></li>
-        <li><a href="/termos">Termos de Uso</a></li>
-      </ul>
-    </nav>
-    <div>
-      <p class="rodape-titulo-coluna">Contato</p>
-      <ul class="rodape-contato">
-        <li><a href="https://wa.me/5511999999999" target="_blank" rel="noopener"><i data-lucide="message-circle" aria-hidden="true"></i>(11) 99999-9999</a></li>
-        <li><a href="https://instagram.com/spectra.seguranca" target="_blank" rel="noopener"><i data-lucide="instagram" aria-hidden="true"></i>@spectra.seguranca</a></li>
-        <li><a href="mailto:contato@spectra.app"><i data-lucide="mail" aria-hidden="true"></i>contato@spectra.app</a></li>
-      </ul>
-    </div>
-  </div>
-  <div class="rodape-base">
-    <span>© <span data-ano-atual>2026</span> Spectra. Todos os direitos reservados.</span>
-    <span>Varredura passiva · proteção ao consumidor</span>
-  </div>
-</footer>
+<!--PARCIAL:rodape-->
 
-</div><!-- /corpo -->
-</div><!-- /app -->
-
-<div class="a11y-caixa">
-  <div id="a11y-painel" class="a11y-painel" hidden role="region" aria-label="Acessibilidade">
-    <p class="a11y-titulo">Acessibilidade</p>
-    <div class="a11y-linha">
-      <span class="a11y-rotulo">Tema</span>
-      <button type="button" data-a11y-tema>
-        <i data-lucide="sun-moon" aria-hidden="true"></i><span data-a11y-tema-rotulo>Tema</span>
-      </button>
-    </div>
-    <div class="a11y-linha">
-      <span class="a11y-rotulo">Fonte</span>
-      <div class="a11y-grupo">
-        <button type="button" data-a11y-fonte-menos aria-label="Diminuir fonte">A−</button>
-        <button type="button" data-a11y-fonte-reset aria-label="Fonte padrão"><span data-a11y-fonte-valor>100%</span></button>
-        <button type="button" data-a11y-fonte-mais aria-label="Aumentar fonte">A+</button>
-      </div>
-    </div>
-    <div class="a11y-linha">
-      <span class="a11y-rotulo">Alto contraste</span>
-      <button type="button" data-a11y-contraste aria-pressed="false">
-        <i data-lucide="contrast" aria-hidden="true"></i>Ativar
-      </button>
-    </div>
-    <div class="a11y-linha">
-      <span class="a11y-rotulo">Movimento</span>
-      <button type="button" data-interruptor-movimento aria-pressed="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
-        <span data-rotulo-movimento>Movimento ligado</span>
-      </button>
-    </div>
-  </div>
-  <button type="button" id="a11y-abrir" class="a11y-botao" aria-expanded="false" aria-controls="a11y-painel" aria-label="Abrir opções de acessibilidade">
-    <i data-lucide="accessibility" aria-hidden="true"></i>
-  </button>
+</div>
 </div>
 
-<script src="/static/movimento.js"></script>
-<script src="/static/acessibilidade.js"></script>
-<script src="/static/historico.js"></script>
+<!--PARCIAL:acessibilidade-->
+
+<script src="/static/menu.js" defer></script>
+<script src="/static/historico.js" defer></script>
 </body>
 </html>

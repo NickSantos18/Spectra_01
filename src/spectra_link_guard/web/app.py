@@ -17,6 +17,7 @@ por requisição (campo ``offline`` do corpo), mas não é o padrão.
 from __future__ import annotations
 
 import asyncio
+import re
 import time
 from collections import deque
 from contextlib import asynccontextmanager
@@ -41,6 +42,14 @@ ESTATICOS = Path(__file__).parent / "static"
 
 #: Ativos que toda página carrega; entram no cache-busting de _pagina().
 _ATIVOS_BASE = ("tokens.css", "rodape.css", "movimento.js", "acessibilidade.js")
+
+#: Ativos das telas com menu lateral (painel).
+_ATIVOS_PAINEL = _ATIVOS_BASE + ("laudo.css", "menu.js")
+
+#: Partes de HTML compartilhadas, encaixadas por _pagina() no lugar de
+#: <!--PARCIAL:nome-->. Ficam fora de static/: não são servidas sozinhas.
+PARCIAIS = Path(__file__).parent / "parciais"
+_MARCADOR_PARCIAL = re.compile(r"<!--PARCIAL:([a-z-]+)-->")
 
 #: Limite por IP: a análise consome cota de APIs de terceiros e abre uma
 #: conexão TLS por chamada, então o endpoint precisa de freio.
@@ -219,9 +228,16 @@ async def revalidar_estaticos(request: Request, proximo):
     return resposta
 
 
-def _pagina(arquivo: str, *ativos: str) -> HTMLResponse:
-    """Serve uma página injetando ?v=<mtime> nos ativos que ela referencia."""
+def _pagina(arquivo: str, *ativos: str, menu: str | None = None) -> HTMLResponse:
+    """Serve uma página: encaixa os parciais, marca o item ativo do menu e
+    injeta ?v=<mtime> nos ativos que ela referencia (cache-busting)."""
     html = (ESTATICOS / arquivo).read_text(encoding="utf-8")
+    html = _MARCADOR_PARCIAL.sub(
+        lambda marcador: (PARCIAIS / f"{marcador.group(1)}.html").read_text(encoding="utf-8"),
+        html,
+    )
+    if menu is not None:
+        html = html.replace(f'data-menu="{menu}"', f'data-menu="{menu}" aria-current="page"')
     for ativo in ativos:
         html = html.replace(f"/static/{ativo}", f"/static/{ativo}?v={_carimbo(ativo)}")
     return HTMLResponse(html)
@@ -253,8 +269,8 @@ async def painel_app(request: Request) -> Response:
     if usuario_atual(request.cookies.get("spectra_sessao")) is None:
         return RedirectResponse("/inicio?erro=entre_primeiro", status_code=303)
     return _pagina(
-        "laudo.html", *_ATIVOS_BASE, "laudo.css",
-        "glossario.js", "caminhos.js", "melhorias.js", "laudo.js",
+        "laudo.html", *_ATIVOS_PAINEL,
+        "glossario.js", "caminhos.js", "melhorias.js", "laudo.js", menu="verificar",
     )
 
 
@@ -263,7 +279,7 @@ async def painel_historico(request: Request) -> Response:
     """Histórico das análises do usuário."""
     if usuario_atual(request.cookies.get("spectra_sessao")) is None:
         return RedirectResponse("/inicio?erro=entre_primeiro", status_code=303)
-    return _pagina("historico.html", *_ATIVOS_BASE, "laudo.css", "historico.js")
+    return _pagina("historico.html", *_ATIVOS_PAINEL, "historico.js", menu="historico")
 
 
 @app.get("/painel/aprender", include_in_schema=False)
@@ -271,7 +287,7 @@ async def painel_aprender(request: Request) -> Response:
     """Conteúdo educativo sobre phishing e leitura de URLs."""
     if usuario_atual(request.cookies.get("spectra_sessao")) is None:
         return RedirectResponse("/inicio?erro=entre_primeiro", status_code=303)
-    return _pagina("aprender.html", *_ATIVOS_BASE, "laudo.css", "glossario.js")
+    return _pagina("aprender.html", *_ATIVOS_PAINEL, "glossario.js", menu="aprender")
 
 
 @app.get("/privacidade", include_in_schema=False)

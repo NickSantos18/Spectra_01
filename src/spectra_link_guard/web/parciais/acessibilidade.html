@@ -1,0 +1,35 @@
+<div class="a11y-caixa">
+  <div id="a11y-painel" class="a11y-painel" hidden role="region" aria-label="Acessibilidade">
+    <p class="a11y-titulo">Acessibilidade</p>
+    <div class="a11y-linha">
+      <span class="a11y-rotulo">Tema</span>
+      <button type="button" data-a11y-tema>
+        <i data-lucide="sun-moon" aria-hidden="true"></i><span data-a11y-tema-rotulo>Tema</span>
+      </button>
+    </div>
+    <div class="a11y-linha">
+      <span class="a11y-rotulo">Fonte</span>
+      <div class="a11y-grupo">
+        <button type="button" data-a11y-fonte-menos aria-label="Diminuir fonte">A−</button>
+        <button type="button" data-a11y-fonte-reset aria-label="Fonte padrão"><span data-a11y-fonte-valor>100%</span></button>
+        <button type="button" data-a11y-fonte-mais aria-label="Aumentar fonte">A+</button>
+      </div>
+    </div>
+    <div class="a11y-linha">
+      <span class="a11y-rotulo">Alto contraste</span>
+      <button type="button" data-a11y-contraste aria-pressed="false">
+        <i data-lucide="contrast" aria-hidden="true"></i>Ativar
+      </button>
+    </div>
+    <div class="a11y-linha">
+      <span class="a11y-rotulo">Movimento</span>
+      <button type="button" data-interruptor-movimento aria-pressed="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
+        <span data-rotulo-movimento>Movimento ligado</span>
+      </button>
+    </div>
+  </div>
+  <button type="button" id="a11y-abrir" class="a11y-botao" aria-expanded="false" aria-controls="a11y-painel" aria-label="Abrir opções de acessibilidade">
+    <i data-lucide="accessibility" aria-hidden="true"></i>
+  </button>
+</div>
