@@ -2190,14 +2190,16 @@ button:not(.a11y-botao):not(:disabled):active,
 @keyframes esqueleto-brilho { to { transform: translateX(100%); } }
 :root[data-movimento="off"] .esqueleto::after { display: none; }
 
-/* LEDs de "fontes consultadas" pulsam enquanto a análise roda. */
+/* LEDs de "fontes consultadas" pulsam enquanto a análise roda. A cor fica
+   fixa; só a opacidade anima. */
 .fonte.pulsando .led {
+  background: var(--primaria-clara);
   border-color: var(--primaria-clara);
   animation: led-pulso 1s ease-in-out infinite;
 }
 @keyframes led-pulso {
   0%, 100% { opacity: .35; }
-  50%      { opacity: 1; background: var(--primaria-clara); }
+  50%      { opacity: 1; }
 }
 
 /* Feixe de varredura sobre o veredito enquanto a análise roda. A altura do
