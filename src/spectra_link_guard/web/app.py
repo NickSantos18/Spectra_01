@@ -293,13 +293,13 @@ async def painel_aprender(request: Request) -> Response:
 @app.get("/privacidade", include_in_schema=False)
 async def privacidade() -> HTMLResponse:
     """Política de Privacidade — texto modelo, editável em static/privacidade.html."""
-    return _pagina("privacidade.html", *_ATIVOS_BASE, "laudo.css")
+    return _pagina("privacidade.html", *_ATIVOS_BASE, "laudo.css", menu="privacidade")
 
 
 @app.get("/termos", include_in_schema=False)
 async def termos() -> HTMLResponse:
     """Termos de Uso — texto modelo, editável em static/termos.html."""
-    return _pagina("termos.html", *_ATIVOS_BASE, "laudo.css")
+    return _pagina("termos.html", *_ATIVOS_BASE, "laudo.css", menu="termos")
 
 
 @app.get("/v2", include_in_schema=False)

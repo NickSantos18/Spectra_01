@@ -300,3 +300,10 @@ def test_rodape_e_acessibilidade_moram_so_nos_parciais():
         html = pagina.read_text(encoding="utf-8")
         assert 'class="rodape-spectra"' not in html, pagina.name
         assert 'id="a11y-painel"' not in html, pagina.name
+
+
+@pytest.mark.parametrize("pagina,outra", [("privacidade", "termos"), ("termos", "privacidade")])
+def test_rodape_marca_a_pagina_legal_atual(cliente, pagina, outra):
+    html = cliente.get(f"/{pagina}").text
+    assert html.count(f'data-menu="{pagina}" aria-current="page"') == 1
+    assert f'data-menu="{outra}" aria-current' not in html

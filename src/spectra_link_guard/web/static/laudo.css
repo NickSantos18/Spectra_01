@@ -108,7 +108,7 @@ h1, h2, h3 { margin: 0; font-family: var(--fonte-titulo); font-weight: 700; line
   border-bottom: 1px solid var(--linha);
 }
 .subnav-analise::-webkit-scrollbar { display: none; }
-.subnav-legenda { margin: 0 6px 0 0; flex: none; }
+.subnav-analise .subnav-legenda { margin: 0 6px 0 0; flex: none; }
 .subnav-item {
   flex: none;
   padding: 6px 12px;
