@@ -45,11 +45,13 @@
 
     // Toque fora da gaveta (no fundo escurecido) fecha. Compara coordenadas
     // porque o clique no ::backdrop chega com o próprio <dialog> como alvo.
+    // O alvo também precisa ser o <dialog>: clique vindo do teclado ou do
+    // leitor de tela chega com clientX/Y = 0, que pareceria "fora".
     gaveta.addEventListener("click", (evento) => {
       const caixa = gaveta.getBoundingClientRect();
       const fora = evento.clientY < caixa.top || evento.clientY > caixa.bottom
         || evento.clientX < caixa.left || evento.clientX > caixa.right;
-      if (fora) gaveta.close();
+      if (evento.target === gaveta && fora) gaveta.close();
     });
 
     gaveta.querySelector("[data-fechar-gaveta]").addEventListener("click", () => gaveta.close());

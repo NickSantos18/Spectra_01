@@ -322,3 +322,9 @@ def test_item_da_gaveta_tambem_fica_ativo(cliente):
     entrar(cliente)
     html = cliente.get("/painel/aprender").text
     assert html.count('data-menu="aprender" aria-current="page"') == 2  # menu lateral + gaveta
+
+
+def test_aba_do_celular_tambem_fica_ativa(cliente):
+    entrar(cliente)
+    html = cliente.get("/painel/historico").text
+    assert html.count('data-menu="historico" aria-current="page"') == 2  # menu lateral + barra de abas

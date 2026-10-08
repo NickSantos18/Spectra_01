@@ -28,6 +28,10 @@ button, a, nav, h1, h2, h3, .menu, .menu-item, .chancela, .aba,
 
 /* ─────────────────────────────────────────────── 1b) fundo da página */
 
+/* viewport-fit=cover desliga o recuo automático do Safari: o conteúdo em
+   fluxo se afasta sozinho do entalhe com o celular deitado. */
+body { padding-inline: env(safe-area-inset-left) env(safe-area-inset-right); }
+
 /* Brilho estático nos cantos, num pseudo-elemento fixo (background-attachment
    fixed é ignorado ou pesa no Safari do celular). Custo zero de animação. */
 body::before {
@@ -173,7 +177,7 @@ body::before {
 /* ─────────────────────────────────────────────── 3) painel de acessibilidade */
 
 .a11y-caixa {
-  position: fixed; left: 18px; bottom: 18px; z-index: 60;
+  position: fixed; left: calc(18px + env(safe-area-inset-left)); bottom: 18px; z-index: 60;
   display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
 }
 .a11y-botao {
@@ -215,9 +219,12 @@ body::before {
 .a11y-painel button[aria-pressed="true"] { border-color: var(--primaria); color: var(--primaria-clara); }
 .a11y-titulo { margin: 0; font-family: var(--fonte-titulo, sans-serif); font-weight: 700; font-size: .84rem; }
 
-@media (max-width: 640px) { .a11y-caixa { left: 12px; bottom: 12px; } }
+@media (max-width: 640px) { .a11y-caixa { left: calc(12px + env(safe-area-inset-left)); bottom: 12px; } }
 @media (max-width: 599px) {
   body:has(.barra-abas) .a11y-caixa {
     bottom: calc(var(--abas-h, 60px) + env(safe-area-inset-bottom) + 12px);
   }
+  /* Alvos de toque de 44px no celular. */
+  .rodape-links a, .rodape-contato a { min-height: 44px; }
+  .a11y-painel button { min-width: 44px; min-height: 44px; }
 }
