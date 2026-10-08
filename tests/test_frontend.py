@@ -89,3 +89,24 @@ def test_historico_tem_apagar_tudo_com_confirmacao():
     html = _html("historico.html")
     assert 'id="hist-apagar-tudo"' in html
     assert '<dialog class="dialogo" id="dialogo-apagar"' in html
+
+
+EFEITOS_POR_PAGINA = {
+    "visao-geral.html": "varredura",
+    "historico.html": "varredura",
+    "aprender.html": "chuva-hex",
+    "inicio.html": "chuva-hex",
+}
+
+
+def test_cada_tela_tem_o_efeito_de_fundo_combinado():
+    for nome in PAGINAS:
+        html = _html(nome)
+        efeitos = re.findall(r'data-efeito="([a-z-]+)"', html)
+        esperado = EFEITOS_POR_PAGINA.get(nome)
+        if esperado:
+            assert efeitos == [esperado], f"{nome}: {efeitos}"
+            assert "/static/fundo.js" in html, nome
+        else:
+            assert efeitos == [], f"{nome} não deveria ter efeito de fundo: {efeitos}"
+            assert "/static/fundo.js" not in html, nome

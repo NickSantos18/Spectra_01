@@ -298,8 +298,11 @@
   </section>
 
   <!-- ════════════════════════════════════════════════ por que usar -->
-  <section class="border-b border-linha">
-    <div class="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
+  <section class="relative overflow-hidden border-b border-linha">
+    <div class="pointer-events-none absolute inset-0 opacity-70" aria-hidden="true">
+      <canvas class="fundo-animado" data-efeito="chuva-hex"></canvas>
+    </div>
+    <div class="relative mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
       <div class="mx-auto max-w-2xl text-center">
         <p class="font-mono text-[10px] uppercase tracking-[0.16em] text-marca-claro">Por que o Spectra</p>
         <h2 class="mt-3 font-display text-2xl font-extrabold tracking-tight sm:text-3xl">Por que usar nossos serviços?</h2>
@@ -569,6 +572,7 @@
 
 <!--PARCIAL:acessibilidade-->
 
+<script src="/static/fundo.js" defer></script>
 <script src="/static/caminhos.js"></script>
 <script src="/static/inicio.js"></script>
 <!-- Um import map garante UMA cópia do Three.js. Sem ele, o adapter do

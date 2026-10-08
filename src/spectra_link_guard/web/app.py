@@ -263,7 +263,7 @@ async def raiz() -> RedirectResponse:
 @app.get("/inicio", include_in_schema=False)
 async def inicio() -> HTMLResponse:
     """Porta de entrada: hero, acesso e assistente."""
-    return _pagina("inicio.html", *_ATIVOS_BASE, "caminhos.js", "inicio.js", "cubos.js")
+    return _pagina("inicio.html", *_ATIVOS_BASE, "fundo.js", "caminhos.js", "inicio.js", "cubos.js")
 
 
 @app.get("/painel", include_in_schema=False)
@@ -282,7 +282,9 @@ async def painel_visao_geral(request: Request) -> Response:
     """Dashboard com os números e gráficos das análises do usuário."""
     if usuario_atual(request.cookies.get("spectra_sessao")) is None:
         return RedirectResponse("/inicio?erro=entre_primeiro", status_code=303)
-    return _pagina("visao-geral.html", *_ATIVOS_PAINEL, "visao-geral.js", menu="visao-geral")
+    return _pagina(
+        "visao-geral.html", *_ATIVOS_PAINEL, "fundo.js", "visao-geral.js", menu="visao-geral",
+    )
 
 
 @app.get("/painel/historico", include_in_schema=False)
@@ -290,7 +292,7 @@ async def painel_historico(request: Request) -> Response:
     """Histórico das análises do usuário."""
     if usuario_atual(request.cookies.get("spectra_sessao")) is None:
         return RedirectResponse("/inicio?erro=entre_primeiro", status_code=303)
-    return _pagina("historico.html", *_ATIVOS_PAINEL, "historico.js", menu="historico")
+    return _pagina("historico.html", *_ATIVOS_PAINEL, "fundo.js", "historico.js", menu="historico")
 
 
 @app.get("/painel/aprender", include_in_schema=False)
@@ -298,7 +300,7 @@ async def painel_aprender(request: Request) -> Response:
     """Conteúdo educativo sobre phishing e leitura de URLs."""
     if usuario_atual(request.cookies.get("spectra_sessao")) is None:
         return RedirectResponse("/inicio?erro=entre_primeiro", status_code=303)
-    return _pagina("aprender.html", *_ATIVOS_PAINEL, "glossario.js", menu="aprender")
+    return _pagina("aprender.html", *_ATIVOS_PAINEL, "fundo.js", "glossario.js", menu="aprender")
 
 
 @app.get("/privacidade", include_in_schema=False)

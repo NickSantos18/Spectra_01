@@ -26,6 +26,26 @@ button, a, nav, h1, h2, h3, .menu, .menu-item, .chancela, .aba,
   -webkit-user-select: none;
 }
 
+/* ─────────────────────────────────────────────── 1b) fundo da página */
+
+/* Brilho estático nos cantos, num pseudo-elemento fixo (background-attachment
+   fixed é ignorado ou pesa no Safari do celular). Custo zero de animação. */
+body::before {
+  content: "";
+  position: fixed; inset: 0; z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(1100px 620px at 0% 0%, var(--brilho-1), transparent 62%),
+    radial-gradient(900px 560px at 100% 100%, var(--brilho-2), transparent 60%);
+}
+
+/* Efeitos animados (fundo.js). O canvas assume o tamanho do pai. */
+.fundo-fixo {
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none; overflow: hidden;
+}
+.fundo-animado { display: block; pointer-events: none; }
+
 /* ─────────────────────────────────────────────── 2) rodapé */
 
 .rodape-spectra {
