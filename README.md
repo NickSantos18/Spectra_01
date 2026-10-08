@@ -127,15 +127,21 @@ Depois abra **<http://localhost:8000>**.
 | --- | --- |
 | `http://localhost:8000/` | Redireciona para `/inicio` — não há mais painel na raiz |
 | `http://localhost:8000/inicio` | Porta de entrada: hero, login/cadastro, Google, assistente |
-| `http://localhost:8000/painel` | O produto. Exige sessão; sem ela volta para `/inicio` |
+| `http://localhost:8000/painel` | Verificar um link. Exige sessão; sem ela volta para `/inicio` |
+| `http://localhost:8000/painel/visao-geral` | Dashboard: indicadores e gráficos das suas análises |
+| `http://localhost:8000/painel/historico` | Histórico com busca, filtro e exclusão |
+| `http://localhost:8000/painel/aprender` | Guia de phishing e glossário |
 | `POST /api/auth/cadastrar` | `{nome, email, senha}` → cria conta e abre sessão |
 | `POST /api/auth/entrar` | `{email, senha}` → abre sessão (cookie HttpOnly) |
 | `POST /api/auth/sair` | Revoga a sessão no servidor |
 | `GET /auth/google` | Início do OAuth 2.0 com o Google |
 | `http://localhost:8000/docs` | Documentação interativa da API (Swagger) |
 | `POST /api/analisar` | `{"url": "...", "offline": false}` → relatório JSON completo |
-| `GET /api/painel` | Indicadores e histórico da sessão |
-| `DELETE /api/painel/{id}` | Remove uma entrada do histórico (botão de lixeira no painel) |
+| `GET /api/painel` | Indicadores do usuário logado (401 sem sessão) |
+| `GET /api/painel/historico` | Todas as análises do usuário (até 500) |
+| `GET /api/painel/estatisticas` | Números agregados da Visão geral |
+| `DELETE /api/painel/{id}` | Remove uma análise sua (404 se não existe ou é de outra pessoa) |
+| `DELETE /api/painel` | Apaga todo o seu histórico |
 | `GET /api/saude` | Versão e quais provedores de reputação estão configurados |
 
 O endpoint tem limite de 30 análises por IP a cada 5 minutos (janela em memória,
@@ -143,10 +149,12 @@ em [`web/app.py`](src/spectra_link_guard/web/app.py)) — ele consome cota de AP
 de terceiros e abre uma conexão TLS por chamada. Com várias réplicas, troque por
 Redis ou pelo rate limit do proxy reverso.
 
-**Privacidade do histórico:** o painel guarda apenas host, domínio, nota e
-horário — em memória, últimas 50 análises. A URL completa não é retida, porque
-caminho e query podem conter token de sessão ou dados pessoais. Cada entrada tem
-um botão de lixeira que a apaga do servidor na hora.
+**Privacidade do histórico:** cada usuário só vê o próprio histórico, que
+fica no SQLite (tabela `analises`, até 500 por conta, apagadas junto com a
+conta). Guarda-se host, domínio, nota, nível, horário e os códigos dos
+sinais de risco — a URL completa não é retida, porque caminho e query podem
+conter token de sessão ou dados pessoais. Análises feitas sem login (CLI,
+integrações) não são guardadas.
 
 **Seleção de texto:** a interface (menu, botões, rótulos) usa
 `user-select: none`, para o duplo-clique não arrastar pedaços de UI junto. Todo
@@ -307,7 +315,7 @@ pelo menos 80. Faixas: `seguro` 0-9, `baixo` 10-29, `atencao` 30-54, `alto`
 python -m pytest -q
 ```
 
-121 testes, todos offline: as consultas de reputação usam `httpx.MockTransport`,
+190 testes, todos offline: as consultas de reputação usam `httpx.MockTransport`,
 os achados de TLS são testados com certificados simulados e a API é exercitada
 com `offline: true`. A suíte não abre nenhuma conexão de rede.
 

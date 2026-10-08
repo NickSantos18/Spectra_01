@@ -50,7 +50,7 @@ que logar de novo toda hora que reiniciar o servidor.
 python -m pytest -q
 ```
 
-Eram **140 testes**, todos offline (sem tocar rede), na última execução.
+Eram **190 testes**, todos offline (sem tocar rede), na última execução.
 
 ## 5. O que já foi feito (redesign "Spectra")
 
@@ -71,6 +71,11 @@ Todos os 11 itens pedidos no redesign estão implementados:
 10. Tela Aprender + glossário + botões "?" no laudo
 11. Acessibilidade: tema claro/escuro, fonte +/-, alto contraste, "reduzir
     movimento" — botão flutuante arrastável, embaixo à esquerda
+12. Fundação visual (branch `fundacao-visual`): fundo `#070B14` com tokens
+    únicos (`static/tokens.css`), histórico por usuário no SQLite, tela
+    **Visão geral** (`/painel/visao-geral`), menu/rodapé/acessibilidade
+    como parciais (`web/parciais/`), animações, efeitos de fundo e
+    responsividade de 320px a 1920px.
 
 ### Mapa rápido dos arquivos principais
 
@@ -82,6 +87,9 @@ Todos os 11 itens pedidos no redesign estão implementados:
 | Telas (HTML) | `src/spectra_link_guard/web/static/*.html` |
 | Estilo compartilhado (footer, tema claro, cursor, a11y) | `src/spectra_link_guard/web/static/rodape.css` |
 | Acessibilidade (tema/fonte/contraste/arrastar) | `src/spectra_link_guard/web/static/acessibilidade.js` |
+| Cores (todas) | `src/spectra_link_guard/web/static/tokens.css` |
+| Menu, rodapé e acessibilidade (um lugar só) | `src/spectra_link_guard/web/parciais/` |
+| Histórico por usuário e estatísticas | `src/spectra_link_guard/web/analises.py` |
 
 ## 6. Pendente / em aberto
 
@@ -91,15 +99,12 @@ Todos os 11 itens pedidos no redesign estão implementados:
   é só pedir para aplicar no cabeçalho, hero, sidebar e favicon.
 - **Contatos do rodapé são placeholder**: WhatsApp `(11) 99999-9999`,
   Instagram `@spectra.seguranca`, e-mail `contato@spectra.app` — trocar
-  pelos reais em `inicio.html`, `laudo.html`, `historico.html`,
-  `aprender.html`, `privacidade.html` e `termos.html` (mesmo bloco de
-  rodapé repetido nos 6 arquivos, não há template engine no projeto).
+  pelos reais, agora num lugar só: `web/parciais/rodape.html`.
 - **Textos de Política de Privacidade e Termos de Uso** são modelo
   genérico — revisar com jurídico antes de publicar de verdade.
 
 ## 7. Nota sobre git
 
-Este projeto **não tem `.git` próprio** — o repositório encontrado na
-sessão anterior estava na raiz da pasta do usuário (`C:\Users\...`), não
-aqui. Se quiser versionar daqui para frente, rode `git init` dentro desta
-pasta (`spectra 01/`) antes de continuar.
+O projeto tem repositório próprio em `spectra 01/`, com uma branch por
+sub-projeto (a fundação visual foi feita em `fundacao-visual`). O banco
+`dados/` fica fora do git de propósito, para não levar contas de teste.
