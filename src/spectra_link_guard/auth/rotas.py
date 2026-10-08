@@ -231,10 +231,19 @@ async def google_retorno(
 
     usuario = await asyncio.to_thread(bd.buscar_por_google, perfil["sub"])
     if not usuario:
+        # Sem o Google atestar o e-mail, ele é só uma afirmação de quem está do
+        # outro lado: vincular por ele entregaria a conta de quem tem esse
+        # e-mail aqui, e criar conta "reservaria" o e-mail de outra pessoa.
+        if not perfil["email_verificado"]:
+            return RedirectResponse("/inicio?erro=google_email_nao_verificado", status_code=303)
+
         # Já existe conta com este e-mail? Vincula em vez de duplicar.
         usuario = await asyncio.to_thread(bd.buscar_por_email, perfil["email"])
         if usuario:
-            await asyncio.to_thread(bd.vincular_google, usuario["id"], perfil["sub"])
+            await asyncio.to_thread(
+                bd.vincular_google, usuario["id"], perfil["sub"],
+                email_verificado=perfil["email_verificado"],
+            )
             usuario = await asyncio.to_thread(bd.buscar_por_id, usuario["id"])
         else:
             usuario = await asyncio.to_thread(

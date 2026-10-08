@@ -432,6 +432,8 @@ const MOTIVOS = {
   google_cancelado: "Login com Google cancelado.",
   google_estado: "A volta do Google não confere. Tente entrar de novo.",
   google_falhou: "Não foi possível concluir o login com Google.",
+  google_email_nao_verificado:
+    "O Google não confirmou o e-mail desta conta. Verifique o e-mail no Google ou entre com e-mail e senha.",
 };
 
 const motivo = new URLSearchParams(location.search).get("erro");

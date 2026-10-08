@@ -145,12 +145,17 @@ def criar_usuario(
     return novo
 
 
-def vincular_google(usuario_id: str, sub: str) -> None:
-    """Liga uma conta existente (criada por senha) ao login do Google."""
+def vincular_google(usuario_id: str, sub: str, *, email_verificado: bool) -> None:
+    """Liga uma conta existente (criada por senha) ao login do Google.
+
+    Só promove o e-mail a verificado quando o próprio Google o atestou — nunca
+    rebaixa um e-mail que já estava verificado.
+    """
     with conexao() as con:
         con.execute(
-            "UPDATE usuarios SET google_sub = ?, email_verificado = 1 WHERE id = ?",
-            (sub, usuario_id),
+            "UPDATE usuarios SET google_sub = ?, email_verificado = MAX(email_verificado, ?) "
+            "WHERE id = ?",
+            (sub, int(email_verificado), usuario_id),
         )
 
 

@@ -214,3 +214,67 @@ def test_callback_recusa_state_divergente(cliente, monkeypatch):
 def test_callback_sem_codigo_volta_com_erro(cliente):
     resp = cliente.get("/auth/google/callback?error=access_denied", follow_redirects=False)
     assert resp.headers["location"] == "/inicio?erro=google_cancelado"
+
+
+def _retorno_do_google(cliente, monkeypatch, perfil):
+    """Simula a volta do Google com `state` válido e o perfil informado."""
+    from spectra_link_guard.auth import google
+
+    async def perfil_falso(_codigo):
+        return perfil
+
+    monkeypatch.setattr(google, "trocar_codigo", perfil_falso)
+    cliente.cookies.set("spectra_oauth_state", seguranca.assinar("estado-ok"))
+    return cliente.get("/auth/google/callback?code=abc&state=estado-ok", follow_redirects=False)
+
+
+def _perfil(email_verificado: bool) -> dict:
+    return {
+        "sub": "google-123",
+        "email": CONTA["email"],
+        "nome": "Quem Diz Ser Ana",
+        "email_verificado": email_verificado,
+    }
+
+
+def test_google_com_email_nao_verificado_nao_toma_conta_existente(cliente, monkeypatch):
+    """Sem o Google atestar o e-mail, ninguém entra na conta de quem tem esse e-mail."""
+    bd.criar_usuario(nome=CONTA["nome"], email=CONTA["email"], senha_hash="x")
+
+    resp = _retorno_do_google(cliente, monkeypatch, _perfil(email_verificado=False))
+
+    assert resp.headers["location"] == "/inicio?erro=google_email_nao_verificado"
+    assert "spectra_sessao" not in resp.headers.get("set-cookie", "")
+    conta = bd.buscar_por_email(CONTA["email"])
+    assert conta["google_sub"] is None
+    assert conta["email_verificado"] == 0
+
+
+def test_google_com_email_nao_verificado_nao_cria_conta(cliente, monkeypatch):
+    """Criar conta com e-mail não verificado deixaria alguém 'reservar' o e-mail alheio."""
+    resp = _retorno_do_google(cliente, monkeypatch, _perfil(email_verificado=False))
+
+    assert resp.headers["location"] == "/inicio?erro=google_email_nao_verificado"
+    assert bd.buscar_por_email(CONTA["email"]) is None
+
+
+def test_google_com_email_verificado_vincula_conta_existente(cliente, monkeypatch):
+    bd.criar_usuario(nome=CONTA["nome"], email=CONTA["email"], senha_hash="x")
+
+    resp = _retorno_do_google(cliente, monkeypatch, _perfil(email_verificado=True))
+
+    assert resp.headers["location"] == "/painel"
+    conta = bd.buscar_por_email(CONTA["email"])
+    assert conta["google_sub"] == "google-123"
+    assert conta["email_verificado"] == 1
+    assert cliente.get("/api/auth/eu").json()["usuario"]["id"] == conta["id"]
+
+
+def test_vincular_google_so_marca_verificado_se_o_google_confirmou():
+    conta = bd.criar_usuario(nome=CONTA["nome"], email=CONTA["email"], senha_hash="x")
+
+    bd.vincular_google(conta["id"], "google-123", email_verificado=False)
+    assert bd.buscar_por_id(conta["id"])["email_verificado"] == 0
+
+    bd.vincular_google(conta["id"], "google-123", email_verificado=True)
+    assert bd.buscar_por_id(conta["id"])["email_verificado"] == 1
