@@ -554,8 +554,9 @@ function renderChecklist(r) {
   atualizarIcones();
 }
 
-function renderGrafico(r) {
-  $("pontuacao-numero").textContent = r.risco;
+function renderGrafico(r, { animar = true } = {}) {
+  if (animar) animarNumero($("pontuacao-numero"), r.risco);
+  else $("pontuacao-numero").textContent = r.risco;
   $("pontuacao-classificacao").textContent = `${CLASSIFICACAO_3[r.nivel] || "—"} · estimativa`;
 
   if (!window.Chart) return; // CDN pode não ter carregado ainda em conexões muito lentas
@@ -606,6 +607,10 @@ async function periciar(url) {
   $("etiqueta").textContent = "lendo o endereço…";
   $("pastilha").textContent = "periciando";
   avisar("");
+  const quadroVeredito = $("q-veredito");
+  quadroVeredito.style.setProperty("--altura-varredura", `${quadroVeredito.offsetHeight}px`);
+  quadroVeredito.classList.add("varrendo");
+  document.querySelectorAll(".fonte").forEach((fonte) => fonte.classList.add("pulsando"));
 
   try {
     const resp = await fetch("/api/analisar", {
@@ -655,6 +660,8 @@ async function periciar(url) {
     $("etiqueta").textContent = "laudo interrompido";
     $("pastilha").textContent = "interrompido";
   } finally {
+    $("q-veredito").classList.remove("varrendo");
+    document.querySelectorAll(".fonte").forEach((fonte) => fonte.classList.remove("pulsando"));
     botao.disabled = false;
     $("grade").setAttribute("aria-busy", "false");
     $("enviar-texto").textContent = "Periciar";
@@ -678,7 +685,7 @@ for (const amostra of document.querySelectorAll(".amostra")) {
 window.addEventListener("spectra:tema", () => {
   if (!laudoAtual) return;
   poligrafo.configurar({ tensao: TENSAO[laudoAtual.nivel] ?? 0.5, cor: corDoSinal() });
-  renderGrafico(laudoAtual);
+  renderGrafico(laudoAtual, { animar: false });
 });
 
 fetch("/api/saude")

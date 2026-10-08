@@ -1,0 +1,124 @@
+/* Spectra — micro-interações e transições, compartilhadas por todas as telas.
+ *
+ * Com movimento parado (`data-movimento="off"`, resolvido por movimento.js a
+ * partir do interruptor e do prefers-reduced-motion), nada se mexe e nada
+ * fica invisível esperando animação. Só transform, translate e opacity são
+ * animados.
+ */
+
+:root { --ease-saida: cubic-bezier(.16, 1, .3, 1); }
+
+/* Entrada ao rolar. animacoes.js marca .revelado. Usa `translate` (não
+   `transform`) para não brigar com o hover dos cards, que usa transform. */
+[data-revelar] {
+  transition: opacity .55s var(--ease-saida), translate .55s var(--ease-saida);
+}
+:root.revelar-pronto[data-movimento="on"] [data-revelar]:not(.revelado) {
+  opacity: 0;
+  translate: 0 18px;
+}
+
+/* Hover: quadros grandes só ganham borda; cards pequenos também sobem. */
+.quadro { transition: border-color .2s ease; }
+.quadro:hover { border-color: color-mix(in srgb, var(--primaria) 35%, var(--linha)); }
+
+.cartao-vivo { transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
+.cartao-vivo[data-revelar] {
+  transition: opacity .55s var(--ease-saida), translate .55s var(--ease-saida),
+              transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.cartao-vivo:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--primaria) 60%, var(--linha));
+  box-shadow: 0 14px 30px -20px rgb(var(--primaria-rgb) / .55);
+}
+
+/* Botões afundam ao clicar (o de acessibilidade não: ele é arrastável). */
+button:not(.a11y-botao):not(:disabled):active,
+.botao-primario:active { transform: scale(.97); }
+
+/* Skeleton enquanto carrega. */
+.esqueleto {
+  position: relative; overflow: hidden;
+  color: transparent !important;
+  background: var(--base-3);
+  border-radius: 6px;
+}
+.esqueleto::after {
+  content: ""; position: absolute; inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgb(var(--texto-rgb) / .07), transparent);
+  animation: esqueleto-brilho 1.3s ease-in-out infinite;
+}
+.esqueleto-linha { display: block; height: 12px; min-width: 48px; }
+@keyframes esqueleto-brilho { to { transform: translateX(100%); } }
+:root[data-movimento="off"] .esqueleto::after { display: none; }
+
+/* LEDs de "fontes consultadas" pulsam enquanto a análise roda. A cor fica
+   fixa; só a opacidade anima. */
+.fonte.pulsando .led {
+  background: var(--primaria-clara);
+  border-color: var(--primaria-clara);
+  animation: led-pulso 1s ease-in-out infinite;
+}
+@keyframes led-pulso {
+  0%, 100% { opacity: .35; }
+  50%      { opacity: 1; }
+}
+
+/* Feixe de varredura sobre o veredito enquanto a análise roda. A altura do
+   quadro vem de --altura-varredura (laudo.js mede antes de começar). */
+.q-veredito { position: relative; }
+.q-veredito.varrendo { overflow: hidden; }
+.q-veredito.varrendo::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; z-index: 3;
+  height: 72px; pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgb(var(--primaria-rgb) / .26));
+  border-bottom: 2px solid var(--primaria-clara);
+  animation: varrer 1.6s linear infinite;
+}
+@keyframes varrer {
+  from { transform: translateY(-72px); }
+  to   { transform: translateY(var(--altura-varredura, 360px)); }
+}
+:root[data-movimento="off"] .q-veredito.varrendo::after { display: none; }
+
+/* Avisos curtos (toast). */
+.toasts {
+  position: fixed; top: 16px; left: 50%; z-index: 90;
+  transform: translateX(-50%);
+  display: grid; gap: 8px;
+  width: min(420px, calc(100vw - 32px));
+  pointer-events: none;
+}
+.toast {
+  margin: 0;
+  pointer-events: auto;
+  padding: 11px 14px;
+  background: var(--base-3); color: var(--texto);
+  border: 1px solid var(--linha-forte); border-left-width: 3px;
+  font-size: .84rem; line-height: 1.45;
+  box-shadow: 0 18px 40px -24px rgb(0 0 0 / .9);
+  animation: toast-entrar .28s var(--ease-saida) both;
+}
+.toast[data-tipo="ok"] { border-left-color: var(--secundaria); }
+.toast[data-tipo="erro"] { border-left-color: var(--perigo); }
+.toast.saindo { animation: toast-sair .2s ease both; }
+@keyframes toast-entrar { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+@keyframes toast-sair { to { opacity: 0; transform: translateY(-8px); } }
+
+/* Transição entre páginas (View Transitions entre documentos da mesma
+   origem). Navegador sem suporte navega normalmente. O menu tem nome
+   próprio para ficar parado enquanto o conteúdo faz o fade. */
+@view-transition { navigation: auto; }
+.trilho { view-transition-name: trilho; }
+::view-transition-old(root),
+::view-transition-new(root) { animation-duration: .22s; }
+:root[data-movimento="off"]::view-transition-group(*),
+:root[data-movimento="off"]::view-transition-old(*),
+:root[data-movimento="off"]::view-transition-new(*) { animation: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation: none !important; }
+}

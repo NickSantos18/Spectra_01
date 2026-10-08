@@ -71,3 +71,21 @@ def test_toda_pagina_carrega_tokens_antes_dos_outros_estilos():
     for nome in PAGINAS:
         folhas = re.findall(r'<link rel="stylesheet" href="/static/([^"]+)"', _html(nome))
         assert folhas and folhas[0] == "tokens.css", f"{nome}: {folhas}"
+
+
+def test_toda_pagina_carrega_animacoes_no_head_depois_do_movimento():
+    for nome in PAGINAS:
+        cabeca = _html(nome).split("</head>")[0]
+        assert '<link rel="stylesheet" href="/static/animacoes.css">' in cabeca, nome
+        assert '<script src="/static/animacoes.js"></script>' in cabeca, nome
+        assert cabeca.index("/static/movimento.js") < cabeca.index("/static/animacoes.js"), nome
+
+
+def test_home_nao_tem_mais_script_proprio_de_revelar():
+    assert "IntersectionObserver" not in _html("inicio.html")
+
+
+def test_historico_tem_apagar_tudo_com_confirmacao():
+    html = _html("historico.html")
+    assert 'id="hist-apagar-tudo"' in html
+    assert '<dialog class="dialogo" id="dialogo-apagar"' in html

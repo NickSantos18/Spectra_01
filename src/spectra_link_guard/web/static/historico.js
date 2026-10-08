@@ -1,8 +1,9 @@
 /* Spectra — Histórico.
  *
- * Consome GET /api/painel/historico (lista completa da sessão, até 50 itens)
- * e DELETE /api/painel/{id} (já existia, usado pelo laudo). Busca e filtro
- * são só no cliente — a lista já é pequena e fica toda em memória.
+ * Consome a API por usuário: GET /api/painel/historico, DELETE
+ * /api/painel/{id} e DELETE /api/painel (apagar tudo). Busca e filtro rodam
+ * no cliente: a lista tem no máximo 500 itens. Sem sessão a API responde 401
+ * e a tela volta para a entrada.
  */
 
 const $ = (id) => document.getElementById(id);
@@ -12,13 +13,13 @@ const TOKEN_NIVEL = {
   seguro: "secundaria", baixo: "secundaria", atencao: "terciaria", alto: "perigo", critico: "perigo",
 };
 
+let itensTodos = [];
+let graficoHist = null;
+
 function corNivel(nivel) {
   return getComputedStyle(document.documentElement)
     .getPropertyValue(`--${TOKEN_NIVEL[nivel]}`).trim();
 }
-
-let itensTodos = [];
-let graficoHist = null;
 
 function elemento(tag, classe, texto) {
   const el = document.createElement(tag);
@@ -27,12 +28,21 @@ function elemento(tag, classe, texto) {
   return el;
 }
 
+function celula(rotulo, classe, texto) {
+  const td = elemento("td", classe, texto);
+  td.dataset.rotulo = rotulo;
+  return td;
+}
+
 function formatarQuando(iso) {
-  try {
-    return new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
-  } catch {
-    return iso || "—";
-  }
+  const data = new Date(iso);
+  return Number.isNaN(data.getTime())
+    ? iso
+    : data.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+}
+
+function voltarParaEntrada() {
+  window.location.href = "/inicio?erro=entre_primeiro";
 }
 
 function itensFiltrados() {
@@ -41,44 +51,70 @@ function itensFiltrados() {
   return itensTodos.filter((item) => {
     if (filtro && item.nivel !== filtro) return false;
     if (!busca) return true;
-    return (item.host || "").toLowerCase().includes(busca) || (item.dominio || "").toLowerCase().includes(busca);
+    return (item.host || "").toLowerCase().includes(busca)
+      || (item.dominio || "").toLowerCase().includes(busca);
   });
 }
 
-async function apagar(id) {
+async function apagar(item) {
+  let resp;
   try {
-    await fetch(`/api/painel/${id}`, { method: "DELETE" });
+    resp = await fetch(`/api/painel/${item.id}`, { method: "DELETE" });
   } catch {
-    /* segue mesmo se a chamada falhar: a linha some da UI, próxima carga sincroniza */
+    avisarToast("Sem resposta do servidor. Tente de novo.", "erro");
+    return;
   }
-  itensTodos = itensTodos.filter((i) => i.id !== id);
+  if (resp.status === 401) return voltarParaEntrada();
+  if (!resp.ok && resp.status !== 404) {
+    avisarToast("Não foi possível apagar esta análise.", "erro");
+    return;
+  }
+  itensTodos = itensTodos.filter((i) => i.id !== item.id);
   renderizarTudo();
+  avisarToast(`Análise de ${item.host || "link"} apagada.`, "ok");
+}
+
+async function apagarTudo() {
+  let resp;
+  try {
+    resp = await fetch("/api/painel", { method: "DELETE" });
+  } catch {
+    avisarToast("Sem resposta do servidor. Tente de novo.", "erro");
+    return;
+  }
+  if (resp.status === 401) return voltarParaEntrada();
+  if (!resp.ok) {
+    avisarToast("Não foi possível apagar o histórico.", "erro");
+    return;
+  }
+  itensTodos = [];
+  renderizarTudo();
+  avisarToast("Histórico apagado.", "ok");
 }
 
 function linhaHist(item) {
   const tr = elemento("tr");
+  tr.append(celula("Quando", "mono", formatarQuando(item.quando)));
+  tr.append(celula("Host", "mono copiavel", item.host || "(sem host)"));
+  tr.append(celula("Domínio", "mono copiavel", item.dominio || "(sem domínio)"));
 
-  tr.append(elemento("td", "mono", formatarQuando(item.quando)));
-  tr.append(elemento("td", "mono copiavel", item.host || "—"));
-  tr.append(elemento("td", "mono copiavel", item.dominio || "—"));
-
-  const tdVeredito = elemento("td");
-  const badge = elemento("span", "hist-veredito", NOME_NIVEL[item.nivel] || item.nivel);
-  badge.dataset.nivel = item.nivel;
-  tdVeredito.append(badge);
+  const tdVeredito = celula("Veredito");
+  const selo = elemento("span", "hist-veredito", NOME_NIVEL[item.nivel] || item.nivel);
+  selo.dataset.nivel = item.nivel;
+  tdVeredito.append(selo);
   tr.append(tdVeredito);
 
-  tr.append(elemento("td", "mono", `${item.risco}/100`));
+  tr.append(celula("Nota", "mono", `${item.risco}/100`));
 
-  const tdAcao = elemento("td");
+  const tdAcao = celula("Ações");
   const botao = elemento("button", "hist-apagar");
   botao.type = "button";
-  botao.setAttribute("aria-label", `Apagar análise de ${item.host || "item"} do histórico`);
-  const i = document.createElement("i");
-  i.setAttribute("data-lucide", "trash-2");
-  i.setAttribute("aria-hidden", "true");
-  botao.append(i);
-  botao.addEventListener("click", () => apagar(item.id));
+  botao.setAttribute("aria-label", `Apagar análise de ${item.host || "link"} do histórico`);
+  const icone = document.createElement("i");
+  icone.setAttribute("data-lucide", "trash-2");
+  icone.setAttribute("aria-hidden", "true");
+  botao.append(icone);
+  botao.addEventListener("click", () => apagar(item));
   tdAcao.append(botao);
   tr.append(tdAcao);
 
@@ -87,11 +123,10 @@ function linhaHist(item) {
 
 function renderizarTabela() {
   const filtrados = itensFiltrados();
-  const corpo = $("hist-corpo");
-  corpo.replaceChildren();
-  for (const item of filtrados) corpo.append(linhaHist(item));
+  $("hist-corpo").replaceChildren(...filtrados.map(linhaHist));
   $("hist-vazio").hidden = filtrados.length > 0;
   $("hist-contagem").textContent = `${filtrados.length} de ${itensTodos.length}`;
+  $("hist-apagar-tudo").disabled = itensTodos.length === 0;
   if (window.lucide) window.lucide.createIcons();
 }
 
@@ -118,7 +153,11 @@ function renderizarResumo() {
     type: "doughnut",
     data: {
       labels: Object.keys(contagem).map((n) => NOME_NIVEL[n]),
-      datasets: [{ data: Object.values(contagem), backgroundColor: Object.keys(contagem).map(corNivel), borderWidth: 0 }],
+      datasets: [{
+        data: Object.values(contagem),
+        backgroundColor: Object.keys(contagem).map(corNivel),
+        borderWidth: 0,
+      }],
     },
     options: {
       cutout: "62%",
@@ -133,23 +172,43 @@ function renderizarTudo() {
   renderizarTabela();
 }
 
-async function carregar() {
-  try {
-    const resp = await fetch("/api/painel/historico");
-    if (resp.status === 401) {
-      window.location.href = "/inicio?erro=entre_primeiro";
-      return;
+function esqueletoTabela(linhas = 4) {
+  const corpo = $("hist-corpo");
+  corpo.replaceChildren();
+  for (let i = 0; i < linhas; i += 1) {
+    const tr = elemento("tr");
+    for (let j = 0; j < 6; j += 1) {
+      const td = elemento("td");
+      td.append(elemento("span", "esqueleto esqueleto-linha", "carregando"));
+      tr.append(td);
     }
-    const dados = await resp.json();
-    itensTodos = dados.itens || [];
-  } catch {
-    itensTodos = [];
+    corpo.append(tr);
   }
+}
+
+async function carregar() {
+  esqueletoTabela();
+  let resp;
+  try {
+    resp = await fetch("/api/painel/historico");
+  } catch {
+    avisarToast("Não foi possível carregar o histórico.", "erro");
+    itensTodos = [];
+    renderizarTudo();
+    return;
+  }
+  if (resp.status === 401) return voltarParaEntrada();
+  itensTodos = (await resp.json()).itens || [];
   renderizarTudo();
 }
 
+const dialogo = $("dialogo-apagar");
 $("hist-busca").addEventListener("input", renderizarTabela);
 $("hist-filtro").addEventListener("change", renderizarTabela);
-
+$("hist-apagar-tudo").addEventListener("click", () => dialogo.showModal());
+dialogo.addEventListener("close", () => {
+  if (dialogo.returnValue === "apagar") apagarTudo();
+});
 window.addEventListener("spectra:tema", renderizarResumo);
+
 carregar();

@@ -41,7 +41,10 @@ from . import analises
 ESTATICOS = Path(__file__).parent / "static"
 
 #: Ativos que toda página carrega; entram no cache-busting de _pagina().
-_ATIVOS_BASE = ("tokens.css", "rodape.css", "movimento.js", "acessibilidade.js")
+_ATIVOS_BASE = (
+    "tokens.css", "rodape.css", "animacoes.css",
+    "movimento.js", "acessibilidade.js", "animacoes.js",
+)
 
 #: Ativos das telas com menu lateral (painel).
 _ATIVOS_PAINEL = _ATIVOS_BASE + ("laudo.css", "menu.js")

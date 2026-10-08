@@ -11,9 +11,11 @@
 <link rel="stylesheet" href="/static/tokens.css">
 <link rel="stylesheet" href="/static/laudo.css">
 <link rel="stylesheet" href="/static/rodape.css">
+<link rel="stylesheet" href="/static/animacoes.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
 <script src="/static/movimento.js"></script>
 <script src="/static/acessibilidade.js"></script>
+<script src="/static/animacoes.js"></script>
 <script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js" defer
         integrity="sha384-WBRt9V/J/erVtkEuP91HUFRv9MvHzFiFOp4/zTDp4xkcMG7aOeIv2asTV4yxFLWa" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" defer
@@ -41,6 +43,9 @@
       <option value="alto">alto</option>
       <option value="critico">crítico</option>
     </select>
+    <button type="button" class="botao-perigo" id="hist-apagar-tudo" disabled>
+      <i data-lucide="trash-2" aria-hidden="true"></i>Apagar tudo
+    </button>
   </div>
 </header>
 
@@ -90,6 +95,17 @@
 
 </div>
 </div>
+
+<dialog class="dialogo" id="dialogo-apagar" aria-labelledby="dialogo-apagar-titulo">
+  <form method="dialog" class="dialogo-corpo">
+    <h2 id="dialogo-apagar-titulo" class="dialogo-titulo">Apagar todo o histórico?</h2>
+    <p class="dialogo-texto">Todas as suas análises salvas serão apagadas. Isso não pode ser desfeito.</p>
+    <div class="dialogo-acoes">
+      <button value="cancelar" class="botao-secundario">Cancelar</button>
+      <button value="apagar" class="botao-perigo">Apagar tudo</button>
+    </div>
+  </form>
+</dialog>
 
 <!--PARCIAL:acessibilidade-->
 
