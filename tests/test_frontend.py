@@ -46,6 +46,16 @@ def test_nenhum_neutro_antigo_fora_dos_tokens():
             assert cor not in texto, f"{cor} ainda aparece em {arquivo.name}"
 
 
+def test_nenhuma_classe_da_antiga_cor_base_do_tailwind():
+    # A cor Tailwind "base" virou "fundo"; text-base agora é só tamanho de fonte.
+    for arquivo in ESTATICOS.iterdir():
+        if arquivo.suffix not in {".html", ".js"}:
+            continue
+        texto = arquivo.read_text(encoding="utf-8")
+        for classe in ("bg-base", "bg-marca text-base"):
+            assert classe not in texto, f"{classe} ainda aparece em {arquivo.name}"
+
+
 def test_tokens_definem_tema_escuro_e_claro_com_triplets():
     blocos = _blocos((ESTATICOS / "tokens.css").read_text(encoding="utf-8"))
     escuro = blocos[":root"]

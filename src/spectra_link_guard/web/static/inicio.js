@@ -333,7 +333,7 @@ function balao(texto, autor) {
     "max-w-[85%] rounded-lg px-3.5 py-2.5 text-sm leading-relaxed " +
     (autor === "bot"
       ? "self-start bg-sup-2 text-txt-2 rounded-bl-sm"
-      : "self-end bg-marca text-base rounded-br-sm");
+      : "self-end bg-marca text-sobre-marca rounded-br-sm");
 
   linha.className = "flex flex-col";
   linha.append(bolha);
