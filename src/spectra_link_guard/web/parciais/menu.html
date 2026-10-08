@@ -36,3 +36,53 @@
     </div>
   </div>
 </aside>
+
+<header class="topo-movel">
+  <a class="chancela" href="/inicio">
+    <span class="chancela-marca" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+    </span>
+    <span class="chancela-nome">SPECTRA</span>
+  </a>
+  <button type="button" class="topo-conta" data-abrir-mais aria-controls="gaveta-mais" aria-expanded="false" aria-label="Abrir o menu da conta">
+    <span class="conta-inicial" data-conta-inicial aria-hidden="true"></span>
+  </button>
+</header>
+
+<nav class="barra-abas" aria-label="Navegação rápida">
+  <a class="aba-item" href="/painel" data-menu="verificar">
+    <i data-lucide="search-check" aria-hidden="true"></i><span>Verificar</span>
+  </a>
+  <a class="aba-item" href="/painel/visao-geral" data-menu="visao-geral">
+    <i data-lucide="layout-dashboard" aria-hidden="true"></i><span>Visão geral</span>
+  </a>
+  <a class="aba-item" href="/painel/historico" data-menu="historico">
+    <i data-lucide="history" aria-hidden="true"></i><span>Histórico</span>
+  </a>
+  <button type="button" class="aba-item" data-abrir-mais aria-controls="gaveta-mais" aria-expanded="false">
+    <i data-lucide="menu" aria-hidden="true"></i><span>Mais</span>
+  </button>
+</nav>
+
+<dialog class="gaveta" id="gaveta-mais" aria-labelledby="gaveta-titulo">
+  <div class="gaveta-topo">
+    <h2 class="gaveta-titulo" id="gaveta-titulo">Mais</h2>
+    <button type="button" class="gaveta-fechar" data-fechar-gaveta aria-label="Fechar">
+      <i data-lucide="x" aria-hidden="true"></i>
+    </button>
+  </div>
+  <nav class="gaveta-menu" aria-label="Outras páginas">
+    <a class="gaveta-item" href="/painel/aprender" data-menu="aprender">
+      <i data-lucide="book-open" aria-hidden="true"></i>Aprender
+    </a>
+  </nav>
+  <div class="gaveta-conta" data-conta hidden>
+    <span class="conta-inicial" data-conta-inicial aria-hidden="true"></span>
+    <span class="conta-nome" data-conta-nome></span>
+    <button type="button" class="conta-sair" data-sair>
+      <i data-lucide="log-out" aria-hidden="true"></i><span>Sair</span>
+    </button>
+  </div>
+</dialog>

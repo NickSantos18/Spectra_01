@@ -110,3 +110,18 @@ def test_cada_tela_tem_o_efeito_de_fundo_combinado():
         else:
             assert efeitos == [], f"{nome} não deveria ter efeito de fundo: {efeitos}"
             assert "/static/fundo.js" not in html, nome
+
+
+def test_toda_pagina_usa_viewport_fit_cover():
+    for nome in PAGINAS:
+        assert 'content="width=device-width, initial-scale=1, viewport-fit=cover"' in _html(nome), nome
+
+
+def test_menu_tem_navegacao_de_celular():
+    from spectra_link_guard.web.app import PARCIAIS
+
+    menu = (PARCIAIS / "menu.html").read_text(encoding="utf-8")
+    assert '<nav class="barra-abas"' in menu
+    assert menu.count('class="aba-item"') == 4
+    assert '<dialog class="gaveta" id="gaveta-mais"' in menu
+    assert menu.count("data-abrir-mais") == 2

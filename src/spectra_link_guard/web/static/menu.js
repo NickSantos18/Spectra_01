@@ -26,4 +26,37 @@
     .catch(() => {});
 
   document.querySelectorAll("[data-sair]").forEach((botao) => botao.addEventListener("click", sair));
+
+  const gaveta = document.getElementById("gaveta-mais");
+  const abridores = document.querySelectorAll("[data-abrir-mais]");
+  if (gaveta && typeof gaveta.showModal === "function") {
+    let ultimoAbridor = null;
+
+    abridores.forEach((botao) => botao.addEventListener("click", () => {
+      ultimoAbridor = botao;
+      gaveta.showModal();
+      abridores.forEach((b) => b.setAttribute("aria-expanded", "true"));
+    }));
+
+    gaveta.addEventListener("close", () => {
+      abridores.forEach((b) => b.setAttribute("aria-expanded", "false"));
+      if (ultimoAbridor) ultimoAbridor.focus();
+    });
+
+    // Toque fora da gaveta (no fundo escurecido) fecha. Compara coordenadas
+    // porque o clique no ::backdrop chega com o próprio <dialog> como alvo.
+    gaveta.addEventListener("click", (evento) => {
+      const caixa = gaveta.getBoundingClientRect();
+      const fora = evento.clientY < caixa.top || evento.clientY > caixa.bottom
+        || evento.clientX < caixa.left || evento.clientX > caixa.right;
+      if (fora) gaveta.close();
+    });
+
+    gaveta.querySelector("[data-fechar-gaveta]").addEventListener("click", () => gaveta.close());
+
+    // Se a tela atual mora dentro da gaveta, a aba "Mais" aparece ativa.
+    if (gaveta.querySelector('[aria-current="page"]')) {
+      document.querySelector(".barra-abas [data-abrir-mais]")?.classList.add("ativo");
+    }
+  }
 })();

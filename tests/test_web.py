@@ -316,3 +316,9 @@ def test_rodape_marca_a_pagina_legal_atual(cliente, pagina, outra):
     html = cliente.get(f"/{pagina}").text
     assert html.count(f'data-menu="{pagina}" aria-current="page"') == 1
     assert f'data-menu="{outra}" aria-current' not in html
+
+
+def test_item_da_gaveta_tambem_fica_ativo(cliente):
+    entrar(cliente)
+    html = cliente.get("/painel/aprender").text
+    assert html.count('data-menu="aprender" aria-current="page"') == 2  # menu lateral + gaveta

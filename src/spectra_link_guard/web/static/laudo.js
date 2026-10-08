@@ -536,8 +536,10 @@ function renderChecklist(r) {
     const linha = elemento("tr");
 
     const tdRotulo = elemento("td", "", c.rotulo);
+    tdRotulo.dataset.rotulo = "Critério";
 
     const tdResultado = elemento("td");
+    tdResultado.dataset.rotulo = "Resultado";
     const resultado = elemento("span", `checklist-resultado ${c.passou ? "passou" : "falhou"}`);
     const i = document.createElement("i");
     i.setAttribute("data-lucide", c.passou ? "check-circle-2" : "x-circle");
@@ -546,6 +548,7 @@ function renderChecklist(r) {
     tdResultado.append(resultado);
 
     const tdMotivo = elemento("td", "checklist-motivo", c.motivo);
+    tdMotivo.dataset.rotulo = "Explicação";
 
     linha.append(tdRotulo, tdResultado, tdMotivo);
     corpo.append(linha);

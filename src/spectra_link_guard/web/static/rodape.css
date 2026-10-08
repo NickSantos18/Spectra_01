@@ -216,3 +216,8 @@ body::before {
 .a11y-titulo { margin: 0; font-family: var(--fonte-titulo, sans-serif); font-weight: 700; font-size: .84rem; }
 
 @media (max-width: 640px) { .a11y-caixa { left: 12px; bottom: 12px; } }
+@media (max-width: 599px) {
+  body:has(.barra-abas) .a11y-caixa {
+    bottom: calc(var(--abas-h, 60px) + env(safe-area-inset-bottom) + 12px);
+  }
+}

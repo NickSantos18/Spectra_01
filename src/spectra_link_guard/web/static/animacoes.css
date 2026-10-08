@@ -112,6 +112,8 @@ button:not(.a11y-botao):not(:disabled):active,
    próprio para ficar parado enquanto o conteúdo faz o fade. */
 @view-transition { navigation: auto; }
 .trilho { view-transition-name: trilho; }
+.topo-movel { view-transition-name: topo-movel; }
+.barra-abas { view-transition-name: barra-abas; }
 ::view-transition-old(root),
 ::view-transition-new(root) { animation-duration: .22s; }
 :root[data-movimento="off"]::view-transition-group(*),
