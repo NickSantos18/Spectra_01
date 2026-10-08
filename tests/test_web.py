@@ -2,6 +2,7 @@
 
 Todos rodam em modo offline (``offline: true`` no corpo), então a suíte
 continua sem abrir conexão de rede nem consumir cota de API de terceiro.
+O banco é isolado por teste (conftest.py).
 """
 
 from __future__ import annotations
@@ -11,19 +12,32 @@ import pytest
 fastapi = pytest.importorskip("fastapi", reason="extra 'web' não instalado")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from spectra_link_guard.web.app import app, historico, limitador  # noqa: E402
+from spectra_link_guard.web.app import app, limitador  # noqa: E402
 
 
 @pytest.fixture
 def cliente() -> TestClient:
     # Estado do processo é compartilhado entre testes: zeramos antes de cada um.
-    historico._itens.clear()
     limitador._por_ip.clear()
     return TestClient(app)
 
 
+def entrar(cliente: TestClient, email: str = "ana@exemplo.com.br") -> None:
+    """Cria a conta e deixa a sessão no cookie deste cliente."""
+    resp = cliente.post(
+        "/api/auth/cadastrar",
+        json={"nome": "Pessoa de Teste", "email": email, "senha": "senha-forte-123"},
+    )
+    assert resp.status_code == 201
+
+
 def analisar(cliente: TestClient, url: str):
     return cliente.post("/api/analisar", json={"url": url, "offline": True})
+
+
+# --------------------------------------------------------------------------- #
+# Páginas
+# --------------------------------------------------------------------------- #
 
 
 def test_raiz_redireciona_para_a_entrada(cliente):
@@ -39,14 +53,8 @@ def test_v2_antigo_aponta_para_o_painel(cliente):
     assert resp.headers["location"] == "/painel"
 
 
-def test_painel_exige_sessao(cliente):
-    resp = cliente.get("/painel", follow_redirects=False)
-    assert resp.status_code == 303
-    assert resp.headers["location"] == "/inicio?erro=entre_primeiro"
-
-
-@pytest.mark.parametrize("rota", ["/painel/historico", "/painel/aprender"])
-def test_novas_telas_do_painel_exigem_sessao(cliente, rota):
+@pytest.mark.parametrize("rota", ["/painel", "/painel/historico", "/painel/aprender"])
+def test_telas_do_painel_exigem_sessao(cliente, rota):
     resp = cliente.get(rota, follow_redirects=False)
     assert resp.status_code == 303
     assert resp.headers["location"] == "/inicio?erro=entre_primeiro"
@@ -65,6 +73,11 @@ def test_tela_de_entrada_responde(cliente):
     assert "inicio.js?v=" in resp.text  # ativo versionado contra cache
     for marco in ("Cadastrar-se", "Esqueci minha senha", "Aceito os", "Assistente Spectra"):
         assert marco in resp.text
+
+
+# --------------------------------------------------------------------------- #
+# Análise
+# --------------------------------------------------------------------------- #
 
 
 def test_analise_devolve_relatorio_completo(cliente):
@@ -88,14 +101,6 @@ def test_analise_traz_checklist_heuristico(cliente):
     assert all({"codigo", "rotulo", "passou", "motivo"} == set(c) for c in corpo["checklist"])
 
 
-def test_api_historico_completo_tem_mesmo_formato_do_resumo(cliente):
-    analisar(cliente, "https://exemplo.com/pagina?token=segredo-do-usuario")
-    itens = cliente.get("/api/painel/historico").json()["itens"]
-    assert len(itens) == 1
-    assert set(itens[0]) == {"id", "host", "dominio", "risco", "nivel", "quando"}
-    assert "segredo-do-usuario" not in str(itens[0])
-
-
 def test_url_vazia_e_rejeitada(cliente):
     assert cliente.post("/api/analisar", json={"url": ""}).status_code == 422
 
@@ -105,7 +110,35 @@ def test_url_absurdamente_longa_e_rejeitada(cliente):
     assert resp.status_code == 422
 
 
+# --------------------------------------------------------------------------- #
+# Histórico por usuário
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.parametrize(
+    "metodo,rota",
+    [
+        ("get", "/api/painel"),
+        ("get", "/api/painel/historico"),
+        ("get", "/api/painel/estatisticas"),
+        ("delete", "/api/painel"),
+        ("delete", "/api/painel/abcdef123456"),
+    ],
+)
+def test_rotas_do_historico_exigem_sessao(cliente, metodo, rota):
+    resp = getattr(cliente, metodo)(rota)
+    assert resp.status_code == 401
+    assert "erro" in resp.json()
+
+
+def test_analise_sem_sessao_nao_entra_no_historico(cliente):
+    analisar(cliente, "https://exemplo.com")
+    entrar(cliente)
+    assert cliente.get("/api/painel/historico").json() == {"itens": []}
+
+
 def test_painel_acumula_historico(cliente):
+    entrar(cliente)
     analisar(cliente, "https://itau.seguranca-cliente.top/senha/login")
     analisar(cliente, "https://exemplo.com")
     painel = cliente.get("/api/painel").json()
@@ -115,6 +148,7 @@ def test_painel_acumula_historico(cliente):
 
 def test_historico_nao_guarda_a_url_completa(cliente):
     """A query pode carregar token de sessão — só host e nota são retidos."""
+    entrar(cliente)
     analisar(cliente, "https://exemplo.com/pagina?token=segredo-do-usuario")
     recente = cliente.get("/api/painel").json()["recentes"][0]
     assert recente["host"] == "exemplo.com"
@@ -122,7 +156,17 @@ def test_historico_nao_guarda_a_url_completa(cliente):
     assert set(recente) == {"id", "host", "dominio", "risco", "nivel", "quando"}
 
 
+def test_api_historico_completo_tem_mesmo_formato_do_resumo(cliente):
+    entrar(cliente)
+    analisar(cliente, "https://exemplo.com/pagina?token=segredo-do-usuario")
+    itens = cliente.get("/api/painel/historico").json()["itens"]
+    assert len(itens) == 1
+    assert set(itens[0]) == {"id", "host", "dominio", "risco", "nivel", "quando"}
+    assert "segredo-do-usuario" not in str(itens[0])
+
+
 def test_excluir_entrada_do_historico(cliente):
+    entrar(cliente)
     analisar(cliente, "https://exemplo.com")
     analisar(cliente, "https://outro-exemplo.com")
     recentes = cliente.get("/api/painel").json()["recentes"]
@@ -137,6 +181,7 @@ def test_excluir_entrada_do_historico(cliente):
 
 
 def test_excluir_id_inexistente_devolve_404(cliente):
+    entrar(cliente)
     resp = cliente.delete("/api/painel/abcdef123456")
     assert resp.status_code == 404
     assert "erro" in resp.json()
@@ -144,15 +189,60 @@ def test_excluir_id_inexistente_devolve_404(cliente):
 
 def test_excluir_id_malformado_e_rejeitado(cliente):
     # Só hexadecimal: fecha a porta para path traversal e lixo na rota.
+    entrar(cliente)
     assert cliente.delete("/api/painel/..%2Fetc").status_code in (404, 422)
     assert cliente.delete("/api/painel/ZZZZ").status_code == 422
 
 
 def test_cada_analise_recebe_id_proprio(cliente):
+    entrar(cliente)
     analisar(cliente, "https://exemplo.com")
     analisar(cliente, "https://exemplo.com")
     ids = [r["id"] for r in cliente.get("/api/painel").json()["recentes"]]
     assert len(set(ids)) == 2
+
+
+def test_um_usuario_nao_ve_nem_apaga_o_historico_do_outro(cliente):
+    entrar(cliente, "ana@exemplo.com.br")
+    analisar(cliente, "https://exemplo.com")
+    item_da_ana = cliente.get("/api/painel/historico").json()["itens"][0]["id"]
+
+    bruno = TestClient(app)
+    entrar(bruno, "bruno@exemplo.com.br")
+    assert bruno.get("/api/painel/historico").json() == {"itens": []}
+    assert bruno.get("/api/painel/estatisticas").json()["total"] == 0
+    assert bruno.delete(f"/api/painel/{item_da_ana}").status_code == 404
+
+    itens_da_ana = cliente.get("/api/painel/historico").json()["itens"]
+    assert [i["id"] for i in itens_da_ana] == [item_da_ana]
+
+
+def test_apagar_todo_o_historico(cliente):
+    entrar(cliente)
+    analisar(cliente, "https://exemplo.com")
+    analisar(cliente, "https://outro-exemplo.com")
+    assert cliente.delete("/api/painel").status_code == 204
+    assert cliente.get("/api/painel/historico").json() == {"itens": []}
+
+
+def test_estatisticas_tem_o_formato_do_dashboard(cliente):
+    entrar(cliente)
+    analisar(cliente, "https://itau.seguranca-cliente.top/atualizar/senha")
+    analisar(cliente, "https://exemplo.com")
+    estat = cliente.get("/api/painel/estatisticas").json()
+    assert set(estat) == {
+        "total", "perigosos", "risco_medio", "pct_seguras",
+        "por_nivel", "por_dia", "sinais_frequentes",
+    }
+    assert estat["total"] == 2
+    assert len(estat["por_dia"]) == 30
+    assert estat["por_dia"][-1]["total"] == 2
+    assert any(s["codigo"] == "marca_em_subdominio" for s in estat["sinais_frequentes"])
+
+
+# --------------------------------------------------------------------------- #
+# Saúde e limite
+# --------------------------------------------------------------------------- #
 
 
 def test_saude_nao_vaza_chaves(cliente):

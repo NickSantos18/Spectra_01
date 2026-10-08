@@ -48,6 +48,10 @@ CREATE INDEX IF NOT EXISTS idx_sessoes_usuario ON sessoes(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_sessoes_expira  ON sessoes(expira_em);
 """
 
+#: Esquemas criados na primeira conexão do processo. Outros módulos (ex.:
+#: web/analises.py) acrescentam suas tabelas por registrar_esquema().
+_ESQUEMAS: list[str] = [_ESQUEMA]
+
 
 def agora() -> datetime:
     return datetime.now(timezone.utc)
@@ -67,7 +71,8 @@ def conexao() -> Iterator[sqlite3.Connection]:
     con.row_factory = sqlite3.Row
     con.execute("PRAGMA foreign_keys = ON")
     if not _PRONTO:
-        con.executescript(_ESQUEMA)
+        for esquema in _ESQUEMAS:
+            con.executescript(esquema)
         con.commit()
         _PRONTO = True
     try:
@@ -84,6 +89,14 @@ def preparar() -> None:
     """Cria o esquema se ainda não existir. Idempotente."""
     with conexao():
         pass
+
+
+def registrar_esquema(sql: str) -> None:
+    """Acrescenta tabelas de outro módulo ao esquema criado na primeira conexão."""
+    global _PRONTO
+    if sql not in _ESQUEMAS:
+        _ESQUEMAS.append(sql)
+        _PRONTO = False
 
 
 # --------------------------------------------------------------------------- #

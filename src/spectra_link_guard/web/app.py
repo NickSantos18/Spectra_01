@@ -16,8 +16,8 @@ por requisição (campo ``offline`` do corpo), mas não é o padrão.
 
 from __future__ import annotations
 
+import asyncio
 import time
-import uuid
 from collections import deque
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -35,7 +35,7 @@ from ..analisador import ConfiguracaoLinkGuard, LinkGuard
 from ..auth import bd as bd_auth
 from ..auth import router as router_auth
 from ..auth import usuario_atual
-from ..models import NivelRisco
+from . import analises
 
 ESTATICOS = Path(__file__).parent / "static"
 
@@ -75,71 +75,17 @@ class _Limitador:
             return True
 
 
-@dataclass
-class _Historico:
-    """Últimas análises da sessão, para alimentar os indicadores do painel.
-
-    PRIVACIDADE: guarda apenas host, domínio registrável, nota e horário.
-    A URL completa **não** é retida — caminho e query podem conter tokens,
-    identificadores de sessão ou dados pessoais.
-    """
-
-    limite: int = 50
-
-    def __post_init__(self) -> None:
-        self._itens: deque[dict[str, Any]] = deque(maxlen=self.limite)
-        self._trava = Lock()
-
-    def registrar(self, relatorio) -> str:
-        """Guarda a análise e devolve o id usado para removê-la depois."""
-        item_id = uuid.uuid4().hex[:12]
-        with self._trava:
-            self._itens.appendleft(
-                {
-                    "id": item_id,
-                    "host": relatorio.host,
-                    "dominio": relatorio.dominio_registravel,
-                    "risco": relatorio.risco,
-                    "nivel": relatorio.nivel.value,
-                    "quando": relatorio.analisado_em,
-                }
-            )
-        return item_id
-
-    def remover(self, item_id: str) -> bool:
-        """Apaga uma entrada. Devolve ``False`` se o id não existia."""
-        with self._trava:
-            for item in self._itens:
-                if item["id"] == item_id:
-                    self._itens.remove(item)
-                    return True
-        return False
-
-    def resumo(self) -> dict[str, Any]:
-        with self._trava:
-            itens = list(self._itens)
-        contagem = {n.value: 0 for n in NivelRisco}
-        for item in itens:
-            contagem[item["nivel"]] = contagem.get(item["nivel"], 0) + 1
-        perigosos = sum(
-            contagem[n] for n in (NivelRisco.ALTO.value, NivelRisco.CRITICO.value)
-        )
-        return {
-            "total": len(itens),
-            "por_nivel": contagem,
-            "perigosos": perigosos,
-            "recentes": itens[:12],
-        }
-
-    def todos(self) -> list[dict[str, Any]]:
-        """Lista completa (até `limite`), para a tela de Histórico."""
-        with self._trava:
-            return list(self._itens)
-
-
 limitador = _Limitador()
-historico = _Historico()
 guard = LinkGuard()
+
+
+def _usuario_ou_401(request: Request) -> dict[str, Any]:
+    """Dono da sessão, ou 401: o histórico é sempre de alguém."""
+    usuario = usuario_atual(request.cookies.get("spectra_sessao"))
+    if usuario is None:
+        raise HTTPException(status_code=401, detail="Entre na sua conta para ver o histórico.")
+    return usuario
+
 
 @asynccontextmanager
 async def ciclo_de_vida(_: FastAPI):
@@ -188,30 +134,51 @@ async def analisar(pedido: PedidoAnalise, request: Request) -> dict[str, Any]:
     else:
         relatorio = await guard.analisar(pedido.url)
 
-    historico.registrar(relatorio)
+    # Sem sessão (CLI, testes, integração) a análise funciona, mas não é salva.
+    usuario = usuario_atual(request.cookies.get("spectra_sessao"))
+    if usuario is not None:
+        await asyncio.to_thread(analises.registrar, usuario["id"], relatorio)
     return relatorio.to_dict()
 
 
-@app.get("/api/painel", summary="Indicadores da sessão")
-async def painel() -> dict[str, Any]:
-    return historico.resumo()
+@app.get("/api/painel", summary="Indicadores do usuário")
+async def painel(request: Request) -> dict[str, Any]:
+    usuario = _usuario_ou_401(request)
+    return await asyncio.to_thread(analises.resumo, usuario["id"])
 
 
-@app.get("/api/painel/historico", summary="Lista completa do histórico da sessão")
-async def historico_completo() -> dict[str, Any]:
-    """Todas as análises guardadas (até 50), para busca e filtro na tela de Histórico."""
-    return {"itens": historico.todos()}
+@app.get("/api/painel/historico", summary="Histórico completo do usuário")
+async def historico_completo(request: Request) -> dict[str, Any]:
+    """Todas as análises guardadas (até 500), para busca e filtro na tela de Histórico."""
+    usuario = _usuario_ou_401(request)
+    return {"itens": await asyncio.to_thread(analises.listar, usuario["id"])}
+
+
+@app.get("/api/painel/estatisticas", summary="Números da Visão geral")
+async def estatisticas(request: Request) -> dict[str, Any]:
+    usuario = _usuario_ou_401(request)
+    return await asyncio.to_thread(analises.estatisticas, usuario["id"])
+
+
+@app.delete("/api/painel", status_code=204, summary="Apaga todo o histórico do usuário")
+async def apagar_historico(request: Request) -> Response:
+    usuario = _usuario_ou_401(request)
+    await asyncio.to_thread(analises.remover_todas, usuario["id"])
+    return Response(status_code=204)
 
 
 @app.delete(
     "/api/painel/{item_id}",
     status_code=204,
-    summary="Remove uma análise do histórico da sessão",
+    summary="Remove uma análise do histórico do usuário",
 )
 async def remover_do_historico(
+    request: Request,
     item_id: str = ParamPath(min_length=1, max_length=32, pattern=r"^[0-9a-f]+$"),
 ) -> Response:
-    if not historico.remover(item_id):
+    usuario = _usuario_ou_401(request)
+    # 404 também quando o item é de outra pessoa: não revela que ele existe.
+    if not await asyncio.to_thread(analises.remover, usuario["id"], item_id):
         raise HTTPException(status_code=404, detail="Entrada não encontrada.")
     return Response(status_code=204)
 
@@ -293,7 +260,7 @@ async def painel_app(request: Request) -> Response:
 
 @app.get("/painel/historico", include_in_schema=False)
 async def painel_historico(request: Request) -> Response:
-    """Histórico das análises feitas nesta sessão."""
+    """Histórico das análises do usuário."""
     if usuario_atual(request.cookies.get("spectra_sessao")) is None:
         return RedirectResponse("/inicio?erro=entre_primeiro", status_code=303)
     return _pagina("historico.html", *_ATIVOS_BASE, "laudo.css", "historico.js")

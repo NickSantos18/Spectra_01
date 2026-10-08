@@ -136,6 +136,10 @@ function renderizarTudo() {
 async function carregar() {
   try {
     const resp = await fetch("/api/painel/historico");
+    if (resp.status === 401) {
+      window.location.href = "/inicio?erro=entre_primeiro";
+      return;
+    }
     const dados = await resp.json();
     itensTodos = dados.itens || [];
   } catch {
