@@ -53,7 +53,7 @@ def test_v2_antigo_aponta_para_o_painel(cliente):
     assert resp.headers["location"] == "/painel"
 
 
-@pytest.mark.parametrize("rota", ["/painel", "/painel/historico", "/painel/aprender"])
+@pytest.mark.parametrize("rota", ["/painel", "/painel/visao-geral", "/painel/historico", "/painel/aprender"])
 def test_telas_do_painel_exigem_sessao(cliente, rota):
     resp = cliente.get(rota, follow_redirects=False)
     assert resp.status_code == 303
@@ -73,6 +73,15 @@ def test_tela_de_entrada_responde(cliente):
     assert "inicio.js?v=" in resp.text  # ativo versionado contra cache
     for marco in ("Cadastrar-se", "Esqueci minha senha", "Aceito os", "Assistente Spectra"):
         assert marco in resp.text
+
+
+def test_visao_geral_traz_indicadores_e_graficos(cliente):
+    entrar(cliente)
+    html = cliente.get("/painel/visao-geral").text
+    for alvo in ("kpi-total", "kpi-perigosos", "kpi-risco", "kpi-seguras",
+                 "g-tempo", "g-niveis", "g-sinais", "vg-vazio"):
+        assert f'id="{alvo}"' in html
+    assert "visao-geral.js?v=" in html
 
 
 # --------------------------------------------------------------------------- #
@@ -265,9 +274,9 @@ def test_limite_de_requisicoes(cliente):
 # Partes compartilhadas
 # --------------------------------------------------------------------------- #
 
-ITENS_DO_MENU = ["verificar", "historico", "aprender"]
-TELAS_DO_PAINEL = [("/painel", "verificar"), ("/painel/historico", "historico"),
-                   ("/painel/aprender", "aprender")]
+ITENS_DO_MENU = ["verificar", "visao-geral", "historico", "aprender"]
+TELAS_DO_PAINEL = [("/painel", "verificar"), ("/painel/visao-geral", "visao-geral"),
+                   ("/painel/historico", "historico"), ("/painel/aprender", "aprender")]
 
 
 def test_telas_do_painel_trazem_parciais_e_marcam_o_item_ativo(cliente):

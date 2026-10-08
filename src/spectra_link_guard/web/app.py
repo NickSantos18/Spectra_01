@@ -277,6 +277,14 @@ async def painel_app(request: Request) -> Response:
     )
 
 
+@app.get("/painel/visao-geral", include_in_schema=False)
+async def painel_visao_geral(request: Request) -> Response:
+    """Dashboard com os números e gráficos das análises do usuário."""
+    if usuario_atual(request.cookies.get("spectra_sessao")) is None:
+        return RedirectResponse("/inicio?erro=entre_primeiro", status_code=303)
+    return _pagina("visao-geral.html", *_ATIVOS_PAINEL, "visao-geral.js", menu="visao-geral")
+
+
 @app.get("/painel/historico", include_in_schema=False)
 async def painel_historico(request: Request) -> Response:
     """Histórico das análises do usuário."""

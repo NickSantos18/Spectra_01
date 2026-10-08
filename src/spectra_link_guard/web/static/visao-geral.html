@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Spectra</title>
+<meta name="description" content="Números e gráficos das suas análises de links.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/tokens.css">
+<link rel="stylesheet" href="/static/laudo.css">
+<link rel="stylesheet" href="/static/rodape.css">
+<link rel="stylesheet" href="/static/animacoes.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<script src="/static/movimento.js"></script>
+<script src="/static/acessibilidade.js"></script>
+<script src="/static/animacoes.js"></script>
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js" defer
+        integrity="sha384-WBRt9V/J/erVtkEuP91HUFRv9MvHzFiFOp4/zTDp4xkcMG7aOeIv2asTV4yxFLWa" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" defer
+        integrity="sha384-NrKB+u6Ts6AtkIhwPixiKTzgSKNblyhlk0Sohlgar9UHUBzai/sgnNNWWd291xqt" crossorigin="anonymous"></script>
+</head>
+<body data-estado="seguro">
+
+<div class="app">
+
+<!--PARCIAL:menu-->
+
+<div class="corpo">
+
+<header class="barra hist-barra">
+  <h1 class="hist-titulo">Visão geral</h1>
+  <a class="botao-link" href="/painel/historico">Ver histórico</a>
+</header>
+
+<main class="grade" id="visao" aria-busy="true">
+
+  <section class="vg-kpis" aria-label="Indicadores">
+    <article class="quadro kpi cartao-vivo">
+      <p class="kpi-rotulo">Análises</p>
+      <p class="kpi-valor esqueleto" id="kpi-total">0</p>
+    </article>
+    <article class="quadro kpi cartao-vivo">
+      <p class="kpi-rotulo">Perigosas</p>
+      <p class="kpi-valor kpi-perigo esqueleto" id="kpi-perigosos">0</p>
+    </article>
+    <article class="quadro kpi cartao-vivo">
+      <p class="kpi-rotulo">Risco médio</p>
+      <p class="kpi-valor esqueleto" id="kpi-risco">0</p>
+    </article>
+    <article class="quadro kpi cartao-vivo">
+      <p class="kpi-rotulo">Seguras</p>
+      <p class="kpi-valor esqueleto" id="kpi-seguras">0%</p>
+    </article>
+  </section>
+
+  <section class="quadro vg-vazio" id="vg-vazio" hidden>
+    <div class="quadro-corpo vg-vazio-corpo">
+      <i data-lucide="radar" class="vg-vazio-icone" aria-hidden="true"></i>
+      <h2 class="vg-vazio-titulo">Nenhuma análise ainda</h2>
+      <p class="vg-vazio-texto">Os gráficos aparecem aqui depois que você verificar o primeiro link.</p>
+      <a class="botao-primario" href="/painel">Verificar meu primeiro link</a>
+    </div>
+  </section>
+
+  <section class="quadro vg-tempo" data-com-dados>
+    <header class="quadro-topo">
+      <h2 class="quadro-titulo">Últimos 30 dias</h2>
+      <span class="quadro-marca mono">análises e risco médio</span>
+    </header>
+    <div class="quadro-corpo">
+      <div class="grafico-caixa grafico-alto">
+        <canvas id="g-tempo" role="img" aria-label="Gráfico de análises por dia nos últimos 30 dias"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section class="quadro vg-niveis" data-com-dados>
+    <header class="quadro-topo"><h2 class="quadro-titulo">Vereditos</h2></header>
+    <div class="quadro-corpo">
+      <div class="grafico-caixa">
+        <canvas id="g-niveis" role="img" aria-label="Distribuição de vereditos"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section class="quadro vg-sinais" data-com-dados>
+    <header class="quadro-topo"><h2 class="quadro-titulo">Sinais mais frequentes</h2></header>
+    <div class="quadro-corpo">
+      <div class="grafico-caixa">
+        <canvas id="g-sinais" role="img" aria-label="Sinais de risco mais frequentes"></canvas>
+      </div>
+      <p class="vg-sinais-vazio" id="vg-sinais-vazio" hidden>Nenhum sinal de risco nas suas análises até agora.</p>
+    </div>
+  </section>
+
+</main>
+
+<!--PARCIAL:rodape-->
+
+</div>
+</div>
+
+<!--PARCIAL:acessibilidade-->
+
+<script src="/static/menu.js" defer></script>
+<script src="/static/visao-geral.js" defer></script>
+</body>
+</html>
