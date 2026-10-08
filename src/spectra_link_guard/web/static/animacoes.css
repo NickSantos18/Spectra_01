@@ -35,7 +35,7 @@
 
 /* Botões afundam ao clicar (o de acessibilidade não: ele é arrastável). */
 button:not(.a11y-botao):not(:disabled):active,
-.botao-primario:active { transform: scale(.97); }
+.botao-primario:active { scale: .97; }
 
 /* Skeleton enquanto carrega. */
 .esqueleto {

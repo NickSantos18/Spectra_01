@@ -187,19 +187,29 @@ function esqueletoTabela(linhas = 4) {
   }
 }
 
+function falhaAoCarregar() {
+  avisarToast("Não foi possível carregar o histórico.", "erro");
+  itensTodos = [];
+  renderizarTudo();
+}
+
 async function carregar() {
   esqueletoTabela();
   let resp;
   try {
     resp = await fetch("/api/painel/historico");
   } catch {
-    avisarToast("Não foi possível carregar o histórico.", "erro");
-    itensTodos = [];
-    renderizarTudo();
-    return;
+    return falhaAoCarregar();
   }
   if (resp.status === 401) return voltarParaEntrada();
-  itensTodos = (await resp.json()).itens || [];
+  if (!resp.ok) return falhaAoCarregar();
+  let dados;
+  try {
+    dados = await resp.json();
+  } catch {
+    return falhaAoCarregar();
+  }
+  itensTodos = dados?.itens || [];
   renderizarTudo();
 }
 
