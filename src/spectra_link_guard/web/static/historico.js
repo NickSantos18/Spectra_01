@@ -8,9 +8,14 @@
 const $ = (id) => document.getElementById(id);
 
 const NOME_NIVEL = { seguro: "seguro", baixo: "baixo", atencao: "atenção", alto: "alto", critico: "crítico" };
-const COR_NIVEL = {
-  seguro: "#5b9986", baixo: "#5b9986", atencao: "#fffc0e", alto: "#ff4438", critico: "#ff4438",
+const TOKEN_NIVEL = {
+  seguro: "secundaria", baixo: "secundaria", atencao: "terciaria", alto: "perigo", critico: "perigo",
 };
+
+function corNivel(nivel) {
+  return getComputedStyle(document.documentElement)
+    .getPropertyValue(`--${TOKEN_NIVEL[nivel]}`).trim();
+}
 
 let itensTodos = [];
 let graficoHist = null;
@@ -101,7 +106,7 @@ function renderizarResumo() {
   for (const nivel of Object.keys(contagem)) {
     const li = elemento("li");
     const ponto = elemento("span", "ponto");
-    ponto.style.background = COR_NIVEL[nivel];
+    ponto.style.background = corNivel(nivel);
     li.append(ponto, elemento("span", "", NOME_NIVEL[nivel]), elemento("span", "qtd", contagem[nivel]));
     legenda.append(li);
   }
@@ -113,7 +118,7 @@ function renderizarResumo() {
     type: "doughnut",
     data: {
       labels: Object.keys(contagem).map((n) => NOME_NIVEL[n]),
-      datasets: [{ data: Object.values(contagem), backgroundColor: Object.keys(contagem).map((n) => COR_NIVEL[n]), borderWidth: 0 }],
+      datasets: [{ data: Object.values(contagem), backgroundColor: Object.keys(contagem).map(corNivel), borderWidth: 0 }],
     },
     options: {
       cutout: "62%",
@@ -142,6 +147,7 @@ async function carregar() {
 $("hist-busca").addEventListener("input", renderizarTabela);
 $("hist-filtro").addEventListener("change", renderizarTabela);
 
+window.addEventListener("spectra:tema", renderizarResumo);
 carregar();
 
 fetch("/api/auth/eu")

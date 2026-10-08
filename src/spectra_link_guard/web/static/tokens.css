@@ -1,0 +1,81 @@
+/* Spectra — tokens de cor.
+ *
+ * Fonte única de cor do site. laudo.css, rodape.css, animacoes.css, o
+ * Tailwind da home (inicio.html) e os canvas/gráficos (via getComputedStyle)
+ * leem estas variáveis; nenhum outro arquivo define cor neutra.
+ *
+ * Cada cor existe duas vezes: em hex e como triplet RGB (`--x-rgb`), que o
+ * Tailwind usa nos modificadores de opacidade (`bg-fundo/95`) e o JS usa em
+ * `rgb(… / alfa)`. Ao mudar uma, mude a outra.
+ *
+ * Contrastes (WCAG) medidos contra o fundo de cada tema; texto precisa de
+ * pelo menos 4.5:1.
+ */
+
+:root {
+  --base: #070B14;            --base-rgb: 7 11 20;
+  --base-2: #0C1220;          --base-2-rgb: 12 18 32;
+  --base-3: #121A2B;          --base-3-rgb: 18 26 43;
+  --base-4: #18223A;          --base-4-rgb: 24 34 58;
+  --linha: #1C2638;           --linha-rgb: 28 38 56;
+  --linha-forte: #2A3852;     --linha-forte-rgb: 42 56 82;
+
+  --texto: #E7EEF0;           --texto-rgb: 231 238 240;         /* 16.7:1 */
+  --texto-2: #9FB0C8;         --texto-2-rgb: 159 176 200;       /*  8.9:1 */
+  --texto-3: #7E8DA6;         --texto-3-rgb: 126 141 166;       /*  5.9:1 */
+
+  --primaria: #118E94;        --primaria-rgb: 17 142 148;
+  --primaria-clara: #3FB6BB;  --primaria-clara-rgb: 63 182 187; /*  8.1:1 */
+  --secundaria: #5B9986;      --secundaria-rgb: 91 153 134;
+  --terciaria: #FFFC0E;       --terciaria-rgb: 255 252 14;
+  --perigo: #FF4438;          --perigo-rgb: 255 68 56;
+  --sobre-primaria: #04191A;  --sobre-primaria-rgb: 4 25 26;    /* sobre o teal: 4.6:1 */
+
+  /* brilho estático dos cantos da página (rodape.css) */
+  --brilho-1: rgb(17 142 148 / .09);
+  --brilho-2: rgb(37 72 160 / .10);
+
+  color-scheme: dark;
+}
+
+/* Tema claro. Teal, sálvia, amarelo e vermelho escurecem: como texto sobre
+   fundo claro, os tons do tema escuro ficam abaixo de 4.5:1. */
+:root[data-tema="claro"] {
+  --base: #F3F6FA;            --base-rgb: 243 246 250;
+  --base-2: #FFFFFF;          --base-2-rgb: 255 255 255;
+  --base-3: #EAF0F6;          --base-3-rgb: 234 240 246;
+  --base-4: #DFE7F0;          --base-4-rgb: 223 231 240;
+  --linha: #D5DEE8;           --linha-rgb: 213 222 232;
+  --linha-forte: #BCC9D8;     --linha-forte-rgb: 188 201 216;
+
+  --texto: #0D1626;           --texto-rgb: 13 22 38;
+  --texto-2: #3A4A63;         --texto-2-rgb: 58 74 99;
+  --texto-3: #56657E;         --texto-3-rgb: 86 101 126;        /* 5.5:1 */
+
+  --primaria-clara: #0B6E73;  --primaria-clara-rgb: 11 110 115; /* 6.0:1 */
+  --secundaria: #3D6E5F;      --secundaria-rgb: 61 110 95;      /* 5.4:1 */
+  --terciaria: #806500;       --terciaria-rgb: 128 101 0;       /* 5.1:1 */
+  --perigo: #C62E24;          --perigo-rgb: 198 46 36;          /* 5.1:1 */
+
+  --brilho-1: rgb(17 142 148 / .07);
+  --brilho-2: rgb(37 72 160 / .06);
+
+  color-scheme: light;
+}
+
+/* Alto contraste: bordas e textos secundários vão ao máximo do tema. */
+:root[data-alto-contraste="on"] {
+  --linha: var(--linha-forte);  --linha-rgb: var(--linha-forte-rgb);
+  --texto-2: var(--texto);      --texto-2-rgb: var(--texto-rgb);
+  --texto-3: var(--texto);      --texto-3-rgb: var(--texto-rgb);
+}
+:root[data-alto-contraste="on"] .quadro,
+:root[data-alto-contraste="on"] .veredito,
+:root[data-alto-contraste="on"] .trilho,
+:root[data-alto-contraste="on"] .barra {
+  border-width: 2px;
+}
+:root[data-alto-contraste="on"] :focus-visible {
+  outline-width: 3px !important;
+  outline-offset: 2px !important;
+}

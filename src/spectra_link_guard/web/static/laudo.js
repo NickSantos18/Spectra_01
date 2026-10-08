@@ -7,6 +7,11 @@
 
 const $ = (id) => document.getElementById(id);
 
+/** Valor atual de um token de tokens.css (muda com o tema). */
+function token(nome) {
+  return getComputedStyle(document.documentElement).getPropertyValue(`--${nome}`).trim();
+}
+
 /* ══════════════════════════════════════════════════ o polígrafo
  *
  * O elemento-assinatura da tela. Não é um gráfico decorativo: o traço é
@@ -36,7 +41,8 @@ class Poligrafo {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.tensao = 0;
-    this.cor = "#85999f";
+    this.cor = token("texto-3");
+    this.corMarcas = `rgb(${token("texto-rgb")} / .07)`;
     this.harmonicas = this.montarHarmonicas("spectra");
     this.t = 0;
     this.calmo = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -63,6 +69,7 @@ class Poligrafo {
     if (url) this.harmonicas = this.montarHarmonicas(url);
     this.tensao = tensao;
     this.cor = cor;
+    this.corMarcas = `rgb(${token("texto-rgb")} / .07)`;
     if (this.calmo) this.desenhar();
   }
 
@@ -85,7 +92,7 @@ class Poligrafo {
 
   /** Papel milimetrado do instrumento: marcas verticais discretas. */
   marcasDeFundo(ctx) {
-    ctx.strokeStyle = "rgba(231, 238, 240, .07)";
+    ctx.strokeStyle = this.corMarcas;
     ctx.lineWidth = 1;
     for (let x = 0; x < this.l; x += 46) {
       const alto = x % 230 < 46 ? 13 : 6;
@@ -257,7 +264,7 @@ function marcarFonte(chave, estado, descricao) {
 }
 
 function corDoSinal() {
-  return getComputedStyle(document.body).getPropertyValue("--sinal").trim() || "#85999f";
+  return getComputedStyle(document.body).getPropertyValue("--sinal").trim() || token("texto-3");
 }
 
 function encurtar(texto, limite = 46) {
@@ -563,7 +570,7 @@ function renderGrafico(r) {
       datasets: [
         {
           data: [r.risco, 100 - r.risco],
-          backgroundColor: [cor, "rgba(159, 179, 184, .16)"],
+          backgroundColor: [cor, token("linha")],
           borderWidth: 0,
         },
       ],
@@ -666,6 +673,13 @@ for (const amostra of document.querySelectorAll(".amostra")) {
     periciar(amostra.dataset.url);
   });
 }
+
+// Trocar o tema muda as cores dos tokens: o medidor e o polígrafo redesenham.
+window.addEventListener("spectra:tema", () => {
+  if (!laudoAtual) return;
+  poligrafo.configurar({ tensao: TENSAO[laudoAtual.nivel] ?? 0.5, cor: corDoSinal() });
+  renderGrafico(laudoAtual);
+});
 
 fetch("/api/saude")
   .then((r) => r.json())

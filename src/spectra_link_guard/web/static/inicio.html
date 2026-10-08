@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/tokens.css">
 <link rel="stylesheet" href="/static/rodape.css">
 
 <script src="/static/movimento.js"></script>
@@ -16,25 +17,29 @@
         integrity="sha384-WBRt9V/J/erVtkEuP91HUFRv9MvHzFiFOp4/zTDp4xkcMG7aOeIv2asTV4yxFLWa" crossorigin="anonymous"></script>
 <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
 <script>
-  // Tokens do design system da Spectra mapeados para classes do Tailwind.
-  // Use bg-marca, text-sage, border-linha etc. em vez de hex solto no HTML.
+  // Cores do Tailwind apontam para os tokens (tokens.css), em triplet RGB para
+  // os modificadores de opacidade funcionarem (bg-fundo/95). "fundo" e não
+  // "base": uma cor chamada base colide com o utilitário de tamanho text-base.
+  const token = (nome) => `rgb(var(--${nome}-rgb) / <alpha-value>)`;
   tailwind.config = {
     theme: {
       extend: {
         colors: {
-          base:    "#0f171a",  // chão
-          sup:     "#131e22",  // superfície (cards, modais)
-          "sup-2": "#18262b",  // superfície elevada (campos, hover)
-          linha:   "#22353b",
-          "linha-forte": "#2e474f",
-          txt:     "#e7eef0",
-          "txt-2": "#9fb3b8",
-          "txt-3": "#85999f",
-          marca:   "#118e94",  // primary
-          "marca-claro": "#3fb6bb",
-          sage:    "#5b9986",  // secondary
-          amarelo: "#fffc0e",  // tertiary
-          perigo:  "#ff4438",  // extensão semântica (não é cor de marca)
+          fundo:         token("base"),
+          sup:           token("base-2"),
+          "sup-2":       token("base-3"),
+          "sup-3":       token("base-4"),
+          linha:         token("linha"),
+          "linha-forte": token("linha-forte"),
+          txt:           token("texto"),
+          "txt-2":       token("texto-2"),
+          "txt-3":       token("texto-3"),
+          marca:         token("primaria"),
+          "marca-claro": token("primaria-clara"),
+          sage:          token("secundaria"),
+          amarelo:       token("terciaria"),
+          perigo:        token("perigo"),
+          "sobre-marca": token("sobre-primaria"),
         },
         fontFamily: {
           display: ['"Hanken Grotesk"', "system-ui", "sans-serif"],
@@ -54,7 +59,7 @@
   /* O pouco que o Tailwind não resolve bem: rolagem, animações e o
      preenchimento automático do navegador nos campos escuros. */
   html { scroll-behavior: smooth; }
-  body { background: #0f171a; }
+  body { background: var(--base); }
 
   /* display:flex numa classe vence o atributo hidden — este não vence. */
   [hidden] { display: none !important; }
@@ -91,7 +96,7 @@
   .letra {
     display: inline-block;
     white-space: pre;
-    background-image: linear-gradient(180deg, #e7eef0, #9fb3b8);
+    background-image: linear-gradient(180deg, var(--texto), var(--texto-2));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -104,9 +109,9 @@
   /* O autofill do Chrome pinta o campo de azul-claro e apaga o texto. */
   input:-webkit-autofill,
   input:-webkit-autofill:focus {
-    -webkit-text-fill-color: #e7eef0;
-    -webkit-box-shadow: 0 0 0 1000px #18262b inset;
-    caret-color: #e7eef0;
+    -webkit-text-fill-color: var(--texto);
+    -webkit-box-shadow: 0 0 0 1000px var(--base-3) inset;
+    caret-color: var(--texto);
   }
 
   /* O movimento é controlado por movimento.js, não direto pela media query:
@@ -143,7 +148,7 @@
   .motivo-card.revelado { opacity: 1; transform: none; }
   .motivo-card:hover {
     box-shadow: 0 20px 44px -26px rgba(0,0,0,.95);
-    border-color: #118e94;
+    border-color: var(--primaria);
   }
   :root[data-movimento="off"] .motivo-card { opacity: 1; transform: none; }
 </style>
@@ -153,12 +158,12 @@
 
 <body class="font-corpo text-txt antialiased">
 
-<a href="#conteudo" class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-3 focus:rounded focus:bg-marca focus:px-4 focus:py-2 focus:font-display focus:font-semibold focus:text-base">
+<a href="#conteudo" class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-3 focus:rounded focus:bg-marca focus:px-4 focus:py-2 focus:font-display focus:font-semibold focus:text-sobre-marca">
   Pular para o conteúdo
 </a>
 
 <!-- ══════════════════════════════════════════════════════════ barra -->
-<header class="sticky top-0 z-30 border-b border-linha bg-base/95 backdrop-blur">
+<header class="sticky top-0 z-30 border-b border-linha bg-fundo/95 backdrop-blur">
   <div class="mx-auto flex max-w-6xl items-center gap-4 px-5 py-3.5 sm:px-8">
 
     <!-- ╔═════════════════════════════════════════════════════════════╗
@@ -174,7 +179,7 @@
          ║  em tela retina. Salve em src/spectra_link_guard/web/static/║
          ╚═════════════════════════════════════════════════════════════╝ -->
     <a href="/inicio" class="flex items-center gap-2.5 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-marca-claro">
-      <span class="grid h-8 w-8 place-items-center rounded bg-marca text-base" aria-hidden="true">
+      <span class="grid h-8 w-8 place-items-center rounded bg-marca text-sobre-marca" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
         </svg>
@@ -196,7 +201,7 @@
         Entrar
       </button>
       <button type="button" data-abrir="cadastrar"
-              class="rounded bg-marca px-4 py-2 font-display text-sm font-semibold text-base transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro">
+              class="rounded bg-marca px-4 py-2 font-display text-sm font-semibold text-sobre-marca transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro">
         Cadastrar-se
       </button>
     </nav>
@@ -250,7 +255,7 @@
 
     <div class="subir mt-10 flex w-full flex-col gap-3 sm:w-auto sm:flex-row" style="animation-delay:.18s">
       <button type="button" data-abrir="cadastrar"
-              class="rounded bg-marca px-7 py-3.5 font-display text-[15px] font-bold text-base shadow-suave transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro">
+              class="rounded bg-marca px-7 py-3.5 font-display text-[15px] font-bold text-sobre-marca shadow-suave transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro">
         Cadastrar-se
       </button>
       <button type="button" data-abrir="entrar"
@@ -269,7 +274,7 @@
   <section class="border-y border-linha bg-sup/40">
     <div class="mx-auto grid max-w-6xl gap-px bg-linha px-0 sm:grid-cols-3">
 
-      <article class="bg-base p-7 sm:p-9">
+      <article class="bg-fundo p-7 sm:p-9">
         <i data-lucide="radar" class="h-6 w-6 text-marca-claro" aria-hidden="true"></i>
         <p class="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-marca-claro">Varredura</p>
         <h2 class="mt-1 font-display text-lg font-bold">Encontra o que está exposto</h2>
@@ -280,7 +285,7 @@
         </p>
       </article>
 
-      <article class="bg-base p-7 sm:p-9">
+      <article class="bg-fundo p-7 sm:p-9">
         <i data-lucide="languages" class="h-6 w-6 text-amarelo" aria-hidden="true"></i>
         <p class="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-amarelo">Tradução</p>
         <h2 class="mt-1 font-display text-lg font-bold">Diz o que isso custa</h2>
@@ -290,7 +295,7 @@
         </p>
       </article>
 
-      <article class="bg-base p-7 sm:p-9">
+      <article class="bg-fundo p-7 sm:p-9">
         <i data-lucide="git-pull-request-arrow" class="h-6 w-6 text-sage" aria-hidden="true"></i>
         <p class="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-sage">Correção</p>
         <h2 class="mt-1 font-display text-lg font-bold">Entrega o diff pronto</h2>
@@ -398,7 +403,7 @@
 
 <!-- ══════════════════════════════════════════════════ modal de acesso -->
 <div id="modal" class="fixed inset-0 z-40 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
-  <div id="modal-fundo" class="absolute inset-0 bg-base/85 backdrop-blur-sm"></div>
+  <div id="modal-fundo" class="absolute inset-0 bg-fundo/85 backdrop-blur-sm"></div>
 
   <div id="modal-caixa" class="relative flex w-full max-w-md max-h-[85vh] flex-col rounded-xl border border-linha bg-sup shadow-alta">
 
@@ -487,7 +492,7 @@
       </div>
 
       <button type="submit"
-              class="mt-1 rounded bg-marca px-5 py-3 font-display text-sm font-bold text-base transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro">
+              class="mt-1 rounded bg-marca px-5 py-3 font-display text-sm font-bold text-sobre-marca transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro">
         Entrar
       </button>
 
@@ -545,7 +550,7 @@
       </div>
 
       <button type="submit"
-              class="mt-1 rounded bg-marca px-5 py-3 font-display text-sm font-bold text-base transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro">
+              class="mt-1 rounded bg-marca px-5 py-3 font-display text-sm font-bold text-sobre-marca transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro">
         Criar conta
       </button>
 
@@ -564,7 +569,7 @@
            aria-label="Assistente Spectra">
 
     <div class="flex items-center gap-3 border-b border-linha px-4 py-3">
-      <span class="grid h-8 w-8 flex-none place-items-center rounded bg-marca text-base" aria-hidden="true">
+      <span class="grid h-8 w-8 flex-none place-items-center rounded bg-marca text-sobre-marca" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
           <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
         </svg>
@@ -588,14 +593,14 @@
       <input id="chat-campo" type="text" autocomplete="off" placeholder="Escreva sua dúvida…"
              class="min-w-0 flex-1 rounded border border-linha bg-sup-2 px-3 py-2.5 text-sm text-txt placeholder:text-txt-3 focus:border-marca focus:outline-none focus:ring-2 focus:ring-marca/25">
       <button type="submit" aria-label="Enviar mensagem"
-              class="grid h-10 w-10 flex-none place-items-center rounded bg-marca text-base transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro">
+              class="grid h-10 w-10 flex-none place-items-center rounded bg-marca text-sobre-marca transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
       </button>
     </form>
   </section>
 
   <button type="button" id="abrir-chat" aria-expanded="false" aria-controls="chat"
-          class="grid h-14 w-14 place-items-center rounded-full bg-marca text-base shadow-alta transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-marca-claro">
+          class="grid h-14 w-14 place-items-center rounded-full bg-marca text-sobre-marca shadow-alta transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-marca-claro">
     <span class="sr-only">Abrir conversa com o assistente</span>
     <svg id="icone-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6">
       <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>

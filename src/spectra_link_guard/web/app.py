@@ -39,6 +39,9 @@ from ..models import NivelRisco
 
 ESTATICOS = Path(__file__).parent / "static"
 
+#: Ativos que toda página carrega; entram no cache-busting de _pagina().
+_ATIVOS_BASE = ("tokens.css", "rodape.css", "movimento.js", "acessibilidade.js")
+
 #: Limite por IP: a análise consome cota de APIs de terceiros e abre uma
 #: conexão TLS por chamada, então o endpoint precisa de freio.
 _JANELA_S = 300.0
@@ -274,10 +277,7 @@ async def raiz() -> RedirectResponse:
 @app.get("/inicio", include_in_schema=False)
 async def inicio() -> HTMLResponse:
     """Porta de entrada: hero, acesso e assistente."""
-    return _pagina(
-        "inicio.html", "rodape.css", "movimento.js", "acessibilidade.js",
-        "caminhos.js", "inicio.js", "cubos.js",
-    )
+    return _pagina("inicio.html", *_ATIVOS_BASE, "caminhos.js", "inicio.js", "cubos.js")
 
 
 @app.get("/painel", include_in_schema=False)
@@ -286,8 +286,8 @@ async def painel_app(request: Request) -> Response:
     if usuario_atual(request.cookies.get("spectra_sessao")) is None:
         return RedirectResponse("/inicio?erro=entre_primeiro", status_code=303)
     return _pagina(
-        "laudo.html", "laudo.css", "rodape.css", "movimento.js",
-        "acessibilidade.js", "glossario.js", "caminhos.js", "melhorias.js", "laudo.js",
+        "laudo.html", *_ATIVOS_BASE, "laudo.css",
+        "glossario.js", "caminhos.js", "melhorias.js", "laudo.js",
     )
 
 
@@ -296,10 +296,7 @@ async def painel_historico(request: Request) -> Response:
     """Histórico das análises feitas nesta sessão."""
     if usuario_atual(request.cookies.get("spectra_sessao")) is None:
         return RedirectResponse("/inicio?erro=entre_primeiro", status_code=303)
-    return _pagina(
-        "historico.html", "laudo.css", "rodape.css", "movimento.js",
-        "acessibilidade.js", "historico.js",
-    )
+    return _pagina("historico.html", *_ATIVOS_BASE, "laudo.css", "historico.js")
 
 
 @app.get("/painel/aprender", include_in_schema=False)
@@ -307,22 +304,19 @@ async def painel_aprender(request: Request) -> Response:
     """Conteúdo educativo sobre phishing e leitura de URLs."""
     if usuario_atual(request.cookies.get("spectra_sessao")) is None:
         return RedirectResponse("/inicio?erro=entre_primeiro", status_code=303)
-    return _pagina(
-        "aprender.html", "laudo.css", "rodape.css", "movimento.js",
-        "acessibilidade.js", "glossario.js",
-    )
+    return _pagina("aprender.html", *_ATIVOS_BASE, "laudo.css", "glossario.js")
 
 
 @app.get("/privacidade", include_in_schema=False)
 async def privacidade() -> HTMLResponse:
     """Política de Privacidade — texto modelo, editável em static/privacidade.html."""
-    return _pagina("privacidade.html", "rodape.css", "movimento.js", "acessibilidade.js")
+    return _pagina("privacidade.html", *_ATIVOS_BASE, "laudo.css")
 
 
 @app.get("/termos", include_in_schema=False)
 async def termos() -> HTMLResponse:
     """Termos de Uso — texto modelo, editável em static/termos.html."""
-    return _pagina("termos.html", "rodape.css", "movimento.js", "acessibilidade.js")
+    return _pagina("termos.html", *_ATIVOS_BASE, "laudo.css")
 
 
 @app.get("/v2", include_in_schema=False)

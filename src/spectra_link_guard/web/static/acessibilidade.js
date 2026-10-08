@@ -204,6 +204,7 @@
       tema = tema === "claro" ? "escuro" : "claro";
       gravar(CHAVE_TEMA, tema);
       aplicarTema(tema);
+      window.dispatchEvent(new CustomEvent("spectra:tema", { detail: tema }));
       atualizarRotulos();
     });
 
