@@ -177,6 +177,7 @@ function esqueletoTabela(linhas = 4) {
   corpo.replaceChildren();
   for (let i = 0; i < linhas; i += 1) {
     const tr = elemento("tr");
+    tr.setAttribute("aria-hidden", "true");
     for (let j = 0; j < 6; j += 1) {
       const td = elemento("td");
       td.append(elemento("span", "esqueleto esqueleto-linha", "carregando"));
@@ -205,7 +206,10 @@ async function carregar() {
 const dialogo = $("dialogo-apagar");
 $("hist-busca").addEventListener("input", renderizarTabela);
 $("hist-filtro").addEventListener("change", renderizarTabela);
-$("hist-apagar-tudo").addEventListener("click", () => dialogo.showModal());
+$("hist-apagar-tudo").addEventListener("click", () => {
+  dialogo.returnValue = "";
+  dialogo.showModal();
+});
 dialogo.addEventListener("close", () => {
   if (dialogo.returnValue === "apagar") apagarTudo();
 });
