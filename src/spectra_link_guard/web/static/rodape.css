@@ -1,0 +1,247 @@
+/* Spectra — extras compartilhados por todas as páginas.
+ *
+ * Um arquivo só, carregado em /inicio, /painel, /painel/historico,
+ * /painel/aprender, /privacidade e /termos (o projeto não tem template
+ * engine, então em vez de duplicar estas regras em cada <style>, elas
+ * moram aqui). Cobre:
+ *   1) o cursor de texto piscando em elementos que não são campo de texto;
+ *   2) o rodapé (links legais, contato, copyright, gradiente de fundo);
+ *   3) o painel de acessibilidade (tema, fonte, alto contraste);
+ *   4) o tema claro — sobrescreve as custom properties de laudo.css e, para
+ *      /inicio (que usa o Tailwind via CDN), as classes utilitárias usadas
+ *      naquela página;
+ *   5) o modo de alto contraste.
+ */
+
+/* ─────────────────────────────────────────────── 1) cursor / seleção */
+
+/* Nenhum elemento de interface é campo de texto: sem caret piscando neles.
+   `.copiavel` (laudo) e parágrafos de conteúdo continuam selecionáveis —
+   só perdem o caret, não a seleção. */
+body { caret-color: transparent; }
+input, textarea, [contenteditable="true"] { caret-color: auto; }
+
+button, a, nav, h1, h2, h3, .menu, .menu-item, .chancela, .aba,
+.quadro-titulo, .quadro-marca, .sinal-titulo, .grau, .pastilha,
+.legenda, .fontes, .amostra-tipo, .rodape-links, .rodape-marca,
+[role="tab"], [role="button"] {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ─────────────────────────────────────────────── 2) rodapé */
+
+.rodape-spectra {
+  position: relative;
+  overflow: hidden;
+  margin-top: auto;
+  border-top: 1px solid var(--linha, #22353b);
+  isolation: isolate;
+}
+
+.rodape-fundo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--primaria, #118e94) 18%, transparent),
+    transparent 35%,
+    color-mix(in srgb, var(--secundaria, #5b9986) 14%, transparent) 65%,
+    transparent 100%
+  );
+  background-size: 220% 220%;
+  animation: rodape-fluir 22s ease-in-out infinite;
+  opacity: .55;
+}
+@keyframes rodape-fluir {
+  0%   { background-position: 0% 30%; }
+  50%  { background-position: 100% 70%; }
+  100% { background-position: 0% 30%; }
+}
+
+.rodape-conteudo {
+  position: relative;
+  z-index: 1;
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 36px 20px 28px;
+  display: grid;
+  gap: 22px;
+  grid-template-columns: 1.2fr 1fr 1fr;
+}
+@media (max-width: 720px) {
+  .rodape-conteudo { grid-template-columns: 1fr; padding: 28px 18px 22px; }
+}
+
+.rodape-marca {
+  display: flex; align-items: center; gap: 9px;
+  font-family: var(--fonte-titulo, "Hanken Grotesk", sans-serif);
+  font-weight: 800; letter-spacing: .14em; font-size: .8rem;
+  color: var(--texto, #e7eef0);
+}
+.rodape-marca svg { width: 16px; height: 16px; color: var(--primaria, #118e94); }
+.rodape-tagline {
+  margin: 8px 0 0; max-width: 32ch;
+  font-size: .78rem; line-height: 1.6; color: var(--texto-3, #85999f);
+}
+
+.rodape-titulo-coluna {
+  margin: 0 0 10px;
+  font-family: var(--fonte-mono, monospace); font-size: .62rem;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--texto-3, #85999f);
+}
+.rodape-links, .rodape-contato { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
+.rodape-links a, .rodape-contato a {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--texto-2, #9fb3b8); text-decoration: none; font-size: .82rem;
+  width: fit-content;
+  transition: color .16s;
+}
+.rodape-links a svg, .rodape-contato a svg { width: 15px; height: 15px; flex: none; color: var(--texto-3, #85999f); }
+.rodape-links a:hover, .rodape-contato a:hover { color: var(--primaria-clara, #3fb6bb); }
+.rodape-links a:focus-visible, .rodape-contato a:focus-visible {
+  outline: 2px solid var(--primaria, #118e94); outline-offset: 3px;
+}
+
+.rodape-base {
+  position: relative; z-index: 1;
+  border-top: 1px solid var(--linha, #22353b);
+  padding: 14px 20px 18px;
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between;
+  max-width: 1152px; margin: 0 auto;
+  font-family: var(--fonte-mono, monospace); font-size: .68rem;
+  letter-spacing: .04em; color: var(--texto-3, #85999f);
+}
+
+@media (prefers-reduced-motion: reduce) { .rodape-fundo { animation: none; } }
+:root[data-movimento="off"] .rodape-fundo { animation: none; }
+
+/* ─────────────────────────────────────────────── 2b) páginas de documento
+   (Privacidade, Termos) — sem trilho, layout simples de leitura. */
+
+.documento-pagina {
+  min-height: 100vh; display: flex; flex-direction: column;
+  background: var(--base, #0f171a); color: var(--texto, #e7eef0);
+  font-family: var(--fonte-corpo, "Inter", sans-serif);
+}
+.documento-header {
+  display: flex; align-items: center; gap: 11px;
+  padding: 18px 20px; border-bottom: 1px solid var(--linha, #22353b);
+}
+.documento-header a { display: flex; align-items: center; gap: 9px; text-decoration: none; color: inherit; }
+.documento-header .chancela-marca {
+  width: 30px; height: 30px; display: grid; place-items: center;
+  background: var(--primaria, #118e94); color: #04191a; border-radius: 3px;
+}
+.documento-header .chancela-marca svg { width: 16px; height: 16px; }
+.documento-header strong { font-family: var(--fonte-titulo, sans-serif); letter-spacing: .14em; font-size: .85rem; }
+
+.documento-conteudo { flex: 1; max-width: 760px; margin: 0 auto; padding: 40px 20px 60px; width: 100%; }
+.documento-conteudo h1 {
+  font-family: var(--fonte-titulo, sans-serif); font-weight: 800; font-size: 1.9rem; margin: 0 0 6px;
+}
+.documento-atualizado {
+  font-family: var(--fonte-mono, monospace); font-size: .68rem; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--texto-3, #85999f); margin: 0 0 30px;
+}
+.documento-conteudo h2 {
+  font-family: var(--fonte-titulo, sans-serif); font-size: 1.05rem; margin: 30px 0 10px;
+}
+.documento-conteudo p, .documento-conteudo li {
+  font-size: .9rem; line-height: 1.75; color: var(--texto-2, #9fb3b8);
+}
+.documento-conteudo ul { padding-left: 22px; }
+
+/* ─────────────────────────────────────────────── 3) painel de acessibilidade */
+
+.a11y-caixa {
+  position: fixed; left: 18px; bottom: 18px; z-index: 60;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
+}
+.a11y-botao {
+  width: 48px; height: 48px; flex: none;
+  display: grid; place-items: center;
+  border: 1px solid var(--linha-forte, #2e474f); border-radius: 999px;
+  background: var(--base-2, #131e22); color: var(--texto, #e7eef0);
+  cursor: grab;
+  touch-action: none;
+  box-shadow: 0 18px 36px -18px rgba(0,0,0,.9);
+  transition: border-color .16s, transform .16s;
+}
+.a11y-botao:hover { border-color: var(--primaria, #118e94); transform: translateY(-2px); }
+.a11y-botao:focus-visible { outline: 2px solid var(--primaria-clara, #3fb6bb); outline-offset: 3px; }
+.a11y-botao.arrastando { cursor: grabbing; transition: none; }
+.a11y-botao svg, .a11y-botao svg.lucide { width: 20px; height: 20px; pointer-events: none; }
+
+.a11y-painel {
+  width: min(280px, calc(100vw - 36px));
+  padding: 16px;
+  background: var(--base-2, #131e22);
+  border: 1px solid var(--linha, #22353b);
+  box-shadow: 0 30px 60px -28px rgba(0,0,0,1);
+  display: flex; flex-direction: column; gap: 14px;
+}
+.a11y-linha { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.a11y-rotulo { font-size: .78rem; color: var(--texto-2, #9fb3b8); }
+.a11y-grupo { display: flex; align-items: center; gap: 6px; }
+.a11y-painel button {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 36px; min-width: 36px; padding: 0 10px;
+  background: var(--base-3, #18262b); border: 1px solid var(--linha, #22353b);
+  color: var(--texto, #e7eef0); font-size: .78rem; cursor: pointer;
+  transition: border-color .16s, color .16s;
+}
+.a11y-painel button svg { width: 15px; height: 15px; }
+.a11y-painel button:hover { border-color: var(--primaria, #118e94); color: var(--primaria-clara, #3fb6bb); }
+.a11y-painel button:focus-visible { outline: 2px solid var(--primaria, #118e94); outline-offset: 2px; }
+.a11y-painel button[aria-pressed="true"] { border-color: var(--primaria, #118e94); color: var(--primaria-clara, #3fb6bb); }
+.a11y-titulo { margin: 0; font-family: var(--fonte-titulo, sans-serif); font-weight: 700; font-size: .84rem; }
+
+@media (max-width: 640px) { .a11y-caixa { left: 12px; bottom: 12px; } }
+
+/* ─────────────────────────────────────────────── 4) tema claro */
+
+:root[data-tema="claro"] {
+  --base: #f4f7f8;
+  --base-2: #ffffff;
+  --base-3: #eef3f4;
+  --base-4: #e4ecee;
+  --linha: #d8e2e4;
+  --linha-forte: #c1d0d3;
+  --texto: #14232a;
+  --texto-2: #3d5158;
+  --texto-3: #5c7178;
+  color-scheme: light;
+}
+
+/* /inicio, /privacidade e /termos podem usar classes utilitárias do
+   Tailwind (bg-base, text-txt...) além das custom properties — cobrimos as
+   duas por segurança, já que o Tailwind CDN gera classes reais em runtime. */
+:root[data-tema="claro"] .bg-base { background-color: #f4f7f8 !important; }
+:root[data-tema="claro"] .bg-sup { background-color: #ffffff !important; }
+:root[data-tema="claro"] .bg-sup-2 { background-color: #eef3f4 !important; }
+:root[data-tema="claro"] .text-txt { color: #14232a !important; }
+:root[data-tema="claro"] .text-txt-2 { color: #3d5158 !important; }
+:root[data-tema="claro"] .text-txt-3 { color: #5c7178 !important; }
+:root[data-tema="claro"] .border-linha { border-color: #d8e2e4 !important; }
+:root[data-tema="claro"] .border-linha-forte { border-color: #c1d0d3 !important; }
+:root[data-tema="claro"] body { background: #f4f7f8; }
+
+/* ─────────────────────────────────────────────── 5) alto contraste */
+
+:root[data-alto-contraste="on"] {
+  --linha: var(--linha-forte);
+  --texto-2: var(--texto);
+  --texto-3: var(--texto);
+}
+:root[data-alto-contraste="on"] .quadro,
+:root[data-alto-contraste="on"] .veredito,
+:root[data-alto-contraste="on"] .trilho,
+:root[data-alto-contraste="on"] .barra {
+  border-width: 2px;
+}
+:root[data-alto-contraste="on"] :focus-visible {
+  outline-width: 3px !important;
+  outline-offset: 2px !important;
+}

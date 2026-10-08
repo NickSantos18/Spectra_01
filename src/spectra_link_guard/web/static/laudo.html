@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spectra</title>
+<meta name="description" content="Veredito direto sobre um link: é seguro abrir ou não.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/laudo.css">
+<link rel="stylesheet" href="/static/rodape.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js" defer
+        integrity="sha384-WBRt9V/J/erVtkEuP91HUFRv9MvHzFiFOp4/zTDp4xkcMG7aOeIv2asTV4yxFLWa" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" defer
+        integrity="sha384-NrKB+u6Ts6AtkIhwPixiKTzgSKNblyhlk0Sohlgar9UHUBzai/sgnNNWWd291xqt" crossorigin="anonymous"></script>
+</head>
+<body data-estado="ocioso">
+
+<!-- Atmosfera: os caminhos ficam atrás de tudo, em opacidade baixa, e assumem
+     a cor do veredito. É o "quarto" onde o laudo acontece — o polígrafo, dentro
+     do quadro de veredito, continua sendo o instrumento. -->
+<div class="atmosfera" aria-hidden="true">
+  <svg id="caminhos-a" viewBox="-400 -200 1100 800" fill="none" preserveAspectRatio="none"></svg>
+  <svg id="caminhos-b" viewBox="-400 -200 1100 800" fill="none" preserveAspectRatio="none"></svg>
+</div>
+
+<div class="app">
+
+<!-- ══════════════════════════════════════════════════ trilho -->
+<aside class="trilho">
+  <a class="chancela" href="/inicio">
+    <span class="chancela-marca" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+    </span>
+    <span class="chancela-texto">
+      <span class="chancela-nome">SPECTRA</span>
+      <span class="chancela-tipo">laudo de link</span>
+    </span>
+  </a>
+
+  <nav class="menu" aria-label="Navegação principal">
+    <a class="menu-item ativo" href="/painel" aria-current="page">
+      <i data-lucide="search-check" class="menu-icone" aria-hidden="true"></i>Verificar
+    </a>
+    <a class="menu-item" href="/painel/historico">
+      <i data-lucide="history" class="menu-icone" aria-hidden="true"></i>Histórico
+    </a>
+    <a class="menu-item" href="/painel/aprender">
+      <i data-lucide="book-open" class="menu-icone" aria-hidden="true"></i>Aprender
+    </a>
+  </nav>
+
+  <nav class="submenu" id="subnav-analise" aria-label="Nesta análise" hidden>
+    <p class="legenda">Nesta análise</p>
+    <a class="submenu-item" href="#q-veredito">Veredito</a>
+    <a class="submenu-item" href="#q-checklist">Pontuação</a>
+    <a class="submenu-item" href="#q-cadeia">Destino real</a>
+    <a class="submenu-item" href="#q-evidencias">Evidências</a>
+    <a class="submenu-item" href="#q-sinais">Sinais</a>
+  </nav>
+
+  <div class="trilho-base">
+    <div class="conta" id="conta" hidden>
+      <span class="conta-inicial" id="conta-inicial" aria-hidden="true">—</span>
+      <span class="conta-texto">
+        <span class="conta-nome" id="conta-nome">—</span>
+        <button type="button" id="sair" class="conta-sair">Sair</button>
+      </span>
+    </div>
+
+    <p class="legenda">Fontes consultadas</p>
+    <ul class="fontes" id="fontes">
+      <li class="fonte" data-fonte="sintaxe"><span class="led" aria-hidden="true"></span>Estrutura da URL</li>
+      <li class="fonte" data-fonte="tls"><span class="led" aria-hidden="true"></span>Certificado TLS</li>
+      <li class="fonte" data-fonte="rede"><span class="led" aria-hidden="true"></span>RDAP / DNS</li>
+    </ul>
+  </div>
+</aside>
+
+<div class="corpo">
+
+<!-- ══════════════════════════════════════════════════ barra -->
+<header class="barra">
+  <form class="busca" id="formulario" autocomplete="off">
+    <label class="oculto" for="url">Endereço a periciar</label>
+    <span class="busca-icone" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4.2-4.2"/></svg>
+    </span>
+    <input id="url" name="url" type="text" inputmode="url" spellcheck="false"
+           placeholder="cole o link aqui" required>
+    <button type="submit" id="enviar"><span id="enviar-texto">Periciar</span></button>
+  </form>
+
+  <div class="barra-estado">
+    <span class="pastilha" id="pastilha">em espera</span>
+    <span class="protocolo mono" id="protocolo">—</span>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════════ grade -->
+<main class="grade" id="grade" aria-busy="false">
+
+  <!-- ─────────────────────────────────── veredito -->
+  <section class="quadro q-veredito" id="q-veredito">
+    <header class="quadro-topo">
+      <h2 class="quadro-titulo">Veredito</h2>
+      <span class="quadro-marca mono" id="etiqueta">aguardando endereço</span>
+    </header>
+
+    <div class="quadro-corpo veredito">
+      <canvas class="poligrafo" id="poligrafo" aria-hidden="true"></canvas>
+
+      <div class="veredito-texto" role="status" aria-live="polite" aria-atomic="true">
+        <span class="veredito-icone" id="veredito-icone" aria-hidden="true"></span>
+        <h1 class="sentenca" id="sentenca">Cole um link para periciar</h1>
+        <p class="parecer" id="parecer">
+          O laudo diz, em uma frase, se dá para abrir. Sem jargão, sem nota de 0 a 100
+          escondendo a resposta.
+        </p>
+      </div>
+
+      <dl class="ficha" id="ficha" hidden>
+        <div><dt>domínio</dt><dd class="mono copiavel" id="f-dominio">—</dd></div>
+        <div><dt>host</dt><dd class="mono copiavel" id="f-host">—</dd></div>
+        <div><dt>nota de risco</dt><dd class="mono copiavel" id="f-risco">—</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────────── amostras -->
+  <section class="quadro q-amostras" id="q-amostras">
+    <header class="quadro-topo">
+      <h2 class="quadro-titulo">Amostras</h2>
+      <span class="quadro-marca mono">sem link à mão?</span>
+    </header>
+    <div class="quadro-corpo amostras">
+      <button class="amostra" data-url="https://itau.seguranca-cliente.top/atualizar/senha/login">
+        <span class="amostra-tipo mono">golpe bancário</span>
+        <span class="amostra-url mono">itau.seguranca-cliente.top</span>
+      </button>
+      <button class="amostra" data-url="https://bradesc0.com.br/acesso">
+        <span class="amostra-tipo mono">domínio sósia</span>
+        <span class="amostra-url mono">bradesc0.com.br</span>
+      </button>
+      <button class="amostra" data-url="https://www.itau.com.br/pf/conta-corrente">
+        <span class="amostra-tipo mono">banco real</span>
+        <span class="amostra-url mono">www.itau.com.br</span>
+      </button>
+      <button class="amostra" data-url="https://bit.ly/3xYzAbC">
+        <span class="amostra-tipo mono">link encurtado</span>
+        <span class="amostra-url mono">bit.ly/3xYzAbC</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────────── checklist heurística -->
+  <section class="faixa-checklist" id="q-checklist" hidden>
+    <article class="quadro q-pontuacao">
+      <header class="quadro-topo">
+        <h2 class="quadro-titulo">Pontuação heurística</h2>
+        <span class="quadro-marca mono">estimativa</span>
+      </header>
+      <div class="quadro-corpo pontuacao-corpo">
+        <div class="pontuacao-grafico">
+          <canvas id="grafico-pontuacao" width="168" height="168" role="img" aria-label="Gráfico de rosca com a pontuação de risco, de 0 a 100"></canvas>
+          <p class="pontuacao-numero"><span id="pontuacao-numero">0</span><span class="pontuacao-de100">/100</span></p>
+        </div>
+        <p class="pontuacao-classificacao" id="pontuacao-classificacao">—</p>
+        <p class="pontuacao-aviso">Estimativa automática a partir de padrões da URL. Não é um veredito definitivo.</p>
+      </div>
+    </article>
+
+    <article class="quadro q-tabela-checklist">
+      <header class="quadro-topo">
+        <h2 class="quadro-titulo">Critérios verificados</h2>
+        <span class="quadro-marca mono" id="checklist-resumo"></span>
+      </header>
+      <div class="quadro-corpo">
+        <table class="tabela-checklist">
+          <caption class="oculto">Cada critério da análise heurística, se passou ou falhou, e o motivo</caption>
+          <thead>
+            <tr><th scope="col">Critério</th><th scope="col">Resultado</th><th scope="col">Explicação</th></tr>
+          </thead>
+          <tbody id="checklist-corpo"></tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <!-- ─────────────────────────────────── destino -->
+  <section class="quadro q-cadeia" id="q-cadeia" hidden>
+    <header class="quadro-topo">
+      <h2 class="quadro-titulo">Destino real</h2>
+      <span class="quadro-marca mono">para onde o link leva de verdade</span>
+    </header>
+    <div class="quadro-corpo">
+      <ol class="cadeia" id="cadeia"></ol>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────────── evidências -->
+  <section class="faixa" id="q-evidencias" hidden>
+    <article class="quadro ev" id="ev-idade">
+      <header class="quadro-topo">
+        <h2 class="quadro-titulo">Idade do domínio <span data-termo="rdap"></span></h2>
+      </header>
+      <div class="quadro-corpo">
+        <p class="ev-valor" id="idade-valor">—</p>
+        <p class="ev-apoio" id="idade-apoio"></p>
+      </div>
+    </article>
+
+    <article class="quadro ev" id="ev-cert">
+      <header class="quadro-topo">
+        <h2 class="quadro-titulo">Certificado <span data-termo="tls"></span></h2>
+      </header>
+      <div class="quadro-corpo">
+        <p class="ev-valor" id="cert-valor">—</p>
+        <p class="ev-apoio mono" id="cert-apoio"></p>
+      </div>
+    </article>
+
+    <article class="quadro ev" id="ev-motores">
+      <header class="quadro-topo">
+        <h2 class="quadro-titulo">Motores de ameaça</h2>
+      </header>
+      <div class="quadro-corpo">
+        <p class="ev-valor" id="motores-valor">—</p>
+        <p class="ev-apoio" id="motores-apoio"></p>
+      </div>
+    </article>
+
+    <article class="quadro ev" id="ev-email">
+      <header class="quadro-topo">
+        <h2 class="quadro-titulo">E-mail e DNS <span data-termo="dns"></span></h2>
+      </header>
+      <div class="quadro-corpo">
+        <p class="ev-valor" id="email-valor">—</p>
+        <p class="ev-apoio mono" id="email-apoio"></p>
+      </div>
+    </article>
+
+    <article class="quadro ev" id="ev-servidor">
+      <header class="quadro-topo">
+        <h2 class="quadro-titulo">Origem do servidor</h2>
+      </header>
+      <div class="quadro-corpo">
+        <p class="ev-valor" id="servidor-valor">—</p>
+        <p class="ev-apoio mono" id="servidor-apoio"></p>
+      </div>
+    </article>
+  </section>
+
+  <!-- ─────────────────────────────────── sinais -->
+  <section class="quadro q-sinais" id="q-sinais" hidden>
+    <header class="quadro-topo">
+      <h2 class="quadro-titulo">O que pesou no veredito</h2>
+      <span class="quadro-marca mono" id="sinais-nota"></span>
+    </header>
+    <div class="quadro-corpo">
+      <ol class="sinais" id="sinais"></ol>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────────── ressalva -->
+  <footer class="quadro q-ressalva">
+    <div class="quadro-corpo">
+      <p class="ressalva">
+        Nenhum sinal encontrado não é o mesmo que site confiável. Um golpe montado
+        hoje ainda não foi denunciado por ninguém, tem certificado válido e domínio
+        novo em folha — e sai daqui com nota baixa.
+      </p>
+      <p class="assinatura mono">Spectra · análise passiva · <span id="versao"></span></p>
+    </div>
+  </footer>
+
+</main>
+
+<div class="aviso" id="aviso" role="alert" hidden></div>
+
+<footer class="rodape-spectra">
+  <div class="rodape-fundo" aria-hidden="true"></div>
+  <div class="rodape-conteudo">
+    <div>
+      <div class="rodape-marca" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        SPECTRA
+      </div>
+      <p class="rodape-tagline">Análise passiva de risco de links, para proteção ao consumidor.</p>
+    </div>
+    <nav aria-label="Links legais">
+      <p class="rodape-titulo-coluna">Legal</p>
+      <ul class="rodape-links">
+        <li><a href="/privacidade">Política de Privacidade</a></li>
+        <li><a href="/termos">Termos de Uso</a></li>
+      </ul>
+    </nav>
+    <div>
+      <p class="rodape-titulo-coluna">Contato</p>
+      <ul class="rodape-contato">
+        <li><a href="https://wa.me/5511999999999" target="_blank" rel="noopener"><i data-lucide="message-circle" aria-hidden="true"></i>(11) 99999-9999</a></li>
+        <li><a href="https://instagram.com/spectra.seguranca" target="_blank" rel="noopener"><i data-lucide="instagram" aria-hidden="true"></i>@spectra.seguranca</a></li>
+        <li><a href="mailto:contato@spectra.app"><i data-lucide="mail" aria-hidden="true"></i>contato@spectra.app</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="rodape-base">
+    <span>© <span data-ano-atual>2026</span> Spectra. Todos os direitos reservados.</span>
+    <span>Varredura passiva · proteção ao consumidor</span>
+  </div>
+</footer>
+
+</div><!-- /corpo -->
+</div><!-- /app -->
+
+<!-- ═══════════════════════════════════════════════ acessibilidade -->
+<div class="a11y-caixa">
+  <div id="a11y-painel" class="a11y-painel" hidden role="region" aria-label="Acessibilidade">
+    <p class="a11y-titulo">Acessibilidade</p>
+    <div class="a11y-linha">
+      <span class="a11y-rotulo">Tema</span>
+      <button type="button" data-a11y-tema>
+        <i data-lucide="sun-moon" aria-hidden="true"></i><span data-a11y-tema-rotulo>Tema</span>
+      </button>
+    </div>
+    <div class="a11y-linha">
+      <span class="a11y-rotulo">Fonte</span>
+      <div class="a11y-grupo">
+        <button type="button" data-a11y-fonte-menos aria-label="Diminuir fonte">A−</button>
+        <button type="button" data-a11y-fonte-reset aria-label="Fonte padrão"><span data-a11y-fonte-valor>100%</span></button>
+        <button type="button" data-a11y-fonte-mais aria-label="Aumentar fonte">A+</button>
+      </div>
+    </div>
+    <div class="a11y-linha">
+      <span class="a11y-rotulo">Alto contraste</span>
+      <button type="button" data-a11y-contraste aria-pressed="false">
+        <i data-lucide="contrast" aria-hidden="true"></i>Ativar
+      </button>
+    </div>
+    <div class="a11y-linha">
+      <span class="a11y-rotulo">Movimento</span>
+      <button type="button" data-interruptor-movimento aria-pressed="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
+        <span data-rotulo-movimento>Movimento ligado</span>
+      </button>
+    </div>
+  </div>
+  <button type="button" id="a11y-abrir" class="a11y-botao" aria-expanded="false" aria-controls="a11y-painel" aria-label="Abrir opções de acessibilidade">
+    <i data-lucide="accessibility" aria-hidden="true"></i>
+  </button>
+</div>
+
+<!-- ═══════════════════════════════════════════════ copiloto do laudo -->
+<div class="copiloto-caixa">
+  <section id="copiloto" hidden class="copiloto" aria-label="Copiloto do laudo">
+    <header class="copiloto-topo">
+      <span class="copiloto-marca" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+        </svg>
+      </span>
+      <span class="copiloto-titulo">
+        <strong>Copiloto</strong>
+        <span class="copiloto-ctx mono" id="copiloto-ctx">sem laudo aberto</span>
+      </span>
+      <button type="button" id="fechar-copiloto" aria-label="Fechar copiloto" class="copiloto-x">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </header>
+
+    <div class="copiloto-conversa" id="copiloto-conversa" role="log" aria-live="polite"></div>
+    <div class="copiloto-atalhos" id="copiloto-atalhos"></div>
+
+    <form class="copiloto-form" id="copiloto-form">
+      <label class="oculto" for="copiloto-campo">Pergunte sobre este laudo</label>
+      <input id="copiloto-campo" type="text" autocomplete="off" placeholder="Pergunte sobre este link…">
+      <button type="submit" aria-label="Enviar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+      </button>
+    </form>
+  </section>
+
+  <button type="button" id="abrir-copiloto" class="copiloto-botao" aria-expanded="false" aria-controls="copiloto">
+    <span class="oculto">Abrir copiloto</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+    </svg>
+  </button>
+</div>
+
+<script src="/static/movimento.js"></script>
+<script src="/static/acessibilidade.js"></script>
+<script src="/static/glossario.js"></script>
+<script src="/static/caminhos.js"></script>
+<script src="/static/melhorias.js"></script>
+<script src="/static/laudo.js"></script>
+</body>
+</html>

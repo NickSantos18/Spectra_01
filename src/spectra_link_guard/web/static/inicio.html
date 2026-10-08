@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spectra</title>
+<meta name="description" content="Varredura de segurança com correção assistida: o Spectra encontra a falha, explica o risco e abre o pull request.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/rodape.css">
+
+<script src="/static/movimento.js"></script>
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js" defer
+        integrity="sha384-WBRt9V/J/erVtkEuP91HUFRv9MvHzFiFOp4/zTDp4xkcMG7aOeIv2asTV4yxFLWa" crossorigin="anonymous"></script>
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<script>
+  // Tokens do design system da Spectra mapeados para classes do Tailwind.
+  // Use bg-marca, text-sage, border-linha etc. em vez de hex solto no HTML.
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          base:    "#0f171a",  // chão
+          sup:     "#131e22",  // superfície (cards, modais)
+          "sup-2": "#18262b",  // superfície elevada (campos, hover)
+          linha:   "#22353b",
+          "linha-forte": "#2e474f",
+          txt:     "#e7eef0",
+          "txt-2": "#9fb3b8",
+          "txt-3": "#85999f",
+          marca:   "#118e94",  // primary
+          "marca-claro": "#3fb6bb",
+          sage:    "#5b9986",  // secondary
+          amarelo: "#fffc0e",  // tertiary
+          perigo:  "#ff4438",  // extensão semântica (não é cor de marca)
+        },
+        fontFamily: {
+          display: ['"Hanken Grotesk"', "system-ui", "sans-serif"],
+          corpo:   ['"Inter"', "system-ui", "sans-serif"],
+          mono:    ['"JetBrains Mono"', "ui-monospace", "monospace"],
+        },
+        boxShadow: {
+          suave: "0 18px 40px -24px rgba(0,0,0,.9)",
+          alta:  "0 30px 60px -30px rgba(0,0,0,1)",
+        },
+      },
+    },
+  };
+</script>
+
+<style>
+  /* O pouco que o Tailwind não resolve bem: rolagem, animações e o
+     preenchimento automático do navegador nos campos escuros. */
+  html { scroll-behavior: smooth; }
+  body { background: #0f171a; }
+
+  /* display:flex numa classe vence o atributo hidden — este não vence. */
+  [hidden] { display: none !important; }
+
+  @keyframes subir { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  .subir { animation: subir .5s cubic-bezier(.16,1,.3,1) both; }
+
+  /* Cada caminho tem pathLength="1", então o traço e o deslocamento ficam
+     normalizados: um dasharray de 0.35 desliza de 1 até -1 e volta, o que
+     reproduz o pathLength/pathOffset do framer-motion sem JavaScript. */
+  @keyframes fluir {
+    from { stroke-dashoffset: 1; }
+    to   { stroke-dashoffset: -1; }
+  }
+  @keyframes respirar {
+    0%, 100% { stroke-opacity: var(--op-min); }
+    50%      { stroke-opacity: var(--op-max); }
+  }
+  .caminho {
+    stroke-dasharray: .35 .65;
+    animation: fluir var(--dur) linear infinite,
+               respirar calc(var(--dur) / 2) ease-in-out infinite;
+  }
+
+  /* Manchete letra a letra: cada span sobe com atraso próprio. */
+  @keyframes surgirLetra {
+    from { opacity: 0; transform: translateY(64px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .bloco-palavra { display: inline-block; }
+  /* A letra é visível por padrão. A animação de entrada só é declarada quando
+     o movimento está ligado — senão a manchete dependeria de uma animação
+     rodar para existir, e some em aba oculta ou se algo travar o CSS. */
+  .letra {
+    display: inline-block;
+    white-space: pre;
+    background-image: linear-gradient(180deg, #e7eef0, #9fb3b8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  :root[data-movimento="on"] .letra {
+    animation: surgirLetra .62s cubic-bezier(.2, .8, .2, 1) both;
+    animation-delay: var(--atraso);
+  }
+
+  /* O autofill do Chrome pinta o campo de azul-claro e apaga o texto. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #e7eef0;
+    -webkit-box-shadow: 0 0 0 1000px #18262b inset;
+    caret-color: #e7eef0;
+  }
+
+  /* O movimento é controlado por movimento.js, não direto pela media query:
+     assim a escolha explícita da pessoa vence a do sistema. */
+  :root[data-movimento="off"] { scroll-behavior: auto; }
+  :root[data-movimento="off"] *,
+  :root[data-movimento="off"] *::before,
+  :root[data-movimento="off"] *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+  :root[data-movimento="off"] .caminho { stroke-dasharray: none; }
+
+  /* Rede de segurança: se movimento.js não rodar, a preferência do sistema
+     ainda manda. Só vale enquanto o atributo não existe. */
+  @media (prefers-reduced-motion: reduce) {
+    :root:not([data-movimento]) *,
+    :root:not([data-movimento]) *::before,
+    :root:not([data-movimento]) *::after {
+      animation-duration: .01ms !important;
+      transition-duration: .01ms !important;
+    }
+    :root:not([data-movimento]) .caminho { stroke-dasharray: none; }
+  }
+
+  /* Seção "Por que usar nossos serviços?": entrada ao rolar + hover. */
+  .motivo-card {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity .55s cubic-bezier(.16,1,.3,1), transform .55s cubic-bezier(.16,1,.3,1),
+                box-shadow .2s ease, border-color .2s ease;
+  }
+  .motivo-card.revelado { opacity: 1; transform: none; }
+  .motivo-card:hover {
+    box-shadow: 0 20px 44px -26px rgba(0,0,0,.95);
+    border-color: #118e94;
+  }
+  :root[data-movimento="off"] .motivo-card { opacity: 1; transform: none; }
+</style>
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+</head>
+
+<body class="font-corpo text-txt antialiased">
+
+<a href="#conteudo" class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-3 focus:rounded focus:bg-marca focus:px-4 focus:py-2 focus:font-display focus:font-semibold focus:text-base">
+  Pular para o conteúdo
+</a>
+
+<!-- ══════════════════════════════════════════════════════════ barra -->
+<header class="sticky top-0 z-30 border-b border-linha bg-base/95 backdrop-blur">
+  <div class="mx-auto flex max-w-6xl items-center gap-4 px-5 py-3.5 sm:px-8">
+
+    <!-- ╔═════════════════════════════════════════════════════════════╗
+         ║  LOGO — BARRA                                               ║
+         ║  Troque este <a> inteiro pela sua logo final:               ║
+         ║                                                             ║
+         ║  <a href="/inicio" class="flex items-center">               ║
+         ║    <img src="/static/logo.svg" alt="Spectra"                ║
+         ║         class="h-8 w-auto">                                 ║
+         ║  </a>                                                       ║
+         ║                                                             ║
+         ║  Altura recomendada: h-8 (32px). Use SVG para não borrar    ║
+         ║  em tela retina. Salve em src/spectra_link_guard/web/static/║
+         ╚═════════════════════════════════════════════════════════════╝ -->
+    <a href="/inicio" class="flex items-center gap-2.5 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-marca-claro">
+      <span class="grid h-8 w-8 place-items-center rounded bg-marca text-base" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      </span>
+      <span class="font-display text-[15px] font-extrabold tracking-[0.16em]">SPECTRA</span>
+    </a>
+
+    <nav class="ml-auto flex items-center gap-2">
+      <button type="button" data-interruptor-movimento aria-pressed="true"
+              class="hidden items-center gap-2 rounded px-3 py-2 font-display text-xs font-semibold text-txt-3 transition hover:bg-sup hover:text-txt focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro sm:flex">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="h-4 w-4" aria-hidden="true">
+          <path d="M3 12h4l3-8 4 16 3-8h4"/>
+        </svg>
+        <span data-rotulo-movimento>Movimento ligado</span>
+      </button>
+
+      <button type="button" data-abrir="entrar"
+              class="rounded px-4 py-2 font-display text-sm font-semibold text-txt-2 transition hover:bg-sup hover:text-txt focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro">
+        Entrar
+      </button>
+      <button type="button" data-abrir="cadastrar"
+              class="rounded bg-marca px-4 py-2 font-display text-sm font-semibold text-base transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro">
+        Cadastrar-se
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div id="faixa-erro" hidden class="border-b border-perigo/50 bg-perigo/10 px-5 py-3 text-center text-sm text-perigo sm:px-8"></div>
+
+<main id="conteudo">
+
+  <!-- ═══════════════════════════════════════════════════════════ hero -->
+  <section class="relative overflow-hidden">
+
+    <!-- Grade de cubos (Three.js + anime.js), em cubos.js. É o visual do hero.
+         Os caminhos flutuantes saíram DESTE bloco de propósito: dois fundos
+         animados no mesmo espaço competem. Eles seguem no /painel.
+         Para voltar atrás, troque esta div pelos dois <svg id="caminhos-*">. -->
+    <div id="cubos" class="pointer-events-none absolute inset-0 opacity-50" aria-hidden="true"></div>
+
+  <div class="relative z-10 mx-auto flex max-w-3xl flex-col items-center px-5 pb-16 pt-16 text-center sm:px-8 sm:pt-24">
+
+    <!-- ╔═════════════════════════════════════════════════════════════╗
+         ║  LOGO — HERO (marca grande, centralizada)                    ║
+         ║  Troque este <div> inteiro por:                              ║
+         ║                                                              ║
+         ║  <img src="/static/logo.svg" alt="Spectra"                   ║
+         ║       class="mb-9 h-20 w-auto">                              ║
+         ║                                                              ║
+         ║  Altura recomendada: h-20 (80px) no desktop.                 ║
+         ║  Se a logo for horizontal (marca + nome), suba para h-14 e   ║
+         ║  apague o <h1> abaixo, senão o nome aparece duas vezes.      ║
+         ╚═════════════════════════════════════════════════════════════╝ -->
+    <div class="subir mb-9 grid h-20 w-20 place-items-center rounded-2xl border border-linha-forte bg-sup shadow-suave" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#3fb6bb" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="h-9 w-9">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        <path d="M9 12l2 2 4-4"/>
+      </svg>
+    </div>
+
+    <h1 id="manchete"
+        class="font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-balance sm:text-6xl"
+        data-texto="Ache a falha antes que alguém ache."
+        aria-label="Ache a falha antes que alguém ache.">
+      Ache a falha antes que alguém ache.
+    </h1>
+
+    <p class="subir mt-6 max-w-xl text-base font-light leading-relaxed text-txt-2 sm:text-lg" style="animation-delay:.12s">
+      O Spectra varre sua aplicação, traduz cada falha em risco de negócio e
+      entrega a correção pronta — com o pull request já aberto no seu repositório.
+    </p>
+
+    <div class="subir mt-10 flex w-full flex-col gap-3 sm:w-auto sm:flex-row" style="animation-delay:.18s">
+      <button type="button" data-abrir="cadastrar"
+              class="rounded bg-marca px-7 py-3.5 font-display text-[15px] font-bold text-base shadow-suave transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro">
+        Cadastrar-se
+      </button>
+      <button type="button" data-abrir="entrar"
+              class="rounded border border-linha-forte px-7 py-3.5 font-display text-[15px] font-bold text-txt transition hover:border-marca hover:text-marca-claro focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro">
+        Entrar
+      </button>
+    </div>
+
+    <p class="subir mt-5 font-mono text-[11px] uppercase tracking-[0.14em] text-txt-3" style="animation-delay:.24s">
+      Varredura passiva · sem instalar nada no servidor
+    </p>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════ o que faz -->
+  <section class="border-y border-linha bg-sup/40">
+    <div class="mx-auto grid max-w-6xl gap-px bg-linha px-0 sm:grid-cols-3">
+
+      <article class="bg-base p-7 sm:p-9">
+        <i data-lucide="radar" class="h-6 w-6 text-marca-claro" aria-hidden="true"></i>
+        <p class="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-marca-claro">Varredura</p>
+        <h2 class="mt-1 font-display text-lg font-bold">Encontra o que está exposto</h2>
+        <p class="mt-2.5 text-sm font-light leading-relaxed text-txt-2">
+          Cabeçalhos ausentes, cookie de sessão fraco, CORS permissivo, rota
+          administrativa sem autenticação. Cada achado vem com a requisição que
+          o provou.
+        </p>
+      </article>
+
+      <article class="bg-base p-7 sm:p-9">
+        <i data-lucide="languages" class="h-6 w-6 text-amarelo" aria-hidden="true"></i>
+        <p class="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-amarelo">Tradução</p>
+        <h2 class="mt-1 font-display text-lg font-bold">Diz o que isso custa</h2>
+        <p class="mt-2.5 text-sm font-light leading-relaxed text-txt-2">
+          Cada falha vira uma frase que o time de negócio entende, com a faixa
+          de exposição estimada e os insumos do cálculo à vista.
+        </p>
+      </article>
+
+      <article class="bg-base p-7 sm:p-9">
+        <i data-lucide="git-pull-request-arrow" class="h-6 w-6 text-sage" aria-hidden="true"></i>
+        <p class="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-sage">Correção</p>
+        <h2 class="mt-1 font-display text-lg font-bold">Entrega o diff pronto</h2>
+        <p class="mt-2.5 text-sm font-light leading-relaxed text-txt-2">
+          O Copilot explica a falha em português, gera a correção no seu
+          framework e abre o pull request. A revisão continua sendo sua.
+        </p>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════ por que usar -->
+  <section class="border-b border-linha">
+    <div class="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
+      <div class="mx-auto max-w-2xl text-center">
+        <p class="font-mono text-[10px] uppercase tracking-[0.16em] text-marca-claro">Por que o Spectra</p>
+        <h2 class="mt-3 font-display text-2xl font-extrabold tracking-tight sm:text-3xl">Por que usar nossos serviços?</h2>
+      </div>
+
+      <div class="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <article class="motivo-card rounded-xl border border-linha bg-sup p-6" data-revelar>
+          <span class="grid h-10 w-10 place-items-center rounded-lg bg-marca/12 text-marca-claro" aria-hidden="true">
+            <i data-lucide="scan-search" class="h-5 w-5"></i>
+          </span>
+          <h3 class="mt-4 font-display text-[15px] font-bold">Varredura passiva</h3>
+          <p class="mt-2 text-sm font-light leading-relaxed text-txt-2">Analisa o link sem invadir nada: só o que qualquer navegador já veria ao abrir a página.</p>
+        </article>
+
+        <article class="motivo-card rounded-xl border border-linha bg-sup p-6" data-revelar>
+          <span class="grid h-10 w-10 place-items-center rounded-lg bg-marca/12 text-marca-claro" aria-hidden="true">
+            <i data-lucide="gauge" class="h-5 w-5"></i>
+          </span>
+          <h3 class="mt-4 font-display text-[15px] font-bold">Pontuação explicável</h3>
+          <p class="mt-2 text-sm font-light leading-relaxed text-txt-2">Cada nota de risco é a soma auditável dos sinais encontrados — sem caixa-preta.</p>
+        </article>
+
+        <article class="motivo-card rounded-xl border border-linha bg-sup p-6" data-revelar>
+          <span class="grid h-10 w-10 place-items-center rounded-lg bg-marca/12 text-marca-claro" aria-hidden="true">
+            <i data-lucide="languages" class="h-5 w-5"></i>
+          </span>
+          <h3 class="mt-4 font-display text-[15px] font-bold">Linguagem simples</h3>
+          <p class="mt-2 text-sm font-light leading-relaxed text-txt-2">Sem jargão técnico: o laudo explica o risco numa frase que qualquer pessoa entende.</p>
+        </article>
+
+        <article class="motivo-card rounded-xl border border-linha bg-sup p-6" data-revelar>
+          <span class="grid h-10 w-10 place-items-center rounded-lg bg-marca/12 text-marca-claro" aria-hidden="true">
+            <i data-lucide="history" class="h-5 w-5"></i>
+          </span>
+          <h3 class="mt-4 font-display text-[15px] font-bold">Histórico organizado</h3>
+          <p class="mt-2 text-sm font-light leading-relaxed text-txt-2">Toda verificação fica registrada, com busca e filtro, para revisar quando quiser.</p>
+        </article>
+
+        <article class="motivo-card rounded-xl border border-linha bg-sup p-6" data-revelar>
+          <span class="grid h-10 w-10 place-items-center rounded-lg bg-marca/12 text-marca-claro" aria-hidden="true">
+            <i data-lucide="graduation-cap" class="h-5 w-5"></i>
+          </span>
+          <h3 class="mt-4 font-display text-[15px] font-bold">Educação incluída</h3>
+          <p class="mt-2 text-sm font-light leading-relaxed text-txt-2">A seção Aprender ensina a reconhecer phishing, mesmo para quem nunca viu o assunto.</p>
+        </article>
+
+        <article class="motivo-card rounded-xl border border-linha bg-sup p-6" data-revelar>
+          <span class="grid h-10 w-10 place-items-center rounded-lg bg-marca/12 text-marca-claro" aria-hidden="true">
+            <i data-lucide="accessibility" class="h-5 w-5"></i>
+          </span>
+          <h3 class="mt-4 font-display text-[15px] font-bold">Acessível de verdade</h3>
+          <p class="mt-2 text-sm font-light leading-relaxed text-txt-2">Tema claro/escuro, fonte ajustável, alto contraste e navegação completa por teclado.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape-spectra">
+  <div class="rodape-fundo" aria-hidden="true"></div>
+  <div class="rodape-conteudo">
+    <div>
+      <div class="rodape-marca" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        SPECTRA
+      </div>
+      <p class="rodape-tagline">Análise passiva de risco de links, para proteção ao consumidor.</p>
+    </div>
+    <nav aria-label="Links legais">
+      <p class="rodape-titulo-coluna">Legal</p>
+      <ul class="rodape-links">
+        <li><a href="/privacidade">Política de Privacidade</a></li>
+        <li><a href="/termos">Termos de Uso</a></li>
+      </ul>
+    </nav>
+    <div>
+      <p class="rodape-titulo-coluna">Contato</p>
+      <ul class="rodape-contato">
+        <li><a href="https://wa.me/5511999999999" target="_blank" rel="noopener"><i data-lucide="message-circle" aria-hidden="true"></i>(11) 99999-9999</a></li>
+        <li><a href="https://instagram.com/spectra.seguranca" target="_blank" rel="noopener"><i data-lucide="instagram" aria-hidden="true"></i>@spectra.seguranca</a></li>
+        <li><a href="mailto:contato@spectra.app"><i data-lucide="mail" aria-hidden="true"></i>contato@spectra.app</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="rodape-base">
+    <span>© <span data-ano-atual>2026</span> Spectra. Todos os direitos reservados.</span>
+    <span>Varredura passiva · proteção ao consumidor</span>
+  </div>
+</footer>
+
+<!-- ══════════════════════════════════════════════════ modal de acesso -->
+<div id="modal" class="fixed inset-0 z-40 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+  <div id="modal-fundo" class="absolute inset-0 bg-base/85 backdrop-blur-sm"></div>
+
+  <div id="modal-caixa" class="relative flex w-full max-w-md max-h-[85vh] flex-col rounded-xl border border-linha bg-sup shadow-alta">
+
+    <div class="flex flex-none items-center justify-between border-b border-linha px-6 py-4">
+      <h2 id="modal-titulo" class="font-display text-base font-bold">Acessar o Spectra</h2>
+      <button type="button" id="fechar-modal" aria-label="Fechar"
+              class="grid h-8 w-8 place-items-center rounded text-txt-3 transition hover:bg-sup-2 hover:text-txt focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="h-4 w-4"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <!-- abas -->
+    <div class="grid flex-none grid-cols-2 gap-px border-b border-linha bg-linha" role="tablist">
+      <button type="button" role="tab" id="aba-entrar" aria-controls="painel-entrar" aria-selected="true"
+              class="aba bg-sup px-4 py-3 font-display text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-marca-claro">
+        Entrar
+      </button>
+      <button type="button" role="tab" id="aba-cadastrar" aria-controls="painel-cadastrar" aria-selected="false"
+              class="aba bg-sup px-4 py-3 font-display text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-marca-claro">
+        Cadastrar-se
+      </button>
+    </div>
+
+    <!-- Conteúdo rolável: cabeçalho e abas ficam fixos, só isto rola quando
+         o formulário (principalmente o de cadastro) não cabe na tela. -->
+    <div class="min-h-0 flex-1 overflow-y-auto">
+
+    <!-- ───────────────────────────────────────────── google -->
+    <div class="flex flex-col gap-4 px-6 pt-6">
+      <a id="botao-google" href="/auth/google"
+         class="flex items-center justify-center gap-3 rounded border border-linha-forte bg-sup-2 px-5 py-3 font-display text-sm font-semibold text-txt transition hover:border-marca hover:bg-sup focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro">
+        <svg viewBox="0 0 24 24" class="h-[18px] w-[18px] flex-none" aria-hidden="true">
+          <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 01-2.4 3.7v3h3.9c2.3-2.1 3.5-5.2 3.5-8.9z"/>
+          <path fill="#34A853" d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.9-3c-1.1.7-2.4 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9h-4v3.1A12 12 0 0012 24z"/>
+          <path fill="#FBBC05" d="M5.4 14.4a7.2 7.2 0 010-4.6v-3.1h-4a12 12 0 000 10.8l4-3.1z"/>
+          <path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 001.4 6.7l4 3.1C6.3 6.9 8.9 4.8 12 4.8z"/>
+        </svg>
+        Continuar com o Google
+      </a>
+      <p id="google-indisponivel" hidden class="rounded border border-linha-forte bg-sup-2 px-3.5 py-2.5 text-xs leading-relaxed text-txt-3">
+        O login com Google ainda não está configurado neste servidor. Use e-mail e senha.
+      </p>
+
+      <div class="flex items-center gap-3">
+        <span class="h-px flex-1 bg-linha"></span>
+        <span class="font-mono text-[10px] uppercase tracking-[0.14em] text-txt-3">ou com e-mail</span>
+        <span class="h-px flex-1 bg-linha"></span>
+      </div>
+    </div>
+
+    <!-- ───────────────────────────────────────────── login -->
+    <form id="painel-entrar" role="tabpanel" aria-labelledby="aba-entrar" novalidate class="flex flex-col gap-4 p-6">
+
+      <div>
+        <label for="entrar-email" class="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.14em] text-txt-3">E-mail</label>
+        <input id="entrar-email" name="email" type="email" autocomplete="email" required
+               placeholder="voce@empresa.com.br"
+               class="w-full rounded border border-linha bg-sup-2 px-3.5 py-2.5 font-mono text-sm text-txt placeholder:text-txt-3 focus:border-marca focus:outline-none focus:ring-2 focus:ring-marca/25">
+        <p class="erro mt-1.5 hidden text-xs text-perigo" data-erro-de="entrar-email"></p>
+      </div>
+
+      <div>
+        <label for="entrar-senha" class="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.14em] text-txt-3">Senha</label>
+        <div class="relative">
+          <input id="entrar-senha" name="senha" type="password" autocomplete="current-password" required
+                 placeholder="••••••••"
+                 class="w-full rounded border border-linha bg-sup-2 px-3.5 py-2.5 pr-11 font-mono text-sm text-txt placeholder:text-txt-3 focus:border-marca focus:outline-none focus:ring-2 focus:ring-marca/25">
+          <button type="button" data-ver-senha="entrar-senha" aria-label="Mostrar senha"
+                  class="absolute right-1 top-1/2 grid h-8 w-9 -translate-y-1/2 place-items-center rounded text-txt-3 transition hover:text-txt focus-visible:outline focus-visible:outline-2 focus-visible:outline-marca-claro">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <p class="erro mt-1.5 hidden text-xs text-perigo" data-erro-de="entrar-senha"></p>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <label class="flex cursor-pointer items-center gap-2.5 text-sm text-txt-2">
+          <input type="checkbox" name="lembrar"
+                 class="h-4 w-4 rounded border-linha-forte bg-sup-2 text-marca focus:ring-2 focus:ring-marca/40 focus:ring-offset-0">
+          Lembrar de mim
+        </label>
+        <button type="button" id="esqueci"
+                class="rounded text-sm text-marca-claro underline-offset-4 transition hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro">
+          Esqueci minha senha
+        </button>
+      </div>
+
+      <button type="submit"
+              class="mt-1 rounded bg-marca px-5 py-3 font-display text-sm font-bold text-base transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro">
+        Entrar
+      </button>
+
+      <p class="aviso-form hidden rounded border border-linha-forte bg-sup-2 px-3.5 py-2.5 text-xs leading-relaxed text-txt-2"></p>
+    </form>
+
+    <!-- ───────────────────────────────────────────── cadastro -->
+    <form id="painel-cadastrar" role="tabpanel" aria-labelledby="aba-cadastrar" novalidate hidden class="flex flex-col gap-4 p-6">
+
+      <div>
+        <label for="cad-nome" class="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.14em] text-txt-3">Nome completo</label>
+        <input id="cad-nome" name="nome" type="text" autocomplete="name" required
+               placeholder="Ana Ribeiro"
+               class="w-full rounded border border-linha bg-sup-2 px-3.5 py-2.5 text-sm text-txt placeholder:text-txt-3 focus:border-marca focus:outline-none focus:ring-2 focus:ring-marca/25">
+        <p class="erro mt-1.5 hidden text-xs text-perigo" data-erro-de="cad-nome"></p>
+      </div>
+
+      <div>
+        <label for="cad-email" class="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.14em] text-txt-3">E-mail</label>
+        <input id="cad-email" name="email" type="email" autocomplete="email" required
+               placeholder="voce@empresa.com.br"
+               class="w-full rounded border border-linha bg-sup-2 px-3.5 py-2.5 font-mono text-sm text-txt placeholder:text-txt-3 focus:border-marca focus:outline-none focus:ring-2 focus:ring-marca/25">
+        <p class="erro mt-1.5 hidden text-xs text-perigo" data-erro-de="cad-email"></p>
+      </div>
+
+      <div>
+        <label for="cad-senha" class="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.14em] text-txt-3">Senha</label>
+        <div class="relative">
+          <input id="cad-senha" name="senha" type="password" autocomplete="new-password" required
+                 placeholder="mínimo 8 caracteres"
+                 class="w-full rounded border border-linha bg-sup-2 px-3.5 py-2.5 pr-11 font-mono text-sm text-txt placeholder:text-txt-3 focus:border-marca focus:outline-none focus:ring-2 focus:ring-marca/25">
+          <button type="button" data-ver-senha="cad-senha" aria-label="Mostrar senha"
+                  class="absolute right-1 top-1/2 grid h-8 w-9 -translate-y-1/2 place-items-center rounded text-txt-3 transition hover:text-txt focus-visible:outline focus-visible:outline-2 focus-visible:outline-marca-claro">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <p class="erro mt-1.5 hidden text-xs text-perigo" data-erro-de="cad-senha"></p>
+      </div>
+
+      <div>
+        <label for="cad-senha2" class="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.14em] text-txt-3">Confirmar senha</label>
+        <input id="cad-senha2" name="senha2" type="password" autocomplete="new-password" required
+               placeholder="repita a senha"
+               class="w-full rounded border border-linha bg-sup-2 px-3.5 py-2.5 font-mono text-sm text-txt placeholder:text-txt-3 focus:border-marca focus:outline-none focus:ring-2 focus:ring-marca/25">
+        <p class="erro mt-1.5 hidden text-xs text-perigo" data-erro-de="cad-senha2"></p>
+      </div>
+
+      <div>
+        <label class="flex cursor-pointer items-start gap-2.5 text-sm leading-relaxed text-txt-2">
+          <input id="cad-termos" type="checkbox" name="termos" required
+                 class="mt-0.5 h-4 w-4 flex-none rounded border-linha-forte bg-sup-2 text-marca focus:ring-2 focus:ring-marca/40 focus:ring-offset-0">
+          <span>Aceito os <a href="#" class="text-marca-claro underline-offset-4 hover:underline">Termos de Uso</a> e a Política de Privacidade</span>
+        </label>
+        <p class="erro mt-1.5 hidden text-xs text-perigo" data-erro-de="cad-termos"></p>
+      </div>
+
+      <button type="submit"
+              class="mt-1 rounded bg-marca px-5 py-3 font-display text-sm font-bold text-base transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro">
+        Criar conta
+      </button>
+
+      <p class="aviso-form hidden rounded border border-linha-forte bg-sup-2 px-3.5 py-2.5 text-xs leading-relaxed text-txt-2"></p>
+    </form>
+
+    </div><!-- /conteúdo rolável -->
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ chat flutuante -->
+<div class="fixed bottom-5 right-5 z-40 flex flex-col items-end gap-3 sm:bottom-6 sm:right-6">
+
+  <section id="chat" hidden
+           class="flex h-[26rem] w-[calc(100vw-2.5rem)] max-w-sm flex-col overflow-hidden rounded-xl border border-linha bg-sup shadow-alta sm:h-[28rem]"
+           aria-label="Assistente Spectra">
+
+    <div class="flex items-center gap-3 border-b border-linha px-4 py-3">
+      <span class="grid h-8 w-8 flex-none place-items-center rounded bg-marca text-base" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
+          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+        </svg>
+      </span>
+      <div class="min-w-0">
+        <p class="font-display text-sm font-bold leading-tight">Assistente Spectra</p>
+        <p class="font-mono text-[10px] uppercase tracking-[0.1em] text-sage">online</p>
+      </div>
+      <button type="button" id="fechar-chat" aria-label="Fechar conversa"
+              class="ml-auto grid h-8 w-8 place-items-center rounded text-txt-3 transition hover:bg-sup-2 hover:text-txt focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="h-4 w-4"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <div id="chat-mensagens" class="flex flex-1 flex-col gap-3 overflow-y-auto p-4" role="log" aria-live="polite" aria-atomic="false"></div>
+
+    <div id="chat-sugestoes" class="flex flex-wrap gap-2 border-t border-linha px-4 py-3"></div>
+
+    <form id="chat-form" class="flex items-center gap-2 border-t border-linha p-3">
+      <label class="sr-only" for="chat-campo">Escreva sua mensagem</label>
+      <input id="chat-campo" type="text" autocomplete="off" placeholder="Escreva sua dúvida…"
+             class="min-w-0 flex-1 rounded border border-linha bg-sup-2 px-3 py-2.5 text-sm text-txt placeholder:text-txt-3 focus:border-marca focus:outline-none focus:ring-2 focus:ring-marca/25">
+      <button type="submit" aria-label="Enviar mensagem"
+              class="grid h-10 w-10 flex-none place-items-center rounded bg-marca text-base transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+      </button>
+    </form>
+  </section>
+
+  <button type="button" id="abrir-chat" aria-expanded="false" aria-controls="chat"
+          class="grid h-14 w-14 place-items-center rounded-full bg-marca text-base shadow-alta transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-marca-claro">
+    <span class="sr-only">Abrir conversa com o assistente</span>
+    <svg id="icone-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6">
+      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+    </svg>
+  </button>
+</div>
+
+<!-- ═══════════════════════════════════════════════ acessibilidade -->
+<div class="a11y-caixa">
+  <div id="a11y-painel" class="a11y-painel" hidden role="region" aria-label="Acessibilidade">
+    <p class="a11y-titulo">Acessibilidade</p>
+    <div class="a11y-linha">
+      <span class="a11y-rotulo">Tema</span>
+      <button type="button" data-a11y-tema>
+        <i data-lucide="sun-moon" aria-hidden="true"></i><span data-a11y-tema-rotulo>Tema</span>
+      </button>
+    </div>
+    <div class="a11y-linha">
+      <span class="a11y-rotulo">Fonte</span>
+      <div class="a11y-grupo">
+        <button type="button" data-a11y-fonte-menos aria-label="Diminuir fonte">A−</button>
+        <button type="button" data-a11y-fonte-reset aria-label="Fonte padrão"><span data-a11y-fonte-valor>100%</span></button>
+        <button type="button" data-a11y-fonte-mais aria-label="Aumentar fonte">A+</button>
+      </div>
+    </div>
+    <div class="a11y-linha">
+      <span class="a11y-rotulo">Alto contraste</span>
+      <button type="button" data-a11y-contraste aria-pressed="false">
+        <i data-lucide="contrast" aria-hidden="true"></i>Ativar
+      </button>
+    </div>
+    <div class="a11y-linha">
+      <span class="a11y-rotulo">Movimento</span>
+      <button type="button" data-interruptor-movimento aria-pressed="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
+        <span data-rotulo-movimento>Movimento ligado</span>
+      </button>
+    </div>
+  </div>
+  <button type="button" id="a11y-abrir" class="a11y-botao" aria-expanded="false" aria-controls="a11y-painel" aria-label="Abrir opções de acessibilidade">
+    <i data-lucide="accessibility" aria-hidden="true"></i>
+  </button>
+</div>
+
+<script src="/static/acessibilidade.js"></script>
+<script>
+  // Entrada ao rolar dos cards "por que usar" — respeita o interruptor de
+  // movimento (mesma fonte de verdade que o resto do site).
+  (function () {
+    const cartoes = document.querySelectorAll("[data-revelar]");
+    if (!cartoes.length) return;
+    if (window.spectraMovimentoLigado && !window.spectraMovimentoLigado()) {
+      cartoes.forEach((c) => c.classList.add("revelado"));
+      return;
+    }
+    const observador = new IntersectionObserver(
+      (entradas) => {
+        entradas.forEach((entrada, i) => {
+          if (!entrada.isIntersecting) return;
+          setTimeout(() => entrada.target.classList.add("revelado"), i * 70);
+          observador.unobserve(entrada.target);
+        });
+      },
+      { threshold: 0.2, rootMargin: "0px 0px -40px 0px" }
+    );
+    cartoes.forEach((c) => observador.observe(c));
+  })();
+</script>
+<script src="/static/caminhos.js"></script>
+<script src="/static/inicio.js"></script>
+<!-- Um import map garante UMA cópia do Three.js. Sem ele, o adapter do
+     anime.js baixa a própria e `getInstances` recebe um mesh de outra classe
+     ("Multiple instances of Three.js being imported" → i.includes is not a
+     function). O `?external=three` faz o esm.sh não embutir a dele. -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://esm.sh/three@0.169.0",
+    "animejs": "https://esm.sh/animejs@4",
+    "animejs/adapters/three": "https://esm.sh/animejs@4/adapters/three?external=three"
+  }
+}
+</script>
+<script type="module" src="/static/cubos.js"></script>
+</body>
+</html>
