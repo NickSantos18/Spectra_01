@@ -21,8 +21,11 @@
 
   function lerNumero(chave, padrao) {
     try {
-      const v = Number(localStorage.getItem(chave));
-      return Number.isFinite(v) && v >= 0 && v < NIVEIS_FONTE.length ? v : padrao;
+      const bruto = localStorage.getItem(chave);
+      // Number(null) e Number("") dão 0, que é um nível válido (87,5%).
+      if (bruto === null || bruto.trim() === "") return padrao;
+      const v = Number(bruto);
+      return Number.isInteger(v) && v >= 0 && v < NIVEIS_FONTE.length ? v : padrao;
     } catch {
       return padrao;
     }
@@ -233,6 +236,8 @@
       contraste = contraste === "on" ? "off" : "on";
       gravar(CHAVE_CONTRASTE, contraste);
       aplicarContraste(contraste);
+      // O contraste também troca tokens: gráficos e canvas precisam relê-los.
+      window.dispatchEvent(new CustomEvent("spectra:tema", { detail: tema }));
       atualizarRotulos();
     });
 
