@@ -3,11 +3,15 @@
  * Inicializa todo <canvas class="fundo-animado" data-efeito="..."> da página:
  *   - "varredura": grade com um feixe de scanner que acende pontos ao passar;
  *   - "chuva-hex": colunas de caracteres hexadecimais caindo.
- * O canvas ocupa o elemento pai. As cores vêm dos tokens a cada quadro, então
- * trocar o tema não exige reiniciar nada.
+ * O canvas ocupa o elemento pai. As cores vêm dos tokens: feixe, pontos e
+ * chuva releem a cada quadro; a grade fica pronta num canvas fora da tela e é
+ * refeita no redimensionamento e no evento `spectra:tema`.
  *
- * Desempenho: resolução limitada a 1,5x; pausa com a aba em segundo plano e
- * com o canvas fora da tela; no celular, menos quadros e feixe mais lento.
+ * Desempenho: resolução limitada a 1,5x; no máximo 30 quadros por segundo;
+ * pausa com a aba em segundo plano e com o canvas fora da tela; no celular, a
+ * chuva tem menos quadros e o feixe anda mais devagar. Só uma mudança de
+ * largura sorteia pontos/colunas de novo: mudar só a altura mantém o efeito
+ * onde estava.
  * Movimento parado: a varredura desenha só a grade, uma vez; a chuva some.
  */
 
@@ -15,19 +19,21 @@
   const raiz = document.documentElement;
   const DPR = Math.min(window.devicePixelRatio || 1, 1.5);
   const HEX = "0123456789ABCDEF";
+  const consultaCelular = window.matchMedia("(max-width: 599px)");
 
   const movimentoLigado = () => raiz.dataset.movimento !== "off";
-  const celular = () => window.matchMedia("(max-width: 599px)").matches;
+  const celular = () => consultaCelular.matches;
 
-  /** Uma leitura de estilo por quadro; devolve cor(token, alfa). */
+  /** Uma leitura de estilo por chamada; devolve cor(token, alfa). */
   function paleta() {
     const estilo = getComputedStyle(raiz);
     return (token, alfa) => `rgb(${estilo.getPropertyValue(`--${token}-rgb`).trim()} / ${alfa})`;
   }
 
   const varredura = {
-    iniciar: () => ({ y: -60, pontos: [], ultimo: 0 }),
-    redimensionar(estado, largura, altura) {
+    iniciar: () => ({ y: -60, pontos: [], ultimo: 0, grade: document.createElement("canvas") }),
+    redimensionar(estado, largura, altura, mudouLargura) {
+      if (!mudouLargura) return;
       const quantidade = Math.max(6, Math.min(40, Math.round((largura * altura) / 26000)));
       estado.pontos = Array.from({ length: quantidade }, () => ({
         x: Math.random() * largura,
@@ -36,18 +42,23 @@
         perigo: Math.random() < 0.3,
       }));
     },
-    intervaloMs: () => (celular() ? 33 : 16),
-    grade(ctx, largura, altura, cor) {
-      ctx.strokeStyle = cor("linha-forte", 0.35);
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      for (let x = 0.5; x < largura; x += 22) { ctx.moveTo(x, 0); ctx.lineTo(x, altura); }
-      for (let y = 0.5; y < altura; y += 22) { ctx.moveTo(0, y); ctx.lineTo(largura, y); }
-      ctx.stroke();
+    intervaloMs: () => 33,
+    prepararCores(estado, largura, altura, cor) {
+      const grade = estado.grade;
+      grade.width = Math.round(largura * DPR);
+      grade.height = Math.round(altura * DPR);
+      const g = grade.getContext("2d");
+      g.setTransform(DPR, 0, 0, DPR, 0, 0);
+      g.strokeStyle = cor("linha-forte", 0.35);
+      g.lineWidth = 1;
+      g.beginPath();
+      for (let x = 0.5; x < largura; x += 22) { g.moveTo(x, 0); g.lineTo(x, altura); }
+      for (let y = 0.5; y < altura; y += 22) { g.moveTo(0, y); g.lineTo(largura, y); }
+      g.stroke();
     },
-    estatico(ctx, estado, largura, altura, cor) {
+    estatico(ctx, estado, largura, altura) {
       ctx.clearRect(0, 0, largura, altura);
-      this.grade(ctx, largura, altura, cor);
+      ctx.drawImage(estado.grade, 0, 0, largura, altura);
     },
     quadro(ctx, estado, largura, altura, agora, cor) {
       const passo = estado.ultimo ? Math.min(agora - estado.ultimo, 100) : 16;
@@ -55,8 +66,7 @@
       estado.y += (celular() ? 0.036 : 0.06) * passo; // px por ms
       if (estado.y > altura + 60) estado.y = -60;
 
-      ctx.clearRect(0, 0, largura, altura);
-      this.grade(ctx, largura, altura, cor);
+      this.estatico(ctx, estado, largura, altura);
 
       const rastro = ctx.createLinearGradient(0, estado.y - 56, 0, estado.y);
       rastro.addColorStop(0, cor("primaria", 0));
@@ -80,12 +90,14 @@
 
   const chuvaHex = {
     iniciar: () => ({ colunas: [], tamanho: 14 }),
-    redimensionar(estado, largura) {
+    redimensionar(estado, largura, altura, mudouLargura) {
+      if (!mudouLargura) return;
       estado.tamanho = celular() ? 16 : 14;
-      estado.colunas = Array.from(
-        { length: Math.ceil(largura / estado.tamanho) },
-        () => Math.floor(Math.random() * -40),
-      );
+      // As colunas que já existem continuam caindo; só as novas começam acima do topo.
+      const total = Math.ceil(largura / estado.tamanho);
+      const colunas = estado.colunas.slice(0, total);
+      while (colunas.length < total) colunas.push(Math.floor(Math.random() * -40));
+      estado.colunas = colunas;
     },
     intervaloMs: () => (celular() ? 90 : 70),
     estatico(ctx, estado, largura, altura) {
@@ -100,10 +112,12 @@
       ctx.globalCompositeOperation = "source-over";
 
       ctx.font = `${estado.tamanho}px "JetBrains Mono", ui-monospace, monospace`;
+      const corRara = cor("texto", 0.5);
+      const corComum = cor("primaria-clara", 0.35);
       estado.colunas.forEach((linha, i) => {
         const y = linha * estado.tamanho;
         if (y > 0) {
-          ctx.fillStyle = Math.random() < 0.04 ? cor("texto", 0.5) : cor("primaria-clara", 0.35);
+          ctx.fillStyle = Math.random() < 0.04 ? corRara : corComum;
           ctx.fillText(HEX[(Math.random() * 16) | 0], i * estado.tamanho, y);
         }
         estado.colunas[i] = y > altura && Math.random() > 0.975 ? 0 : linha + 1;
@@ -138,33 +152,45 @@
       pedido = 0;
       if (!largura) return;
       if (!movimentoLigado()) {
-        efeito.estatico(ctx, estado, largura, altura, paleta());
+        efeito.estatico(ctx, estado, largura, altura);
         return;
       }
       if (visivel && !document.hidden) pedido = requestAnimationFrame(laco);
     }
 
+    function prepararCores() {
+      if (largura && efeito.prepararCores) efeito.prepararCores(estado, largura, altura, paleta());
+    }
+
     function medir() {
       const caixa = pai.getBoundingClientRect();
-      largura = Math.max(1, Math.round(caixa.width));
-      altura = Math.max(1, Math.round(caixa.height));
+      const novaLargura = Math.max(1, Math.round(caixa.width));
+      const novaAltura = Math.max(1, Math.round(caixa.height));
+      if (novaLargura === largura && novaAltura === altura) return;
+      const mudouLargura = novaLargura !== largura;
+      largura = novaLargura;
+      altura = novaAltura;
       canvas.width = Math.round(largura * DPR);
       canvas.height = Math.round(altura * DPR);
       canvas.style.width = `${largura}px`;
       canvas.style.height = `${altura}px`;
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-      efeito.redimensionar(estado, largura, altura);
+      efeito.redimensionar(estado, largura, altura, mudouLargura);
+      prepararCores();
       atualizar();
     }
 
     new ResizeObserver(medir).observe(pai);
-    new IntersectionObserver(([entrada]) => {
-      visivel = entrada.isIntersecting;
+    new IntersectionObserver((entradas) => {
+      visivel = entradas[entradas.length - 1].isIntersecting;
       atualizar();
     }).observe(canvas);
     document.addEventListener("visibilitychange", atualizar);
     window.addEventListener("spectra:movimento", atualizar);
-    window.addEventListener("spectra:tema", () => { if (!movimentoLigado()) atualizar(); });
+    window.addEventListener("spectra:tema", () => {
+      prepararCores();
+      if (!movimentoLigado()) atualizar();
+    });
   }
 
   function iniciar() {

@@ -27,10 +27,13 @@
   transition: opacity .55s var(--ease-saida), translate .55s var(--ease-saida),
               transform .2s ease, border-color .2s ease, box-shadow .2s ease;
 }
-.cartao-vivo:hover {
-  transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--primaria) 60%, var(--linha));
-  box-shadow: 0 14px 30px -20px rgb(var(--primaria-rgb) / .55);
+/* Só com mouse: na tela de toque o :hover fica preso e o card não desce. */
+@media (hover: hover) {
+  .cartao-vivo:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--primaria) 60%, var(--linha));
+    box-shadow: 0 14px 30px -20px rgb(var(--primaria-rgb) / .55);
+  }
 }
 
 /* Botões afundam ao clicar (o de acessibilidade não: ele é arrastável). */
@@ -85,7 +88,7 @@ button:not(.a11y-botao):not(:disabled):active,
 
 /* Avisos curtos (toast). */
 .toasts {
-  position: fixed; top: 16px; left: 50%; z-index: 90;
+  position: fixed; top: calc(16px + env(safe-area-inset-top)); left: 50%; z-index: 90;
   transform: translateX(-50%);
   display: grid; gap: 8px;
   width: min(420px, calc(100vw - 32px));

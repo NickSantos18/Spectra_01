@@ -43,9 +43,12 @@ body::before {
     radial-gradient(900px 560px at 100% 100%, var(--brilho-2), transparent 60%);
 }
 
-/* Efeitos animados (fundo.js). O canvas assume o tamanho do pai. */
+/* Efeitos animados (fundo.js). O canvas assume o tamanho do pai. A altura é a
+   da tela com a barra de endereço recolhida (lvh): ela aparecer ou sumir no
+   celular não redimensiona o fundo nem reinicia o efeito. */
 .fundo-fixo {
-  position: fixed; inset: 0; z-index: 0;
+  position: fixed; inset: 0 0 auto 0; z-index: 0;
+  height: 100vh; height: 100lvh;
   pointer-events: none; overflow: hidden;
 }
 .fundo-animado { display: block; pointer-events: none; }
@@ -177,7 +180,9 @@ body::before {
 /* ─────────────────────────────────────────────── 3) painel de acessibilidade */
 
 .a11y-caixa {
-  position: fixed; left: calc(18px + env(safe-area-inset-left)); bottom: 18px; z-index: 60;
+  position: fixed; z-index: 60;
+  left: calc(18px + env(safe-area-inset-left));
+  bottom: calc(18px + env(safe-area-inset-bottom));
   display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
 }
 .a11y-botao {
@@ -219,7 +224,12 @@ body::before {
 .a11y-painel button[aria-pressed="true"] { border-color: var(--primaria); color: var(--primaria-clara); }
 .a11y-titulo { margin: 0; font-family: var(--fonte-titulo, sans-serif); font-weight: 700; font-size: .84rem; }
 
-@media (max-width: 640px) { .a11y-caixa { left: calc(12px + env(safe-area-inset-left)); bottom: 12px; } }
+@media (max-width: 640px) {
+  .a11y-caixa {
+    left: calc(12px + env(safe-area-inset-left));
+    bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+}
 @media (max-width: 599px) {
   body:has(.barra-abas) .a11y-caixa {
     bottom: calc(var(--abas-h, 60px) + env(safe-area-inset-bottom) + 12px);
