@@ -96,13 +96,32 @@ fundação visual, que veio depois:
 
 - **Logo**: a primeira proposta foi rejeitada pelo usuário e removida; ainda
   usando o ícone placeholder (escudo simples) que já existia no projeto.
-  Ele disse que vai desenhar por conta própria — quando tiver o arquivo,
+  O usuário vai desenhar por conta própria — quando tiver o arquivo,
   é só pedir para aplicar no cabeçalho, hero, sidebar e favicon.
 - **Contatos do rodapé são placeholder**: WhatsApp `(11) 99999-9999`,
   Instagram `@spectra.seguranca`, e-mail `contato@spectra.app` — trocar
   pelos reais, agora num lugar só: `web/parciais/rodape.html`.
 - **Textos de Política de Privacidade e Termos de Uso** são modelo
   genérico — revisar com jurídico antes de publicar de verdade.
+- **Ajustes da revisão final da fundação visual que ficaram de fora**
+  (os arquivos estavam com mudanças não commitadas de outras sessões):
+  - `laudo.js`: o polígrafo e o `scrollIntoView` olham
+    `prefers-reduced-motion` em vez de `window.spectraMovimentoLigado()`;
+    o laço do polígrafo deve parar/voltar no evento `spectra:movimento` e
+    redesenhar parado no `spectra:tema`.
+  - `historico.html:66`: a frase "Guardamos só host, domínio, nota e
+    horário" está desatualizada (também guarda nível e códigos dos sinais).
+  - `visao-geral.*`: sem sinais, esconder a caixa vazia do gráfico; em falha
+    de carga, esconder `[data-com-dados]` e mostrar um estado de erro em vez
+    de "0/0/0/0%"; mesmo mapa de cores de veredito do histórico; redesenho
+    por troca de tema sem animação.
+  - `laudo.css`: `.trilho` em 600–1023 com `overflow-x: hidden` e os 84px de
+    folga em `.trilho-base` (não no contêiner); `.copiloto-caixa` ≥ 600 com
+    `env(safe-area-inset-bottom)`.
+  - `historico.js`: depois de apagar, levar o foco ao título ou contador.
+  - `app.py`: `Cache-Control: no-store` em `/painel*` e `/api/painel*`.
+  - `README.md`: a árvore de arquivos ainda fala em "histórico da sessão" e
+    não lista `analises.py`, `rotulos_sinais.py` e `parciais/`.
 
 ## 7. Nota sobre git
 
