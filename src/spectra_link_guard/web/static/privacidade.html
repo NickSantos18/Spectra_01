@@ -41,7 +41,11 @@
   <h2>1. Dados que coletamos</h2>
   <ul>
     <li>Conta: nome e e-mail informados no cadastro (ou dados básicos do Google, no login social).</li>
-    <li>Uso: host e domínio dos links verificados, nota de risco e data/hora — nunca a URL completa, que pode conter dados sensíveis na query.</li>
+    <li>Uso: de cada análise feita com login, guardamos o host e o domínio do
+    link, a nota de risco, o nível do veredito, a data e a hora e os códigos dos
+    sinais de risco encontrados. A URL completa nunca é guardada, porque o
+    caminho e a query podem conter token de acesso ou dado pessoal. Análises
+    feitas sem login não são guardadas.</li>
     <li>Técnicos: endereço IP, usado apenas para limitar o número de análises por período.</li>
   </ul>
 
@@ -51,8 +55,11 @@
   terceiros para fins de marketing.</p>
 
   <h2>3. Por quanto tempo guardamos</h2>
-  <p>O histórico de análises fica limitado às últimas entradas da sessão e pode
-  ser apagado a qualquer momento pelo próprio usuário, item por item.</p>
+  <p>Cada conta só vê o próprio histórico. Ele fica guardado no banco de dados
+  do Spectra, com até 500 análises por conta; passando disso, as mais antigas
+  saem para dar lugar às novas. Na tela Histórico você pode apagar as análises
+  uma a uma ou todas de uma vez, e apagar a conta apaga também todas as
+  análises dela.</p>
 
   <h2>4. Seus direitos</h2>
   <p>Você pode pedir a exclusão da sua conta e dos seus dados a qualquer
