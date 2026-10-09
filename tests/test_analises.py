@@ -86,6 +86,34 @@ def test_remover_todas():
     assert analises.listar(usuario) == []
 
 
+def test_remover_todas_so_apaga_as_do_dono():
+    ana, bruno = _usuario("ana@exemplo.com.br"), _usuario("bruno@exemplo.com.br")
+    analises.registrar(ana, _relatorio(host="ana.com"))
+    analises.registrar(ana, _relatorio(host="ana.com"))
+    do_bruno = analises.registrar(bruno, _relatorio(host="bruno.com"))
+
+    assert analises.remover_todas(ana) == 2
+    assert analises.listar(ana) == []
+    assert [i["id"] for i in analises.listar(bruno)] == [do_bruno]
+    assert analises.resumo(bruno)["total"] == 1
+
+
+def test_banco_ja_aberto_ganha_a_tabela_registrada_depois(monkeypatch):
+    """Caminho real de atualização: a primeira conexão do processo já criou
+    só usuarios/sessoes quando o esquema de analises chega."""
+    monkeypatch.setattr(bd, "_ESQUEMAS", [bd._ESQUEMA])
+    usuario = _usuario()
+    assert bd._PRONTO is True
+    with bd.conexao() as con:
+        tabelas = {nome for (nome,) in con.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
+    assert "analises" not in tabelas
+
+    bd.registrar_esquema(analises._ESQUEMA)
+
+    item_id = analises.registrar(usuario, _relatorio())
+    assert [i["id"] for i in analises.listar(usuario)] == [item_id]
+
+
 def test_limite_por_usuario_descarta_as_mais_antigas(monkeypatch):
     monkeypatch.setattr(analises, "LIMITE_POR_USUARIO", 3)
     usuario = _usuario()

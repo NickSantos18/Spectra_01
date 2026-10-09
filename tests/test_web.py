@@ -234,6 +234,22 @@ def test_apagar_todo_o_historico(cliente):
     assert cliente.get("/api/painel/historico").json() == {"itens": []}
 
 
+def test_apagar_todo_o_historico_nao_mexe_no_dos_outros(cliente):
+    entrar(cliente, "ana@exemplo.com.br")
+    analisar(cliente, "https://exemplo.com")
+    analisar(cliente, "https://outro-exemplo.com")
+    itens_da_ana = cliente.get("/api/painel/historico").json()["itens"]
+    assert len(itens_da_ana) == 2
+
+    bruno = TestClient(app)
+    entrar(bruno, "bruno@exemplo.com.br")
+    analisar(bruno, "https://exemplo.com")
+    assert bruno.delete("/api/painel").status_code == 204
+    assert bruno.get("/api/painel/historico").json() == {"itens": []}
+
+    assert cliente.get("/api/painel/historico").json()["itens"] == itens_da_ana
+
+
 def test_estatisticas_tem_o_formato_do_dashboard(cliente):
     entrar(cliente)
     analisar(cliente, "https://itau.seguranca-cliente.top/atualizar/senha")
