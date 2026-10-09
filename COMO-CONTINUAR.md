@@ -50,11 +50,12 @@ que logar de novo toda hora que reiniciar o servidor.
 python -m pytest -q
 ```
 
-Eram **190 testes**, todos offline (sem tocar rede), na última execução.
+Eram **193 testes**, todos offline (sem tocar rede), na última execução.
 
 ## 5. O que já foi feito (redesign "Spectra")
 
-Todos os 11 itens pedidos no redesign estão implementados:
+Os 11 itens pedidos no redesign estão implementados (1 a 11); o item 12 é a
+fundação visual, que veio depois:
 
 1. Título da aba = "Spectra" em todas as páginas
 2. Cursor de texto removido de elementos não-editáveis (`rodape.css`)
@@ -85,9 +86,9 @@ Todos os 11 itens pedidos no redesign estão implementados:
 | Checklist heurística (itens 7/8) | `src/spectra_link_guard/sintaxe.py` → `checklist_heuristico()` |
 | Rotas e páginas | `src/spectra_link_guard/web/app.py` |
 | Telas (HTML) | `src/spectra_link_guard/web/static/*.html` |
-| Estilo compartilhado (footer, tema claro, cursor, a11y) | `src/spectra_link_guard/web/static/rodape.css` |
+| Estilo compartilhado (cursor, fundo da página, rodapé, botão e painel de acessibilidade) | `src/spectra_link_guard/web/static/rodape.css` |
 | Acessibilidade (tema/fonte/contraste/arrastar) | `src/spectra_link_guard/web/static/acessibilidade.js` |
-| Cores (todas) | `src/spectra_link_guard/web/static/tokens.css` |
+| Cores (todas), tema claro e alto contraste | `src/spectra_link_guard/web/static/tokens.css` |
 | Menu, rodapé e acessibilidade (um lugar só) | `src/spectra_link_guard/web/parciais/` |
 | Histórico por usuário e estatísticas | `src/spectra_link_guard/web/analises.py` |
 
@@ -105,6 +106,7 @@ Todos os 11 itens pedidos no redesign estão implementados:
 
 ## 7. Nota sobre git
 
-O projeto tem repositório próprio em `spectra 01/`, com uma branch por
-sub-projeto (a fundação visual foi feita em `fundacao-visual`). O banco
-`dados/` fica fora do git de propósito, para não levar contas de teste.
+O projeto tem repositório próprio em `spectra 01/`: branch `main` + uma
+branch de trabalho por sub-projeto (a fundação visual foi feita em
+`fundacao-visual`). O banco `dados/` fica fora do git de propósito, para não
+levar contas de teste.

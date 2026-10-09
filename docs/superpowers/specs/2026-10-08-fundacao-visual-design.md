@@ -89,9 +89,9 @@ Mesma regra que existe hoje (`--linha` = `--linha-forte`, `--texto-2` e
 - Cores fixas espalhadas que viram token: `body{background:#0f171a}` e
   autofill em `inicio.html`; o degradê da manchete (`.letra`); `#04191a` em
   `laudo.css`; anéis de foco `rgba(17,142,148,…)`; cores do polígrafo em
-  `laudo.js`; `COR_NIVEL` em `historico.js` (`cubos.js` mantém sua paleta: só usa cores
-  de marca, nenhum neutro). Gráficos e
-  canvas leem os tokens com `getComputedStyle`.
+  `laudo.js`; `COR_NIVEL` em `historico.js`. Gráficos e canvas leem os
+  tokens com `getComputedStyle`.
+- `cubos.js` mantém sua paleta (só usa cores de marca, nenhum neutro).
 - **Teste de regressão:** nenhum arquivo em `web/static/` (exceto
   `tokens.css`) pode conter os neutros antigos `#0f171a`, `#131e22`,
   `#18262b`, `#22353b`, `#2e474f`, `#9fb3b8`, `#85999f` (sem diferenciar
