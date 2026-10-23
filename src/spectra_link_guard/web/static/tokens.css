@@ -31,6 +31,15 @@
   --perigo: #FF4438;          --perigo-rgb: 255 68 56;
   --sobre-primaria: #04191A;  --sobre-primaria-rgb: 4 25 26;    /* sobre o teal: 4.6:1 */
 
+  /* Escala dos vereditos nos gráficos (só marcas, nunca texto). Validada como
+     paleta: vizinhas separáveis para daltonismo e visão normal, >= 3:1 contra
+     --base-2. Mudou uma? Rode o validador de novo nos dois temas. */
+  --nivel-seguro: #0FA05C;    --nivel-seguro-rgb: 15 160 92;
+  --nivel-baixo: #3986E4;     --nivel-baixo-rgb: 57 134 228;
+  --nivel-atencao: #B88C19;   --nivel-atencao-rgb: 184 140 25;
+  --nivel-alto: #AD4A00;      --nivel-alto-rgb: 173 74 0;
+  --nivel-critico: #ED4074;   --nivel-critico-rgb: 237 64 116;
+
   /* brilho estático dos cantos da página (rodape.css) */
   --brilho-1: rgb(17 142 148 / .09);
   --brilho-2: rgb(37 72 160 / .10);
@@ -57,6 +66,13 @@
   --terciaria: #806500;       --terciaria-rgb: 128 101 0;       /* 5.1:1 */
   --perigo: #C62E24;          --perigo-rgb: 198 46 36;          /* 5.1:1 */
 
+  /* atenção fica a 2.7:1 no branco: a legenda sempre traz nome e número */
+  --nivel-seguro: #0E9254;    --nivel-seguro-rgb: 14 146 84;
+  --nivel-baixo: #2663C9;     --nivel-baixo-rgb: 38 99 201;
+  --nivel-atencao: #C69612;   --nivel-atencao-rgb: 198 150 18;
+  --nivel-alto: #993F00;      --nivel-alto-rgb: 153 63 0;
+  --nivel-critico: #E22767;   --nivel-critico-rgb: 226 39 103;
+
   --brilho-1: rgb(17 142 148 / .07);
   --brilho-2: rgb(37 72 160 / .06);
 
@@ -79,3 +95,20 @@
   outline-width: 3px !important;
   outline-offset: 2px !important;
 }
+
+/* Identidade Spectra fornecida pelo proprietário. */
+.conta-foto{display:block;width:100%;height:100%;object-fit:cover;border-radius:0}
+.conta-inicial{border-radius:0;overflow:hidden}
+.spectra-logo-home,.spectra-logo-menu,.spectra-logo-rodape{display:block;width:142px;height:64px;background:transparent;border-radius:0;flex-shrink:0}
+.spectra-logo-hero{display:block;width:280px;aspect-ratio:905/440;border-radius:0}
+.spectra-logo-home>img,.spectra-logo-menu>img,.spectra-logo-rodape>img,.spectra-logo-hero>img{display:block;width:100%;height:100%;object-fit:contain}
+:root .marca-clara{display:none}
+:root[data-tema="claro"] .marca-escura{display:none}
+:root[data-tema="claro"] .marca-clara{display:block}
+.spectra-logo-rodape{width:170px;height:96px!important}
+.trilho .menu{overflow-y:auto;min-height:0}
+.glossario-lista{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 28px}
+.glossario-topico{padding:18px 0 22px;border-bottom:1px solid var(--linha-forte)}
+.glossario-topico dt{margin-top:0!important;margin-bottom:10px}
+.glossario-topico dd{margin:0!important}
+@media(max-width:720px){.glossario-lista{grid-template-columns:1fr}.spectra-logo-home{width:102px;height:48px}.spectra-logo-hero{width:220px}}

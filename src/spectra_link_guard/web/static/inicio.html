@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="/static/tokens.css">
 <link rel="stylesheet" href="/static/rodape.css">
 <link rel="stylesheet" href="/static/animacoes.css">
+<link rel="stylesheet" href="/static/inicio-rolagem.css">
 
 <script src="/static/movimento.js"></script>
 <script src="/static/acessibilidade.js"></script>
@@ -94,7 +95,7 @@
   }
   .bloco-palavra { display: inline-block; }
   /* A letra é visível por padrão. A animação de entrada só é declarada quando
-     o movimento está ligado — senão a manchete dependeria de uma animação
+     o movimento está ligado - senão a manchete dependeria de uma animação
      rodar para existir, e some em aba oculta ou se algo travar o CSS. */
   .letra {
     display: inline-block;
@@ -142,125 +143,58 @@
   }
 </style>
 
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<link rel="icon" href="/static/logo-spectra-escuro.svg">
 </head>
 
-<body class="font-corpo text-txt antialiased">
+<body class="font-corpo text-txt antialiased inicio-imersivo">
 
 <a href="#conteudo" class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-3 focus:rounded focus:bg-marca focus:px-4 focus:py-2 focus:font-display focus:font-semibold focus:text-sobre-marca">
   Pular para o conteúdo
 </a>
 
 <!-- ══════════════════════════════════════════════════════════ barra -->
-<header class="sticky top-0 z-30 border-b border-linha bg-fundo/95 backdrop-blur">
-  <div class="mx-auto flex max-w-6xl items-center gap-4 px-5 py-3.5 sm:px-8">
 
-    <!-- ╔═════════════════════════════════════════════════════════════╗
-         ║  LOGO — BARRA                                               ║
-         ║  Troque este <a> inteiro pela sua logo final:               ║
-         ║                                                             ║
-         ║  <a href="/inicio" class="flex items-center">               ║
-         ║    <img src="/static/logo.svg" alt="Spectra"                ║
-         ║         class="h-8 w-auto">                                 ║
-         ║  </a>                                                       ║
-         ║                                                             ║
-         ║  Altura recomendada: h-8 (32px). Use SVG para não borrar    ║
-         ║  em tela retina. Salve em src/spectra_link_guard/web/static/║
-         ╚═════════════════════════════════════════════════════════════╝ -->
-    <a href="/inicio" class="flex items-center gap-2.5 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-marca-claro">
-      <span class="grid h-8 w-8 place-items-center rounded bg-marca text-sobre-marca" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-        </svg>
-      </span>
-      <span class="font-display text-[15px] font-extrabold tracking-[0.16em]">SPECTRA</span>
-    </a>
-
-    <nav class="ml-auto flex items-center gap-2">
-      <button type="button" data-interruptor-movimento aria-pressed="true"
-              class="hidden items-center gap-2 rounded px-3 py-2 font-display text-xs font-semibold text-txt-3 transition hover:bg-sup hover:text-txt focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro sm:flex">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="h-4 w-4" aria-hidden="true">
-          <path d="M3 12h4l3-8 4 16 3-8h4"/>
-        </svg>
-        <span data-rotulo-movimento>Movimento ligado</span>
-      </button>
-
-      <button type="button" data-abrir="entrar"
-              class="rounded px-4 py-2 font-display text-sm font-semibold text-txt-2 transition hover:bg-sup hover:text-txt focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro">
-        Entrar
-      </button>
-      <button type="button" data-abrir="cadastrar"
-              class="rounded bg-marca px-4 py-2 font-display text-sm font-semibold text-sobre-marca transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro">
-        Cadastrar-se
-      </button>
-    </nav>
-  </div>
-</header>
 
 <div id="faixa-erro" hidden class="border-b border-perigo/50 bg-perigo/10 px-5 py-3 text-center text-sm text-perigo sm:px-8"></div>
 
 <main id="conteudo">
 
   <!-- ═══════════════════════════════════════════════════════════ hero -->
-  <section class="relative overflow-hidden">
+  <section id="inicio-historia" class="inicio-historia" aria-label="Conheça o Spectra">
+    <div class="inicio-palco">
+      <div class="inicio-ambiente" aria-hidden="true"><canvas class="fundo-animado" data-efeito="circuitos"></canvas></div>
+      <div class="inicio-grade" aria-hidden="true"></div>
+      <div class="inicio-portal" aria-hidden="true"><span></span><span></span><span></span></div>
 
-    <!-- Grade de cubos (Three.js + anime.js), em cubos.js. É o visual do hero.
-         Os caminhos flutuantes saíram DESTE bloco de propósito: dois fundos
-         animados no mesmo espaço competem. Eles seguem no /painel.
-         Para voltar atrás, troque esta div pelos dois <svg id="caminhos-*">. -->
-    <div id="cubos" class="pointer-events-none absolute inset-0 opacity-50" aria-hidden="true"></div>
+      <div class="inicio-identidade" id="inicio-identidade">
+        <span class="spectra-logo-hero inicio-logo">
+          <img class="marca-escura" src="/static/logo-spectra-escuro.svg" alt="Spectra">
+          <img class="marca-clara" src="/static/logo-spectra-claro.svg" alt="Spectra">
+        </span>
+      </div>
 
-  <div class="relative z-10 mx-auto flex max-w-3xl flex-col items-center px-5 pb-16 pt-16 text-center sm:px-8 sm:pt-24">
+      <div id="apresentacao" class="inicio-apresentacao" tabindex="-1">
+        <div class="inicio-apresentacao-conteudo">
+          <p class="inicio-sobretitulo">Antecipe o risco.</p>
+          <h1 id="manchete" data-texto="Ache a falha antes que alguém ache." aria-label="Ache a falha antes que alguém ache.">Ache a falha antes que alguém ache.</h1>
+          <div class="inicio-convite">
+            <p class="inicio-resumo">O Spectra varre sua aplicação, traduz cada falha em risco de negócio e entrega a correção pronta com o pull request já aberto no seu repositório.</p>
+            <div class="inicio-acoes">
+              <button type="button" data-abrir="cadastrar" class="inicio-botao inicio-botao-principal">Cadastrar-se <span aria-hidden="true">↗</span></button>
+              <button type="button" data-abrir="entrar" class="inicio-botao">Entrar <span aria-hidden="true">→</span></button>
+            </div>
+            <p class="inicio-nota">Varredura passiva · sem instalar nada no servidor</p>
+          </div>
+        </div>
+      </div>
 
-    <!-- ╔═════════════════════════════════════════════════════════════╗
-         ║  LOGO — HERO (marca grande, centralizada)                    ║
-         ║  Troque este <div> inteiro por:                              ║
-         ║                                                              ║
-         ║  <img src="/static/logo.svg" alt="Spectra"                   ║
-         ║       class="mb-9 h-20 w-auto">                              ║
-         ║                                                              ║
-         ║  Altura recomendada: h-20 (80px) no desktop.                 ║
-         ║  Se a logo for horizontal (marca + nome), suba para h-14 e   ║
-         ║  apague o <h1> abaixo, senão o nome aparece duas vezes.      ║
-         ╚═════════════════════════════════════════════════════════════╝ -->
-    <div class="subir mb-9 grid h-20 w-20 place-items-center rounded-2xl border border-linha-forte bg-sup shadow-suave" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="h-9 w-9 text-marca-claro">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-        <path d="M9 12l2 2 4-4"/>
-      </svg>
-    </div>
-
-    <h1 id="manchete"
-        class="font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-balance sm:text-6xl"
-        data-texto="Ache a falha antes que alguém ache."
-        aria-label="Ache a falha antes que alguém ache.">
-      Ache a falha antes que alguém ache.
-    </h1>
-
-    <p class="subir mt-6 max-w-xl text-base font-light leading-relaxed text-txt-2 sm:text-lg" style="animation-delay:.12s">
-      O Spectra varre sua aplicação, traduz cada falha em risco de negócio e
-      entrega a correção pronta — com o pull request já aberto no seu repositório.
-    </p>
-
-    <div class="subir mt-10 flex w-full flex-col gap-3 sm:w-auto sm:flex-row" style="animation-delay:.18s">
-      <button type="button" data-abrir="cadastrar"
-              class="rounded bg-marca px-7 py-3.5 font-display text-[15px] font-bold text-sobre-marca shadow-suave transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro">
-        Cadastrar-se
-      </button>
-      <button type="button" data-abrir="entrar"
-              class="rounded border border-linha-forte px-7 py-3.5 font-display text-[15px] font-bold text-txt transition hover:border-marca hover:text-marca-claro focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-claro">
-        Entrar
-      </button>
-    </div>
-
-    <p class="subir mt-5 font-mono text-[11px] uppercase tracking-[0.14em] text-txt-3" style="animation-delay:.24s">
-      Varredura passiva · sem instalar nada no servidor
-    </p>
+      <a class="inicio-rolar" href="#apresentacao" id="inicio-rolar"><span>Role para explorar</span><span class="inicio-traco" aria-hidden="true"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 4v16m-6-6 6 6 6-6"/></svg></a>
+      <span class="inicio-indice" aria-hidden="true"><span id="inicio-etapa">01</span> <span>/ 03</span></span>
     </div>
   </section>
 
   <!-- ════════════════════════════════════════════════════════ o que faz -->
-  <section class="border-y border-linha bg-sup/40">
+  <section id="inicio-recursos" class="border-y border-linha bg-sup/40" tabindex="-1">
     <div class="mx-auto grid max-w-6xl gap-px bg-linha px-0 sm:grid-cols-3">
 
       <article class="bg-fundo p-7 sm:p-9">
@@ -322,7 +256,7 @@
             <i data-lucide="gauge" class="h-5 w-5"></i>
           </span>
           <h3 class="mt-4 font-display text-[15px] font-bold">Pontuação explicável</h3>
-          <p class="mt-2 text-sm font-light leading-relaxed text-txt-2">Cada nota de risco é a soma auditável dos sinais encontrados — sem caixa-preta.</p>
+          <p class="mt-2 text-sm font-light leading-relaxed text-txt-2">Cada nota de risco é a soma auditável dos sinais encontrados sem caixa-preta.</p>
         </article>
 
         <article class="motivo-card cartao-vivo rounded-xl border border-linha bg-sup p-6" data-revelar>
@@ -575,19 +509,6 @@
 <script src="/static/fundo.js" defer></script>
 <script src="/static/caminhos.js"></script>
 <script src="/static/inicio.js"></script>
-<!-- Um import map garante UMA cópia do Three.js. Sem ele, o adapter do
-     anime.js baixa a própria e `getInstances` recebe um mesh de outra classe
-     ("Multiple instances of Three.js being imported" → i.includes is not a
-     function). O `?external=three` faz o esm.sh não embutir a dele. -->
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://esm.sh/three@0.169.0",
-    "animejs": "https://esm.sh/animejs@4",
-    "animejs/adapters/three": "https://esm.sh/animejs@4/adapters/three?external=three"
-  }
-}
-</script>
-<script type="module" src="/static/cubos.js"></script>
+<script src="/static/inicio-rolagem.js"></script>
 </body>
 </html>

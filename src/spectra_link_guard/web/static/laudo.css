@@ -21,9 +21,11 @@
   --vao: 14px;
 }
 
-body[data-estado="seguro"], body[data-estado="baixo"] { --sinal: var(--secundaria); }
-body[data-estado="atencao"] { --sinal: var(--terciaria); }
-body[data-estado="alto"], body[data-estado="critico"] { --sinal: var(--perigo); }
+body[data-estado="seguro"] { --sinal: var(--nivel-seguro); }
+body[data-estado="baixo"] { --sinal: var(--nivel-baixo); }
+body[data-estado="atencao"] { --sinal: var(--nivel-atencao); }
+body[data-estado="alto"] { --sinal: var(--nivel-alto); }
+body[data-estado="critico"] { --sinal: var(--nivel-critico); }
 
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -380,11 +382,11 @@ h1, h2, h3 { margin: 0; font-family: var(--fonte-titulo); font-weight: 700; line
 @media (max-width: 1180px) { .q-hist-resumo, .q-hist-lista { grid-column: span 12; } }
 
 .hist-resumo-corpo { display: flex; flex-direction: column; align-items: center; gap: 14px; }
-.hist-grafico { width: 160px; height: 160px; }
-.hist-legenda { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; gap: 7px; }
-.hist-legenda li { display: flex; align-items: center; gap: 8px; font-size: .78rem; color: var(--texto-2); }
-.hist-legenda .ponto { width: 9px; height: 9px; flex: none; border-radius: 999px; }
-.hist-legenda .qtd { margin-left: auto; font-family: var(--fonte-mono); color: var(--texto-3); }
+/* Coluna estreita: o radial empilha anéis e legenda. */
+.hist-grafico { width: 100%; }
+.hist-grafico .radial { grid-template-columns: 1fr; justify-items: center; gap: 16px; }
+.hist-grafico .radial-figura { max-width: 190px; }
+.hist-grafico .radial-legenda { width: 100%; }
 
 .tabela-hist { width: 100%; border-collapse: collapse; font-size: .82rem; }
 .tabela-hist th {
@@ -424,7 +426,7 @@ h1, h2, h3 { margin: 0; font-family: var(--fonte-titulo); font-weight: 700; line
 .aprender-lista { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; }
 .aprender-passos { padding-left: 24px; }
 
-.glossario-lista { margin: 0; display: grid; gap: 4px 18px; grid-template-columns: repeat(2, 1fr); }
+.glossario-lista { margin: 0; display: grid; gap: 12px 28px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (max-width: 720px) { .glossario-lista { grid-template-columns: 1fr; } }
 .glossario-lista dt { font-family: var(--fonte-titulo); font-weight: 700; font-size: .84rem; margin-top: 12px; }
 .glossario-lista dd { margin: 3px 0 0; font-size: .82rem; color: var(--texto-2); line-height: 1.6; }
@@ -454,6 +456,115 @@ h1, h2, h3 { margin: 0; font-family: var(--fonte-titulo); font-weight: 700; line
 .grafico-caixa { position: relative; height: 240px; }
 .grafico-alto { height: 280px; }
 .vg-sinais-vazio { margin: 0; color: var(--texto-3); font-size: .84rem; }
+
+/* Topo do gráfico de tempo: título à esquerda, métricas clicáveis à direita. */
+.vg-tempo-topo {
+  display: flex; flex-wrap: wrap; align-items: stretch; justify-content: space-between;
+  border-bottom: 1px solid var(--linha);
+}
+.vg-tempo-titulo { display: grid; align-content: center; gap: 4px; padding: 14px 16px; }
+.vg-tempo-sub { margin: 0; font-size: .8rem; color: var(--texto-3); }
+.vg-metricas { display: flex; }
+.vg-metrica {
+  position: relative;
+  display: grid; align-content: center; gap: 4px;
+  min-width: 132px; min-height: 44px; padding: 12px 20px;
+  border: 0; border-left: 1px solid var(--linha);
+  background: transparent; color: var(--texto-3);
+  text-align: left; cursor: pointer;
+  transition: background .16s, color .16s;
+}
+.vg-metrica:hover { background: rgb(var(--base-3-rgb) / .6); }
+.vg-metrica[aria-pressed="true"] { background: var(--base-3); color: var(--texto); }
+.vg-metrica[aria-pressed="true"]::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+  background: var(--primaria-clara);
+}
+.vg-metrica:focus-visible { outline: 2px solid var(--primaria-clara); outline-offset: -2px; }
+.vg-metrica-rotulo {
+  font-family: var(--fonte-mono); font-size: .6rem;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--texto-3);
+}
+.vg-metrica-valor {
+  font-family: var(--fonte-titulo); font-weight: 700;
+  font-size: 1.5rem; line-height: 1.1; color: inherit;
+}
+
+/* Barras radiais (graficos.js). */
+.radial {
+  display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,210px),1fr));
+  align-items: center; gap: 24px;
+}
+.radial-figura { width: 100%; max-width:260px;justify-self:center;aspect-ratio: 1; }
+.radial-svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.radial-trilho { stroke: var(--base-3); }
+.radial-arco {
+  filter:drop-shadow(0 0 3px currentColor);
+  transition: stroke-dasharray .9s cubic-bezier(.22, 1, .36, 1), opacity .16s;
+}
+.radial-total {
+  font-family: var(--fonte-titulo); font-weight: 700; font-size: 26px;
+  fill: var(--texto);
+}
+.radial-sub {
+  font-family: var(--fonte-mono); font-size: 8.5px;
+  letter-spacing: .12em; text-transform: uppercase; fill: var(--texto-3);
+}
+.radial-legenda { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; min-width:0;width:100%; }
+.radial-linha {
+  display: grid; grid-template-columns: 10px minmax(0, 1fr) minmax(2.5ch,auto) 4.4ch;
+  align-items: center; gap: 10px;
+  padding: 10px 8px; border-radius: 0;border-bottom:1px solid var(--linha);
+  font-size: .84rem; color: var(--texto-2);
+  transition: background .16s, opacity .16s;
+}
+.radial-ponto { width: 10px; height: 10px; border-radius: 0; }
+.radial-nome{min-width:0;overflow-wrap:anywhere;line-height:1.4}
+.radial-valor { color: var(--texto); font-weight: 700; font-variant-numeric: tabular-nums;text-align:right; }
+.radial-linha:focus-visible{outline:2px solid var(--primaria-clara);outline-offset:2px}
+.verificacao-cobertura{margin:0;padding:14px 20px;border-top:1px solid var(--linha);border-left:3px solid var(--primaria-clara);color:var(--texto-2);font-size:.82rem;background:var(--base-3)}
+.verificacao-limitada .sentenca .destaque,.verificacao-limitada .veredito-icone{color:var(--texto-2)}
+.radial-pct {
+  text-align: right; font-family: var(--fonte-mono); font-size: .72rem;
+  color: var(--texto-3); font-variant-numeric: tabular-nums;
+}
+/* Foco num anel ou numa linha: o par fica, o resto apaga. */
+.radial[data-foco] .radial-arco { opacity: .25; }
+.radial[data-foco] .radial-linha { opacity: .45; }
+.radial[data-foco="seguro"] [data-chave="seguro"],
+.radial[data-foco="baixo"] [data-chave="baixo"],
+.radial[data-foco="atencao"] [data-chave="atencao"],
+.radial[data-foco="alto"] [data-chave="alto"],
+.radial[data-foco="critico"] [data-chave="critico"] { opacity: 1; }
+.radial-linha:hover { background: var(--base-3); }
+
+/* Barras horizontais (graficos.js). */
+.barras { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
+.barra-topo {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  margin-bottom: 7px;
+}
+.barra-nome { font-size: .84rem; color: var(--texto-2); min-width: 0; }
+.barra-valor {
+  flex: none; font-weight: 500; font-size: .84rem; color: var(--texto);
+  font-variant-numeric: tabular-nums;
+}
+.barra-pct { font-family: var(--fonte-mono); font-size: .72rem; font-weight: 400; color: var(--texto-3); }
+.barra-trilho { height: 12px; border-radius: 0; background: var(--base-3); overflow: hidden; }
+.barra-cheia {
+  display: block; height: 100%; border-radius: 0;
+  background: linear-gradient(90deg,var(--primaria),var(--primaria-clara));
+  transition: width .9s cubic-bezier(.22, 1, .36, 1);
+}
+
+@media (max-width: 560px) {
+  .vg-metricas { width: 100%; border-top: 1px solid var(--linha); }
+  .vg-metrica { flex: 1; min-width: 0; }
+  .vg-metrica:first-child { border-left: 0; }
+  .radial { grid-template-columns: 1fr; justify-items: center; }
+  .radial-figura { max-width: 220px; }
+  .radial-legenda { width: 100%; }
+}
 
 .vg-vazio { grid-column: span 12; }
 .vg-vazio-corpo { display: grid; justify-items: center; gap: 10px; padding: 40px 16px; text-align: center; }

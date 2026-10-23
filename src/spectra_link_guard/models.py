@@ -162,6 +162,21 @@ class AnaliseLink:
         default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds")
     )
 
+    @property
+    def verificacao(self) -> dict[str, Any]:
+        consultados = [r.provedor for r in self.reputacao
+                       if r.status in (StatusReputacao.LIMPO, StatusReputacao.MALICIOSO)]
+        return {
+            'limitada': not bool(consultados),
+            'provedores_consultados': consultados,
+            'motivo': (
+                'Nenhuma fonte de reputação retornou um resultado conclusivo. '
+                'Ausência de sinais não confirma segurança, conteúdo autorizado ou ausência de malware.'
+                if not consultados else
+                'Foram obtidos resultados de reputação. A análise permanece passiva e não garante a segurança do conteúdo.'
+            ),
+        }
+
     def to_dict(self) -> dict[str, Any]:
         """Formato pronto para virar resposta JSON de uma API."""
         return {
@@ -172,6 +187,7 @@ class AnaliseLink:
             "risco": self.risco,
             "nivel": self.nivel.value,
             "resumo": self.resumo,
+            "verificacao": self.verificacao,
             "achados": [a.to_dict() for a in self.achados],
             "checklist": [c.to_dict() for c in self.checklist],
             "tls": self.tls.to_dict() if self.tls else None,

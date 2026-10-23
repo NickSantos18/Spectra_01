@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="/static/laudo.css">
 <link rel="stylesheet" href="/static/rodape.css">
 <link rel="stylesheet" href="/static/animacoes.css">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<link rel="icon" href="/static/logo-spectra-escuro.svg">
 <script src="/static/movimento.js"></script>
 <script src="/static/acessibilidade.js"></script>
 <script src="/static/animacoes.js"></script>
@@ -21,22 +21,17 @@
 
 <header class="documento-header">
   <a href="/inicio">
-    <span class="chancela-marca" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-      </svg>
-    </span>
-    <strong>SPECTRA</strong>
+    <span class="spectra-logo-home"><img class="marca-escura" src="/static/logo-spectra-escuro.svg" alt="Spectra"><img class="marca-clara" src="/static/logo-spectra-claro.svg" alt="Spectra"></span>
   </a>
 </header>
 
 <main class="documento-conteudo">
   <h1>Política de Privacidade</h1>
-  <p class="documento-atualizado">Última atualização: <span data-ano-atual>2026</span> — texto modelo, edite em <code>web/static/privacidade.html</code></p>
+  <p class="documento-atualizado">Última atualização: <span data-ano-atual>2026</span> - texto modelo, edite em <code>web/static/privacidade.html</code></p>
 
   <p>Esta Política de Privacidade descreve como o Spectra coleta, usa e protege
   os dados de quem usa o serviço de verificação de links. Este é um texto
-  modelo — revise com um profissional jurídico antes de publicar em produção.</p>
+  modelo revise com um profissional jurídico antes de publicar em produção.</p>
 
   <h2>1. Dados que coletamos</h2>
   <ul>
@@ -46,7 +41,9 @@
     sinais de risco encontrados. A URL completa nunca é guardada, porque o
     caminho e a query podem conter token de acesso ou dado pessoal. Análises
     feitas sem login não são guardadas.</li>
-    <li>Técnicos: endereço IP, usado apenas para limitar o número de análises por período.</li>
+    <li>Perfil: biografia e foto, quando fornecidas. Nome e foto aparecem para outros membros na comunidade.</li>
+    <li>Comunidade: mensagens, artigos, tópicos e comentários são guardados no banco. Conversas privadas ficam disponíveis apenas aos participantes na interface; não possuem criptografia de ponta a ponta. Artigos, tópicos e comentários podem ser lidos por membros autenticados.</li>
+    <li>Técnicos: o endereço IP da conexão é utilizado nos limites de uso e exibido apenas ao próprio usuário no perfil. O perfil não mantém um histórico de endereços IP.</li>
   </ul>
 
   <h2>2. Como usamos os dados</h2>

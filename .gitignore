@@ -5,6 +5,7 @@ build/
 dist/
 .venv/
 .pytest_cache/
+.pytest_tmp*/
 .ruff_cache/
 .env
 
@@ -13,3 +14,14 @@ dados/
 
 # skills do Claude Code instaladas localmente (ferramenta, não código do projeto)
 .claude/skills/
+
+# segredos e bancos locais
+.env.*
+!.env.example
+*.db
+*.sqlite3
+*.pem
+*.key
+
+# notas locais de ferramentas
+.superpowers/

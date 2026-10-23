@@ -85,6 +85,22 @@ redirecionamento autorizados", idêntico, incluindo o esquema.
 Sem chave, o provedor devolve `nao_configurado` e a análise segue com as etapas
 1 e 2. As chaves nunca aparecem no relatório nem em log.
 
+Assistente com IA (opcional — os dois chats, o da página inicial e o copiloto
+do laudo, passam a responder com o Claude, em streaming e lembrando a conversa):
+
+```bash
+pip install -e ".[web,ia]"
+export ANTHROPIC_API_KEY=...
+export SPECTRA_IA_MODELO=claude-opus-5   # opcional; este é o padrão
+export SPECTRA_IA=0                      # opcional; desliga a IA mesmo com chave
+```
+
+Sem a biblioteca ou sem a chave, `POST /api/assistente` responde 503 e os chats
+voltam às respostas por regra. O copiloto envia o laudo aberto junto da
+pergunta; o chat da página inicial é público, então tem limite próprio por IP
+(40 perguntas a cada 5 minutos). `GET /api/saude` diz se a IA está ativa
+(`assistente_ia`).
+
 ---
 
 ## Uso

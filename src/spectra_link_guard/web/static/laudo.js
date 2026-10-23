@@ -178,11 +178,11 @@ class Poligrafo {
 /* ══════════════════════════════════════════════════ apresentação */
 
 const SENTENCA = {
-  seguro: ["Nenhum sinal", "de fraude neste link"],
-  baixo: ["Sinais fracos,", "nada grave"],
-  atencao: ["Atenção:", "múltiplos sinais de alerta"],
+  seguro: ["Nenhum sinal", "detectado nas verificações realizadas"],
+  baixo: ["Risco baixo", "nos sinais disponíveis"],
+  atencao: ["Atenção:", "sinais que precisam ser conferidos"],
   alto: ["Risco alto:", "não informe seus dados"],
-  critico: ["Perigo:", "site malicioso detectado"],
+  critico: ["Sinais críticos:", "evite este endereço"],
 };
 
 const ETIQUETA = {
@@ -194,8 +194,8 @@ const ETIQUETA = {
 };
 
 const PASTILHA = {
-  seguro: "liberado",
-  baixo: "liberado",
+  seguro: "sem sinais detectados",
+  baixo: "risco baixo",
   atencao: "com ressalvas",
   alto: "desaconselhado",
   critico: "não abra",
@@ -211,15 +211,13 @@ const ICONE_NIVEL = {
   critico: "octagon-alert",
 };
 
-// Item 7: classificação simplificada em 3 faixas, mapeada a partir do nível
-// de risco já calculado e testado em pontuacao.py — não é um segundo placar.
-const CLASSIFICACAO_3 = {
-  seguro: "Seguro",
-  baixo: "Seguro",
-  atencao: "Suspeito",
-  alto: "Perigoso",
-  critico: "Perigoso",
+// Mesmos cinco níveis e cores usados no histórico e na visão geral.
+const CLASSIFICACAO_NIVEL = {
+  seguro: "Sem sinais", baixo: "Baixo", atencao: "Atenção", alto: "Alto", critico: "Crítico",
 };
+function verificacaoLimitada(r) {
+  return r.verificacao?.limitada ?? !(r.reputacao || []).some(p=>p.status==='limpo'||p.status==='malicioso');
+}
 
 /** Reprocessa os ícones lucide inseridos dinamicamente (veredito, checklist). */
 function atualizarIcones() {
@@ -322,6 +320,7 @@ function montarParecer(r) {
   } else if (limpos.length) {
     frases.push(`Nenhuma denúncia em ${limpos.length} lista${limpos.length === 1 ? "" : "s"} pública${limpos.length === 1 ? "" : "s"}.`);
   }
+  if(verificacaoLimitada(r))frases.push('As fontes de reputação não retornaram um resultado conclusivo. A nota indica os sinais encontrados; não confirma a segurança nem a autorização do conteúdo do site.');
 
   return frases.join(" ");
 }
@@ -329,13 +328,17 @@ function montarParecer(r) {
 /* ── seções */
 
 function renderVeredito(r) {
-  const [inicio, resto] = SENTENCA[r.nivel] || SENTENCA.atencao;
+  const limitada=verificacaoLimitada(r),poucosSinais=['seguro','baixo'].includes(r.nivel);
+  const [inicio, resto] = limitada&&poucosSinais ? ['Verificação limitada','não confirma segurança'] : SENTENCA[r.nivel] || SENTENCA.atencao;
+  $('q-veredito').classList.toggle('verificacao-limitada',limitada&&poucosSinais);
+  $('verificacao-cobertura').hidden=!limitada;
+  $('verificacao-cobertura').textContent=limitada?'Reputação não confirmada: nenhum provedor retornou resultado conclusivo.':'';
   const sentenca = $("sentenca");
 
   const icone = $("veredito-icone");
   icone.replaceChildren();
   const i = document.createElement("i");
-  i.setAttribute("data-lucide", ICONE_NIVEL[r.nivel] || "shield-question");
+  i.setAttribute("data-lucide", limitada&&poucosSinais?'shield-question':ICONE_NIVEL[r.nivel] || "shield-question");
   icone.append(i);
 
   // A sentença se monta letra a letra: o veredito chega, não aparece pronto.
@@ -560,7 +563,7 @@ function renderChecklist(r) {
 function renderGrafico(r, { animar = true } = {}) {
   if (animar) animarNumero($("pontuacao-numero"), r.risco);
   else $("pontuacao-numero").textContent = r.risco;
-  $("pontuacao-classificacao").textContent = `${CLASSIFICACAO_3[r.nivel] || "—"} · estimativa`;
+  $("pontuacao-classificacao").textContent = `${CLASSIFICACAO_NIVEL[r.nivel] || "—"} · ${verificacaoLimitada(r)?'verificação limitada':'risco detectado'}`;
 
   if (!window.Chart) return; // CDN pode não ter carregado ainda em conexões muito lentas
   const cor = corDoSinal();
@@ -615,12 +618,14 @@ async function periciar(url) {
   quadroVeredito.classList.add("varrendo");
   document.querySelectorAll(".fonte").forEach((fonte) => fonte.classList.add("pulsando"));
 
+  let etapa = "conexao";
   try {
     const resp = await fetch("/api/analisar", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url }),
     });
+    etapa = "resposta";
     const dados = await resp.json();
 
     if (!resp.ok) {
@@ -630,6 +635,7 @@ async function periciar(url) {
       return;
     }
 
+    etapa = "exibicao";
     document.body.dataset.estado = dados.nivel;
     poligrafo.configurar({
       url: dados.url_original,
@@ -642,6 +648,7 @@ async function periciar(url) {
     $("copiloto-ctx").textContent = `${dados.host} · ${dados.risco}/100`;
     conversa.replaceChildren();  // laudo novo, conversa nova
     melhoriasAtuais = [];
+    historicoIA = [];
 
     renderVeredito(dados);
     renderCadeia(dados);
@@ -651,15 +658,20 @@ async function periciar(url) {
     renderGrafico(dados);
     atualizarIcones();
 
-    $("protocolo").textContent = `nº ${semente(dados.url_original).toString(16).slice(0, 6).toUpperCase()}`;
-    $("pastilha").textContent = PASTILHA[dados.nivel] || "concluído";
+    $("pastilha").textContent = verificacaoLimitada(dados)&&['seguro','baixo'].includes(dados.nivel)?'não confirmado':PASTILHA[dados.nivel] || "concluído";
     $("q-amostras").hidden = true;
     $("subnav-analise").hidden = false;
     for (const id of ["q-cadeia", "q-evidencias", "q-sinais", "q-checklist"]) $(id).hidden = false;
     const calmo = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     $("q-veredito").scrollIntoView({ behavior: calmo ? "auto" : "smooth", block: "start" });
   } catch (erro) {
-    avisar(`Sem resposta do servidor: ${erro.message}`);
+    const mensagens = {
+      conexao: "Não foi possível comunicar com o servidor. Verifique sua conexão e tente novamente.",
+      resposta: "O servidor enviou uma resposta que não pôde ser lida. Tente novamente.",
+      exibicao: "A análise foi recebida, mas ocorreu uma falha ao exibir o laudo. Tente novamente.",
+    };
+    avisar(mensagens[etapa]);
+    console.error(`Falha na análise (${etapa}):`, erro);
     $("etiqueta").textContent = "laudo interrompido";
     $("pastilha").textContent = "interrompido";
   } finally {
@@ -698,9 +710,11 @@ fetch("/api/saude")
 
 /* ══════════════════════════════════════════════════ copiloto do laudo
  *
- * Não é um chat genérico: ele só fala sobre o laudo que está na tela. Todas as
- * respostas são montadas a partir do relatório que o servidor devolveu — se
- * não houver dado, ele diz que não sabe em vez de inventar.
+ * Conversa sobre o laudo que está na tela. As respostas vêm da IA
+ * (/api/assistente), que recebe o relatório inteiro e o histórico da
+ * conversa. Se o servidor não tiver IA configurada (503) ou ela falhar, cai
+ * nas respostas por regra de respostaSobreLaudo(), montadas só com o que o
+ * relatório traz.
  */
 
 let laudoAtual = null;
@@ -708,10 +722,60 @@ let laudoAtual = null;
 const copiloto = $("copiloto");
 const conversa = $("copiloto-conversa");
 
+// Conversa enviada à IA. Zera a cada laudo novo.
+let historicoIA = [];
+// Vira falso no primeiro 503: daí em diante, nem tenta o servidor.
+let iaDisponivel = true;
+let respondendo = false;
+
 function falar(texto, autor) {
   const bolha = elemento("p", `bolha ${autor}`, texto);
   conversa.append(bolha);
   conversa.scrollTop = conversa.scrollHeight;
+  return bolha;
+}
+
+// O servidor só aceita as últimas mensagens, e cada uma com tamanho limitado.
+function recorteDoHistorico(historico) {
+  return historico.slice(-16).map((m) => ({ papel: m.papel, texto: m.texto.slice(0, 8000) }));
+}
+
+/* Pede a resposta à IA e escreve na bolha conforme o texto chega.
+ * Devolve o texto completo, ou null quando é para usar as regras locais. */
+async function perguntarIA(bolha) {
+  // As sugestões de melhorias.js vão junto: a IA fala a mesma língua do
+  // plano que a tela mostra, em vez de inventar outro.
+  const laudo = laudoAtual && {
+    ...laudoAtual,
+    melhorias_sugeridas: window.sugerirMelhorias ? window.sugerirMelhorias(laudoAtual) : [],
+  };
+  const resp = await fetch("/api/assistente", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ contexto: "laudo", historico: recorteDoHistorico(historicoIA), laudo }),
+  });
+  if (resp.status === 503) {
+    iaDisponivel = false;
+    return null;
+  }
+  if (resp.status === 429) {
+    const corpo = await resp.json().catch(() => ({}));
+    return corpo.erro || "Muitas perguntas em pouco tempo. Aguarde alguns minutos.";
+  }
+  if (!resp.ok || !resp.body) return null;
+
+  const leitor = resp.body.getReader();
+  const decodificador = new TextDecoder();
+  let texto = "";
+  for (;;) {
+    const { done, value } = await leitor.read();
+    if (done) break;
+    texto += decodificador.decode(value, { stream: true });
+    bolha.textContent = texto;
+    conversa.scrollTop = conversa.scrollHeight;
+  }
+  texto += decodificador.decode();
+  return texto.trim() ? texto : null;
 }
 
 function severidadeEmPalavras(nivel) {
@@ -777,6 +841,7 @@ function respostaSobreLaudo(pergunta) {
 
   if (/segur|confi|pode abrir|abrir|clicar/.test(p)) {
     const base = `A análise ${severidadeEmPalavras(r.nivel)} — nota ${r.risco} de 100.`;
+    if(verificacaoLimitada(r)&&r.risco<55)return `${base} A verificação é limitada: não houve resultado conclusivo das fontes de reputação. Não posso confirmar que seja seguro. A análise passiva também não verifica a autorização de filmes, vídeos ou outros conteúdos.`;
     return r.risco >= 55
       ? `${base} Eu não abriria. ${graves[0] ? graves[0].recomendacao : ""}`
       : `${base} Mesmo assim, lembre: não achar sinal não é garantia. Um golpe criado hoje ainda não foi denunciado por ninguém e passa limpo.`;
@@ -852,12 +917,32 @@ function montarAtalhos() {
   }
 }
 
-function perguntar(texto) {
+async function perguntar(texto) {
   const pergunta = texto.trim();
-  if (!pergunta) return;
+  if (!pergunta || respondendo) return;
   falar(pergunta, "eu");
   $("copiloto-campo").value = "";
-  setTimeout(() => falar(respostaSobreLaudo(pergunta), "bot"), 360);
+  historicoIA.push({ papel: "usuario", texto: pergunta });
+
+  respondendo = true;
+  // Leitor de tela espera a resposta terminar em vez de ler cada pedaço.
+  conversa.setAttribute("aria-busy", "true");
+  const bolha = falar("…", "bot");
+  let resposta = null;
+  try {
+    if (iaDisponivel) resposta = await perguntarIA(bolha);
+  } catch {
+    resposta = null;  // rede fora: as regras locais respondem
+  }
+  if (resposta === null) {
+    if (!iaDisponivel) await new Promise((r) => setTimeout(r, 360));
+    resposta = respostaSobreLaudo(pergunta);
+  }
+  bolha.textContent = resposta;
+  historicoIA.push({ papel: "assistente", texto: resposta });
+  conversa.scrollTop = conversa.scrollHeight;
+  conversa.removeAttribute("aria-busy");
+  respondendo = false;
 }
 
 function abrirCopiloto(abrir) {

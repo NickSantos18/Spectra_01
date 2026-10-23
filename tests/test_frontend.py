@@ -37,6 +37,18 @@ def test_paginas_existem():
     assert esperadas <= set(PAGINAS)
 
 
+def test_laudo_so_referencia_elementos_presentes_na_pagina():
+    """Uma referência obsoleta não pode interromper a apresentação de uma análise."""
+    from spectra_link_guard.web.app import PARCIAIS
+    html = _html('laudo.html')
+    for parcial in re.findall(r'<!--PARCIAL:([a-z-]+)-->', html):
+        html += (PARCIAIS / f'{parcial}.html').read_text(encoding='utf-8')
+    ids = set(re.findall(r'id="([^"]+)"', html))
+    js = (ESTATICOS / 'laudo.js').read_text(encoding='utf-8')
+    referencias = set(re.findall(r'\$\("([^"]+)"\)', js))
+    assert referencias <= ids, f'Elementos ausentes: {referencias - ids}'
+
+
 def test_nenhum_neutro_antigo_fora_dos_tokens():
     for arquivo in ESTATICOS.iterdir():
         if arquivo.suffix not in {".css", ".js", ".html"} or arquivo.name == "tokens.css":
@@ -95,17 +107,21 @@ EFEITOS_POR_PAGINA = {
     "visao-geral.html": "varredura",
     "historico.html": "varredura",
     "aprender.html": "chuva-hex",
-    "inicio.html": "chuva-hex",
+    "inicio.html": ["circuitos", "chuva-hex"],
 }
 
 
 def test_cada_tela_tem_o_efeito_de_fundo_combinado():
     for nome in PAGINAS:
         html = _html(nome)
+        if nome == "comunidade.html":
+            assert 'data-efeito="__FUNDO_COMUNIDADE__"' in html
+            assert "/static/fundo.js" in html
+            continue
         efeitos = re.findall(r'data-efeito="([a-z-]+)"', html)
         esperado = EFEITOS_POR_PAGINA.get(nome)
         if esperado:
-            assert efeitos == [esperado], f"{nome}: {efeitos}"
+            assert efeitos == (esperado if isinstance(esperado, list) else [esperado]), f"{nome}: {efeitos}"
             assert "/static/fundo.js" in html, nome
         else:
             assert efeitos == [], f"{nome} não deveria ter efeito de fundo: {efeitos}"
@@ -124,4 +140,6 @@ def test_menu_tem_navegacao_de_celular():
     assert '<nav class="barra-abas"' in menu
     assert menu.count('class="aba-item"') == 4
     assert '<dialog class="gaveta" id="gaveta-mais"' in menu
-    assert menu.count("data-abrir-mais") == 2
+    assert menu.count("data-abrir-mais") == 1
+    assert 'data-menu="perfil"' not in menu
+    assert 'data-conta' not in menu

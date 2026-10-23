@@ -8,18 +8,9 @@
 
 const $ = (id) => document.getElementById(id);
 
-const NOME_NIVEL = { seguro: "seguro", baixo: "baixo", atencao: "atenção", alto: "alto", critico: "crítico" };
-const TOKEN_NIVEL = {
-  seguro: "secundaria", baixo: "secundaria", atencao: "terciaria", alto: "perigo", critico: "perigo",
-};
+const NOME_NIVEL = { seguro: "sem sinais", baixo: "baixo", atencao: "atenção", alto: "alto", critico: "crítico" };
 
 let itensTodos = [];
-let graficoHist = null;
-
-function corNivel(nivel) {
-  return getComputedStyle(document.documentElement)
-    .getPropertyValue(`--${TOKEN_NIVEL[nivel]}`).trim();
-}
 
 function elemento(tag, classe, texto) {
   const el = document.createElement(tag);
@@ -136,35 +127,16 @@ function renderizarResumo() {
   const contagem = { seguro: 0, baixo: 0, atencao: 0, alto: 0, critico: 0 };
   for (const item of itensTodos) contagem[item.nivel] = (contagem[item.nivel] || 0) + 1;
 
-  const legenda = $("hist-legenda");
-  legenda.replaceChildren();
-  for (const nivel of Object.keys(contagem)) {
-    const li = elemento("li");
-    const ponto = elemento("span", "ponto");
-    ponto.style.background = corNivel(nivel);
-    li.append(ponto, elemento("span", "", NOME_NIVEL[nivel]), elemento("span", "qtd", contagem[nivel]));
-    legenda.append(li);
-  }
-
-  if (!window.Chart) return;
-  const semMovimento = window.spectraMovimentoLigado && !window.spectraMovimentoLigado();
-  if (graficoHist) graficoHist.destroy();
-  graficoHist = new Chart($("hist-grafico"), {
-    type: "doughnut",
-    data: {
-      labels: Object.keys(contagem).map((n) => NOME_NIVEL[n]),
-      datasets: [{
-        data: Object.values(contagem),
-        backgroundColor: Object.keys(contagem).map(corNivel),
-        borderWidth: 0,
-      }],
-    },
-    options: {
-      cutout: "62%",
-      animation: semMovimento ? false : { duration: 500 },
-      plugins: { legend: { display: false } },
-    },
-  });
+  if (!window.spectraGraficos) return;
+  const itens = Object.keys(contagem).map((nivel) => ({
+    chave: nivel,
+    nome: NOME_NIVEL[nivel].charAt(0).toUpperCase() + NOME_NIVEL[nivel].slice(1),
+    valor: contagem[nivel],
+    cor: spectraGraficos.corNivel(nivel),
+  }));
+  spectraGraficos.radial($("hist-grafico"), itens, { rotulo: "análises" });
+  const resumo = itens.map((item) => `${item.valor} ${NOME_NIVEL[item.chave]}`).join(", ");
+  $("hist-grafico").setAttribute("aria-label", `Distribuição de vereditos no histórico: ${resumo}.`);
 }
 
 function renderizarTudo() {

@@ -1,0 +1,4 @@
+/* Identidade transparente e apresentação da comunidade. Fundos usam os efeitos originais. */
+.spectra-logo-home,.spectra-logo-menu,.spectra-logo-rodape,.spectra-logo-hero{background:transparent;border-radius:0}
+.spectra-logo-menu{height:72px;width:176px}
+@media(max-width:720px){.spectra-logo-menu{height:48px;width:110px}}

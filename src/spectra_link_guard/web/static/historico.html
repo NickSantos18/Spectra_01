@@ -12,14 +12,12 @@
 <link rel="stylesheet" href="/static/laudo.css">
 <link rel="stylesheet" href="/static/rodape.css">
 <link rel="stylesheet" href="/static/animacoes.css">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<link rel="icon" href="/static/logo-spectra-escuro.svg">
 <script src="/static/movimento.js"></script>
 <script src="/static/acessibilidade.js"></script>
 <script src="/static/animacoes.js"></script>
 <script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js" defer
         integrity="sha384-WBRt9V/J/erVtkEuP91HUFRv9MvHzFiFOp4/zTDp4xkcMG7aOeIv2asTV4yxFLWa" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" defer
-        integrity="sha384-NrKB+u6Ts6AtkIhwPixiKTzgSKNblyhlk0Sohlgar9UHUBzai/sgnNNWWd291xqt" crossorigin="anonymous"></script>
 </head>
 <body data-estado="seguro">
 
@@ -39,7 +37,7 @@
     <label class="oculto" for="hist-filtro">Filtrar por veredito</label>
     <select id="hist-filtro" class="hist-filtro">
       <option value="">todos os vereditos</option>
-      <option value="seguro">seguro</option>
+      <option value="seguro">sem sinais</option>
       <option value="baixo">baixo</option>
       <option value="atencao">atenção</option>
       <option value="alto">alto</option>
@@ -59,10 +57,7 @@
       <span class="quadro-marca mono" id="hist-total">0 análises</span>
     </header>
     <div class="quadro-corpo hist-resumo-corpo">
-      <div class="hist-grafico">
-        <canvas id="hist-grafico" width="160" height="160" role="img" aria-label="Gráfico com a distribuição de vereditos no histórico"></canvas>
-      </div>
-      <ul class="hist-legenda" id="hist-legenda"></ul>
+      <div class="hist-grafico" id="hist-grafico" role="img" aria-label="Distribuição de vereditos no histórico"></div>
       <p class="hist-nota">Guardamos só host, domínio, nota e horário, nunca a URL completa (ela pode ter dados pessoais na query).</p>
       <a class="botao-link" href="/painel/visao-geral">Ver gráficos na Visão geral</a>
     </div>
@@ -114,6 +109,7 @@
 
 <script src="/static/fundo.js" defer></script>
 <script src="/static/menu.js" defer></script>
+<script src="/static/graficos.js" defer></script>
 <script src="/static/historico.js" defer></script>
 </body>
 </html>

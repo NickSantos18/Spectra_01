@@ -1,0 +1,429 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [6 0 R 8 0 R 10 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Length 9240 >>
+stream
+BT /F2 11 Tf 0.0314 0.4941 0.5451 rg 1 0 0 1 38 801 Tm (SPECTRA / DOCUMENTA\307\303O DO BANCO) Tj ET
+BT /F2 25 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 38 761 Tm (Diagrama de entidades e relacionamentos) Tj ET
+BT /F1 10 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 38 745 Tm (Modelo f\355sico atual \225 10 tabelas \225 PK = chave prim\341ria \225 FK = chave estrangeira) Tj ET
+0.7059 0.7961 0.8314 RG 1 w [] 0 d 38 733 m 1152 733 l S
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 38 20 Tm (Esquema SQLite definido no c\363digo-fonte \225 23/10/2026 \225 Sem dados pessoais) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 1085 20 Tm (1 / 3) Tj ET
+0.0314 0.4941 0.5451 RG 1 w [] 0 d 453 677 m 370 677 l 370 662 l 298 662 l S
+BT /F1 8 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 304 671 Tm (0..N) Tj ET
+0.0314 0.4941 0.5451 RG 1 w [] 0 d 453 657 m 390 657 l 390 542 l 298 542 l S
+BT /F1 8 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 304 551 Tm (0..1) Tj ET
+0.0314 0.4941 0.5451 RG 1 w [] 0 d 453 637 m 410 637 l 410 417 l 298 417 l S
+BT /F1 8 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 304 426 Tm (0..N) Tj ET
+0.0314 0.4941 0.5451 RG 1 w [] 0 d 733 682 m 800 682 l 800 667 l 892 667 l S
+BT /F1 8 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 760 696 Tm (0..N / remetente) Tj ET
+0.0314 0.4941 0.5451 RG 1 w [] 0 d 733 652 m 780 652 l 780 637 l 892 637 l S
+BT /F1 8 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 752 625 Tm (0..N / destinat\341rio) Tj ET
+0.0314 0.4941 0.5451 RG 1 w [] 0 d 733 607 m 818 607 l 818 502 l 892 502 l S
+BT /F1 8 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 820 515 Tm (0..N / autor) Tj ET
+0.0314 0.4941 0.5451 RG 1 w [] 0 d 733 587 m 795 587 l 795 332 l 892 332 l S
+BT /F1 8 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 800 347 Tm (0..N / autor) Tj ET
+0.0314 0.4941 0.5451 RG 1 w [] 0 d 520 559 m 520 427 l S
+BT /F1 8 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 420 469 Tm (0..N / seguidor) Tj ET
+0.0314 0.4941 0.5451 RG 1 w [] 0 d 665 559 m 665 427 l S
+BT /F1 8 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 675 469 Tm (0..N / seguido) Tj ET
+0.0314 0.4941 0.5451 RG 1 w [] 0 d 1128 426 m 1128 365 l S
+BT /F1 8 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 1066 381 Tm (1 : 0..N) Tj ET
+1.0000 1.0000 1.0000 rg 0.7059 0.7961 0.8314 RG .8 w 453 559 280 151 re B
+0.0314 0.4941 0.5451 rg 0.0314 0.4941 0.5451 RG .8 w 453 684 280 26 re B
+BT /F2 12 Tf 1.0000 1.0000 1.0000 rg 1 0 0 1 465 693 Tm (usuarios) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 465 669 Tm (PK id : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 465 654 Tm (nome : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 465 639 Tm (email : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 465 624 Tm (senha_hash : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 465 609 Tm (google_sub : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 465 594 Tm (email_verificado : INTEGER) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 465 579 Tm (criado_em : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 465 564 Tm (ultimo_acesso : TEXT) Tj ET
+1.0000 1.0000 1.0000 rg 0.7059 0.7961 0.8314 RG .8 w 38 619 260 91 re B
+0.0314 0.4941 0.5451 rg 0.0314 0.4941 0.5451 RG .8 w 38 684 260 26 re B
+BT /F2 12 Tf 1.0000 1.0000 1.0000 rg 1 0 0 1 50 693 Tm (sessoes) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 50 669 Tm (PK id : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 50 654 Tm (FK usuario_id : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 50 639 Tm (criado_em : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 50 624 Tm (expira_em : TEXT) Tj ET
+1.0000 1.0000 1.0000 rg 0.7059 0.7961 0.8314 RG .8 w 38 506 260 76 re B
+0.0314 0.4941 0.5451 rg 0.0314 0.4941 0.5451 RG .8 w 38 556 260 26 re B
+BT /F2 12 Tf 1.0000 1.0000 1.0000 rg 1 0 0 1 50 565 Tm (perfis) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 50 541 Tm (PK FK usuario_id : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 50 526 Tm (bio : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 50 511 Tm (foto : TEXT) Tj ET
+1.0000 1.0000 1.0000 rg 0.7059 0.7961 0.8314 RG .8 w 38 326 260 151 re B
+0.0314 0.4941 0.5451 rg 0.0314 0.4941 0.5451 RG .8 w 38 451 260 26 re B
+BT /F2 12 Tf 1.0000 1.0000 1.0000 rg 1 0 0 1 50 460 Tm (analises) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 50 436 Tm (PK id : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 50 421 Tm (FK usuario_id : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 50 406 Tm (host : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 50 391 Tm (dominio : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 50 376 Tm (risco : INTEGER) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 50 361 Tm (nivel : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 50 346 Tm (codigos : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 50 331 Tm (quando : TEXT) Tj ET
+1.0000 1.0000 1.0000 rg 0.7059 0.7961 0.8314 RG .8 w 892 604 260 106 re B
+0.0314 0.4941 0.5451 rg 0.0314 0.4941 0.5451 RG .8 w 892 684 260 26 re B
+BT /F2 12 Tf 1.0000 1.0000 1.0000 rg 1 0 0 1 904 693 Tm (mensagens) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 904 669 Tm (PK id : INTEGER) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 904 654 Tm (FK remetente : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 904 639 Tm (FK destinatario : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 904 624 Tm (texto : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 904 609 Tm (criado_em : TEXT) Tj ET
+1.0000 1.0000 1.0000 rg 0.7059 0.7961 0.8314 RG .8 w 892 426 260 121 re B
+0.0314 0.4941 0.5451 rg 0.0314 0.4941 0.5451 RG .8 w 892 521 260 26 re B
+BT /F2 12 Tf 1.0000 1.0000 1.0000 rg 1 0 0 1 904 530 Tm (publicacoes) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 904 506 Tm (PK id : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 904 491 Tm (tipo : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 904 476 Tm (FK autor : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 904 461 Tm (titulo : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 904 446 Tm (texto : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 904 431 Tm (criado_em : TEXT) Tj ET
+1.0000 1.0000 1.0000 rg 0.7059 0.7961 0.8314 RG .8 w 892 259 260 106 re B
+0.0314 0.4941 0.5451 rg 0.0314 0.4941 0.5451 RG .8 w 892 339 260 26 re B
+BT /F2 12 Tf 1.0000 1.0000 1.0000 rg 1 0 0 1 904 348 Tm (respostas) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 904 324 Tm (PK id : INTEGER) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 904 309 Tm (FK publicacao : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 904 294 Tm (FK autor : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 904 279 Tm (texto : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 904 264 Tm (criado_em : TEXT) Tj ET
+1.0000 1.0000 1.0000 rg 0.7059 0.7961 0.8314 RG .8 w 453 351 280 76 re B
+0.0314 0.4941 0.5451 rg 0.0314 0.4941 0.5451 RG .8 w 453 401 280 26 re B
+BT /F2 12 Tf 1.0000 1.0000 1.0000 rg 1 0 0 1 465 410 Tm (seguidores) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 465 386 Tm (PK FK seguidor : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 465 371 Tm (PK FK seguido : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 465 356 Tm (criado_em : TEXT) Tj ET
+1.0000 1.0000 1.0000 rg 0.7059 0.7961 0.8314 RG .8 w 38 126 260 46 re B
+0.0314 0.4941 0.5451 rg 0.0314 0.4941 0.5451 RG .8 w 38 146 260 26 re B
+BT /F2 12 Tf 1.0000 1.0000 1.0000 rg 1 0 0 1 50 155 Tm (especialistas) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 50 131 Tm (PK email : TEXT) Tj ET
+1.0000 1.0000 1.0000 rg 0.7059 0.7961 0.8314 RG .8 w 453 104 280 91 re B
+0.0314 0.4941 0.5451 rg 0.0314 0.4941 0.5451 RG .8 w 453 169 280 26 re B
+BT /F2 12 Tf 1.0000 1.0000 1.0000 rg 1 0 0 1 465 178 Tm (convites_blog) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 465 154 Tm (PK hash : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 465 139 Tm (email : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 465 124 Tm (expira_em : TEXT) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 465 109 Tm (usado : INTEGER) Tj ET
+BT /F2 11 Tf 0.0314 0.4941 0.5451 rg 1 0 0 1 453 271 Tm (Leitura das rela\347\365es) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 453 252 Tm (Cada registro filho aponta para 1 usu\341rio. Um) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 453 238 Tm (usu\341rio pode possuir zero ou v\341rios registros) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 453 224 Tm (filhos; o perfil \351 opcional e \372nico.) Tj ET
+BT /F2 11 Tf 0.0314 0.4941 0.5451 rg 1 0 0 1 38 218 Tm (V\315NCULOS POR E-MAIL: tratados pela aplica\347\343o, sem FK no SQLite) Tj ET
+BT /F1 10 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 760 179 Tm (especialistas.email e convites_blog.email s\343o comparados) Tj ET
+BT /F1 10 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 760 164 Tm (ao e-mail da conta no c\363digo. N\343o h\341 integridade) Tj ET
+BT /F1 10 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 760 149 Tm (referencial declarada para esses v\355nculos.) Tj ET
+BT /F1 10 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 760 108 Tm (seguidores representa a rela\347\343o N:N entre usu\341rios.) Tj ET
+BT /F1 10 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 760 93 Tm (mensagens possui duas FKs para usuarios: remetente e) Tj ET
+BT /F1 10 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 760 78 Tm (destinat\341rio.) Tj ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 1190 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 5 0 R >>
+endobj
+7 0 obj
+<< /Length 10969 >>
+stream
+BT /F2 11 Tf 0.0314 0.4941 0.5451 rg 1 0 0 1 38 801 Tm (SPECTRA / DOCUMENTA\307\303O DO BANCO) Tj ET
+BT /F2 25 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 38 761 Tm (Dicion\341rio de dados / identidade e v\355nculos) Tj ET
+BT /F1 10 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 38 745 Tm (Tipos e restri\347\365es extra\355dos dos CREATE TABLE do projeto. Campos sem NOT NULL seguem a declara\347\343o SQLite.) Tj ET
+0.7059 0.7961 0.8314 RG 1 w [] 0 d 38 733 m 1152 733 l S
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 38 20 Tm (Esquema SQLite definido no c\363digo-fonte \225 23/10/2026 \225 Sem dados pessoais) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 1085 20 Tm (2 / 3) Tj ET
+0.0314 0.4941 0.5451 rg 0.0314 0.4941 0.5451 RG .8 w 38 686 540 26 re B
+BT /F2 12 Tf 1.0000 1.0000 1.0000 rg 1 0 0 1 48 695 Tm (usuarios) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 44 668 Tm (Contas locais ou vinculadas ao Google. email e google_sub t\352m restri\347\343o UNIQUE.) Tj ET
+0.9294 0.9608 0.9686 rg 0.7059 0.7961 0.8314 RG .8 w 38 637 540 20 re B
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 644 Tm (Campo) Tj ET
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 644 Tm (Tipo) Tj ET
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 318 644 Tm (Restri\347\365es declaradas / padr\343o) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 624 Tm (id) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 624 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 624 Tm (PK) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 607 Tm (nome) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 607 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 607 Tm (NOT NULL) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 590 Tm (email) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 590 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 590 Tm (NOT NULL, UNIQUE) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 573 Tm (senha_hash) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 573 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 573 Tm (\227) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 556 Tm (google_sub) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 556 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 556 Tm (UNIQUE) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 539 Tm (email_verificado) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 539 Tm (INTEGER) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 539 Tm (NOT NULL, DEFAULT 0) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 522 Tm (criado_em) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 522 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 522 Tm (NOT NULL) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 505 Tm (ultimo_acesso) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 505 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 505 Tm (\227) Tj ET
+0.0314 0.4941 0.5451 rg 0.0314 0.4941 0.5451 RG .8 w 38 448 540 26 re B
+BT /F2 12 Tf 1.0000 1.0000 1.0000 rg 1 0 0 1 48 457 Tm (sessoes) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 44 430 Tm (Sess\365es persistentes de autentica\347\343o; validade registrada em expira_em.) Tj ET
+0.9294 0.9608 0.9686 rg 0.7059 0.7961 0.8314 RG .8 w 38 399 540 20 re B
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 406 Tm (Campo) Tj ET
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 406 Tm (Tipo) Tj ET
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 318 406 Tm (Restri\347\365es declaradas / padr\343o) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 386 Tm (id) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 386 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 386 Tm (PK) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 369 Tm (usuario_id) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 369 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 369 Tm (FK, NOT NULL) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 352 Tm (criado_em) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 352 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 352 Tm (NOT NULL) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 335 Tm (expira_em) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 335 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 335 Tm (NOT NULL) Tj ET
+BT /F1 8 Tf 0.0314 0.4941 0.5451 rg 1 0 0 1 46 319 Tm (FK: usuario_id -> usuarios.id | DELETE CASCADE) Tj ET
+BT /F1 8 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 46 305 Tm (\315ndice: idx_sessoes_expira \050expira_em\051) Tj ET
+BT /F1 8 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 46 291 Tm (\315ndice: idx_sessoes_usuario \050usuario_id\051) Tj ET
+0.0314 0.4941 0.5451 rg 0.0314 0.4941 0.5451 RG .8 w 38 236 540 26 re B
+BT /F2 12 Tf 1.0000 1.0000 1.0000 rg 1 0 0 1 48 245 Tm (perfis) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 44 218 Tm (Dados opcionais de apresenta\347\343o. foto armazena um data URL PNG, n\343o um arquivo) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 44 204 Tm (separado.) Tj ET
+0.9294 0.9608 0.9686 rg 0.7059 0.7961 0.8314 RG .8 w 38 173 540 20 re B
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 180 Tm (Campo) Tj ET
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 180 Tm (Tipo) Tj ET
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 318 180 Tm (Restri\347\365es declaradas / padr\343o) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 160 Tm (usuario_id) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 160 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 160 Tm (PK, FK) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 143 Tm (bio) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 143 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 143 Tm (NOT NULL, DEFAULT '') Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 126 Tm (foto) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 126 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 126 Tm (NOT NULL, DEFAULT '') Tj ET
+BT /F1 8 Tf 0.0314 0.4941 0.5451 rg 1 0 0 1 46 110 Tm (FK: usuario_id -> usuarios.id | DELETE CASCADE) Tj ET
+0.0314 0.4941 0.5451 rg 0.0314 0.4941 0.5451 RG .8 w 612 686 540 26 re B
+BT /F2 12 Tf 1.0000 1.0000 1.0000 rg 1 0 0 1 622 695 Tm (analises) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 618 668 Tm (Hist\363rico de risco de links por usu\341rio; codigos cont\351m uma lista serializada em JSON.) Tj ET
+0.9294 0.9608 0.9686 rg 0.7059 0.7961 0.8314 RG .8 w 612 637 540 20 re B
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 620 644 Tm (Campo) Tj ET
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 817 644 Tm (Tipo) Tj ET
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 892 644 Tm (Restri\347\365es declaradas / padr\343o) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 620 624 Tm (id) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 817 624 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 892 624 Tm (PK) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 620 607 Tm (usuario_id) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 817 607 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 892 607 Tm (FK, NOT NULL) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 620 590 Tm (host) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 817 590 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 892 590 Tm (\227) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 620 573 Tm (dominio) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 817 573 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 892 573 Tm (\227) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 620 556 Tm (risco) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 817 556 Tm (INTEGER) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 892 556 Tm (NOT NULL) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 620 539 Tm (nivel) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 817 539 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 892 539 Tm (NOT NULL) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 620 522 Tm (codigos) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 817 522 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 892 522 Tm (NOT NULL, DEFAULT '[]') Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 620 505 Tm (quando) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 817 505 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 892 505 Tm (NOT NULL) Tj ET
+BT /F1 8 Tf 0.0314 0.4941 0.5451 rg 1 0 0 1 620 489 Tm (FK: usuario_id -> usuarios.id | DELETE CASCADE) Tj ET
+BT /F1 8 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 620 475 Tm (\315ndice: idx_analises_usuario_quando \050usuario_id, quando\051) Tj ET
+0.0314 0.4941 0.5451 rg 0.0314 0.4941 0.5451 RG .8 w 612 420 540 26 re B
+BT /F2 12 Tf 1.0000 1.0000 1.0000 rg 1 0 0 1 622 429 Tm (seguidores) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 618 402 Tm (Rela\347\343o direcionada entre contas. PK composta \050seguidor, seguido\051; CHECK impede seguir) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 618 388 Tm (a si mesmo.) Tj ET
+0.9294 0.9608 0.9686 rg 0.7059 0.7961 0.8314 RG .8 w 612 357 540 20 re B
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 620 364 Tm (Campo) Tj ET
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 817 364 Tm (Tipo) Tj ET
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 892 364 Tm (Restri\347\365es declaradas / padr\343o) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 620 344 Tm (seguidor) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 817 344 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 892 344 Tm (PK #1, FK, NOT NULL) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 620 327 Tm (seguido) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 817 327 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 892 327 Tm (PK #2, FK, NOT NULL) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 620 310 Tm (criado_em) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 817 310 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 892 310 Tm (NOT NULL) Tj ET
+BT /F1 8 Tf 0.0314 0.4941 0.5451 rg 1 0 0 1 620 294 Tm (FK: seguido -> usuarios.id | DELETE CASCADE) Tj ET
+BT /F1 8 Tf 0.0314 0.4941 0.5451 rg 1 0 0 1 620 280 Tm (FK: seguidor -> usuarios.id | DELETE CASCADE) Tj ET
+BT /F1 8 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 620 266 Tm (\315ndice: idx_seguidores_seguido \050seguido\051) Tj ET
+BT /F2 12 Tf 0.0314 0.4941 0.5451 rg 1 0 0 1 618 219 Tm (Regras da aplica\347\343o) Tj ET
+BT /F1 10 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 618 196 Tm (E-mails s\343o normalizados em min\372sculas. Senhas usam hash scrypt; contas Google podem) Tj ET
+BT /F1 10 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 618 181 Tm (n\343o ter senha local. Datas s\343o armazenadas em TEXT, geralmente em formato ISO 8601. As) Tj ET
+BT /F1 10 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 618 166 Tm (sess\365es t\352m validade renov\341vel. O hist\363rico mant\351m at\351 500 an\341lises por usu\341rio.) Tj ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 1190 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 7 0 R >>
+endobj
+9 0 obj
+<< /Length 10611 >>
+stream
+BT /F2 11 Tf 0.0314 0.4941 0.5451 rg 1 0 0 1 38 801 Tm (SPECTRA / DOCUMENTA\307\303O DO BANCO) Tj ET
+BT /F2 25 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 38 761 Tm (Dicion\341rio de dados / comunica\347\343o e conte\372do) Tj ET
+BT /F1 10 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 38 745 Tm (Integridade referencial habilitada nas conex\365es por PRAGMA foreign_keys = ON.) Tj ET
+0.7059 0.7961 0.8314 RG 1 w [] 0 d 38 733 m 1152 733 l S
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 38 20 Tm (Esquema SQLite definido no c\363digo-fonte \225 23/10/2026 \225 Sem dados pessoais) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 1085 20 Tm (3 / 3) Tj ET
+0.0314 0.4941 0.5451 rg 0.0314 0.4941 0.5451 RG .8 w 38 686 540 26 re B
+BT /F2 12 Tf 1.0000 1.0000 1.0000 rg 1 0 0 1 48 695 Tm (mensagens) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 44 668 Tm (Mensagens privadas; id inteiro com AUTOINCREMENT. Remetente e destinat\341rio apontam para) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 44 654 Tm (contas.) Tj ET
+0.9294 0.9608 0.9686 rg 0.7059 0.7961 0.8314 RG .8 w 38 623 540 20 re B
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 630 Tm (Campo) Tj ET
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 630 Tm (Tipo) Tj ET
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 318 630 Tm (Restri\347\365es declaradas / padr\343o) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 610 Tm (id) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 610 Tm (INTEGER) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 610 Tm (PK) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 593 Tm (remetente) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 593 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 593 Tm (FK, NOT NULL) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 576 Tm (destinatario) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 576 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 576 Tm (FK, NOT NULL) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 559 Tm (texto) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 559 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 559 Tm (NOT NULL) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 542 Tm (criado_em) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 542 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 542 Tm (NOT NULL) Tj ET
+BT /F1 8 Tf 0.0314 0.4941 0.5451 rg 1 0 0 1 46 526 Tm (FK: destinatario -> usuarios.id | DELETE CASCADE) Tj ET
+BT /F1 8 Tf 0.0314 0.4941 0.5451 rg 1 0 0 1 46 512 Tm (FK: remetente -> usuarios.id | DELETE CASCADE) Tj ET
+BT /F1 8 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 46 498 Tm (\315ndice: idx_mensagens_conversa \050remetente, destinatario, id\051) Tj ET
+0.0314 0.4941 0.5451 rg 0.0314 0.4941 0.5451 RG .8 w 38 443 540 26 re B
+BT /F2 12 Tf 1.0000 1.0000 1.0000 rg 1 0 0 1 48 452 Tm (publicacoes) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 44 425 Tm (Artigos do blog e t\363picos do f\363rum. tipo \351 validado pela aplica\347\343o como blog ou forum.) Tj ET
+0.9294 0.9608 0.9686 rg 0.7059 0.7961 0.8314 RG .8 w 38 394 540 20 re B
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 401 Tm (Campo) Tj ET
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 401 Tm (Tipo) Tj ET
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 318 401 Tm (Restri\347\365es declaradas / padr\343o) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 381 Tm (id) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 381 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 381 Tm (PK) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 364 Tm (tipo) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 364 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 364 Tm (NOT NULL) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 347 Tm (autor) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 347 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 347 Tm (FK, NOT NULL) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 330 Tm (titulo) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 330 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 330 Tm (NOT NULL) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 313 Tm (texto) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 313 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 313 Tm (NOT NULL) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 296 Tm (criado_em) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 296 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 296 Tm (NOT NULL) Tj ET
+BT /F1 8 Tf 0.0314 0.4941 0.5451 rg 1 0 0 1 46 280 Tm (FK: autor -> usuarios.id | DELETE NO ACTION) Tj ET
+0.0314 0.4941 0.5451 rg 0.0314 0.4941 0.5451 RG .8 w 38 225 540 26 re B
+BT /F2 12 Tf 1.0000 1.0000 1.0000 rg 1 0 0 1 48 234 Tm (respostas) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 44 207 Tm (Coment\341rios das publica\347\365es. id inteiro com AUTOINCREMENT; n\343o h\341 \341rvore de respostas.) Tj ET
+0.9294 0.9608 0.9686 rg 0.7059 0.7961 0.8314 RG .8 w 38 176 540 20 re B
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 183 Tm (Campo) Tj ET
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 183 Tm (Tipo) Tj ET
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 318 183 Tm (Restri\347\365es declaradas / padr\343o) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 163 Tm (id) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 163 Tm (INTEGER) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 163 Tm (PK) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 146 Tm (publicacao) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 146 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 146 Tm (FK, NOT NULL) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 129 Tm (autor) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 129 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 129 Tm (FK, NOT NULL) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 112 Tm (texto) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 112 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 112 Tm (NOT NULL) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 46 95 Tm (criado_em) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 243 95 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 318 95 Tm (NOT NULL) Tj ET
+BT /F1 8 Tf 0.0314 0.4941 0.5451 rg 1 0 0 1 46 79 Tm (FK: autor -> usuarios.id | DELETE NO ACTION) Tj ET
+BT /F1 8 Tf 0.0314 0.4941 0.5451 rg 1 0 0 1 46 65 Tm (FK: publicacao -> publicacoes.id | DELETE CASCADE) Tj ET
+0.0314 0.4941 0.5451 rg 0.0314 0.4941 0.5451 RG .8 w 612 686 540 26 re B
+BT /F2 12 Tf 1.0000 1.0000 1.0000 rg 1 0 0 1 622 695 Tm (especialistas) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 618 668 Tm (Lista de e-mails habilitados a publicar no blog. N\343o possui FK para usuarios.) Tj ET
+0.9294 0.9608 0.9686 rg 0.7059 0.7961 0.8314 RG .8 w 612 637 540 20 re B
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 620 644 Tm (Campo) Tj ET
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 817 644 Tm (Tipo) Tj ET
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 892 644 Tm (Restri\347\365es declaradas / padr\343o) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 620 624 Tm (email) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 817 624 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 892 624 Tm (PK) Tj ET
+0.0314 0.4941 0.5451 rg 0.0314 0.4941 0.5451 RG .8 w 612 567 540 26 re B
+BT /F2 12 Tf 1.0000 1.0000 1.0000 rg 1 0 0 1 622 576 Tm (convites_blog) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 618 549 Tm (Convites para especialistas. hash guarda SHA-256 do token; usado e expira_em controlam) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 618 535 Tm (o aceite.) Tj ET
+0.9294 0.9608 0.9686 rg 0.7059 0.7961 0.8314 RG .8 w 612 504 540 20 re B
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 620 511 Tm (Campo) Tj ET
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 817 511 Tm (Tipo) Tj ET
+BT /F2 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 892 511 Tm (Restri\347\365es declaradas / padr\343o) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 620 491 Tm (hash) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 817 491 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 892 491 Tm (PK) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 620 474 Tm (email) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 817 474 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 892 474 Tm (NOT NULL) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 620 457 Tm (expira_em) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 817 457 Tm (TEXT) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 892 457 Tm (NOT NULL) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 620 440 Tm (usado) Tj ET
+BT /F1 9 Tf 0.0863 0.1765 0.2510 rg 1 0 0 1 817 440 Tm (INTEGER) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 892 440 Tm (NOT NULL, DEFAULT 0) Tj ET
+BT /F2 12 Tf 0.0314 0.4941 0.5451 rg 1 0 0 1 618 394 Tm (Observa\347\365es do modelo atual) Tj ET
+BT /F1 10 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 618 370 Tm (O IP mostrado no perfil vem da conex\343o HTTP e n\343o \351 uma coluna do banco. Explorar \351) Tj ET
+BT /F1 10 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 618 355 Tm (uma consulta de publica\347\365es, n\343o uma tabela. O chat n\343o tem tabela de conversas: os) Tj ET
+BT /F1 10 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 618 340 Tm (participantes s\343o inferidos de remetente e destinat\341rio.) Tj ET
+BT /F1 10 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 618 313 Tm (Os e-mails dos editores s\343o definidos por SPECTRA_EDITOR_EMAILS, fora do banco. A) Tj ET
+BT /F1 10 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 618 298 Tm (autoriza\347\343o para conversar depende de existir uma rela\347\343o de seguidores em algum) Tj ET
+BT /F1 10 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 618 283 Tm (sentido.) Tj ET
+BT /F1 10 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 618 256 Tm (Exclus\365es: FKs com CASCADE removem filhos automaticamente. O autor de publicacoes e) Tj ET
+BT /F1 10 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 618 241 Tm (respostas usa NO ACTION: esses v\355nculos podem impedir a exclus\343o da conta enquanto) Tj ET
+BT /F1 10 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 618 226 Tm (houver conte\372do associado.) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 618 200 Tm (Fontes: src/spectra_link_guard/auth/bd.py; web/analises.py; web/comunidade.py.) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 618 186 Tm (Documento gerado a partir do esquema no c\363digo, sem leitura dos registros do banco) Tj ET
+BT /F1 9 Tf 0.3176 0.4039 0.4745 rg 1 0 0 1 618 172 Tm (local.) Tj ET
+endstream
+endobj
+10 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 1190 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 9 0 R >>
+endobj
+xref
+0 11
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000134 00000 n 
+0000000231 00000 n 
+0000000333 00000 n 
+0000009625 00000 n 
+0000009762 00000 n 
+0000020784 00000 n 
+0000020921 00000 n 
+0000031585 00000 n 
+trailer
+<< /Size 11 /Root 1 0 R >>
+startxref
+31723
+%%EOF

@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="/static/laudo.css">
 <link rel="stylesheet" href="/static/rodape.css">
 <link rel="stylesheet" href="/static/animacoes.css">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<link rel="icon" href="/static/logo-spectra-escuro.svg">
 <script src="/static/movimento.js"></script>
 <script src="/static/acessibilidade.js"></script>
 <script src="/static/animacoes.js"></script>
@@ -41,7 +41,7 @@
     </header>
     <div class="quadro-corpo aprender-corpo">
       <p>Phishing é um golpe em que alguém finge ser uma empresa, banco ou pessoa
-      confiável — por e-mail, SMS, WhatsApp ou rede social — para te convencer a
+      confiável por e-mail, SMS, WhatsApp ou rede social para te convencer a
       clicar num link e digitar senha, CPF ou dados de cartão numa página falsa.</p>
       <p>O nome vem de "fishing" (pescar): o golpista lança uma isca (a mensagem
       urgente, a promoção boa demais) esperando que alguém morda.</p>
@@ -54,7 +54,7 @@
     </header>
     <div class="quadro-corpo aprender-corpo">
       <p>Leia sempre da direita para a esquerda, até achar a primeira barra "/".
-      O que vem logo antes dela é o domínio de verdade — o resto é decoração.</p>
+      O que vem logo antes dela é o domínio de verdade o resto é decoração.</p>
       <ul class="aprender-lista">
         <li><code>itau.com.br/login</code> → domínio real: <strong>itau.com.br</strong></li>
         <li><code>itau.seguranca-cliente.top/login</code> → domínio real: <strong>seguranca-cliente.top</strong> (não é o Itaú)</li>
@@ -85,11 +85,11 @@
     </header>
     <div class="quadro-corpo aprender-corpo">
       <ol class="aprender-lista aprender-passos">
-        <li>Não digite mais nada na página — feche a aba.</li>
+        <li>Não digite mais nada na página feche a aba.</li>
         <li>Se digitou senha, troque-a agora no site oficial (digitado à mão, não pelo link).</li>
         <li>Ative a verificação em duas etapas nas contas importantes.</li>
-        <li>Se informou dados de cartão, ligue para o banco e peça o bloqueio/reemissão.</li>
-        <li>Avise quem te enviou o link — a conta dessa pessoa pode estar comprometida.</li>
+        <li>Se informou dados de cartão, ligue para o banco e peça o bloqueio.</li>
+        <li>Avise quem te enviou o link a conta dessa pessoa pode estar comprometida.</li>
       </ol>
     </div>
   </article>
@@ -120,13 +120,7 @@
   // botões "?" pontuais usam o mesmo GLOSSARIO de glossario.js).
   (function () {
     const lista = document.getElementById("glossario-lista");
-    for (const termo of Object.values(window.GLOSSARIO || {})) {
-      const dt = document.createElement("dt");
-      dt.textContent = termo.titulo;
-      const dd = document.createElement("dd");
-      dd.textContent = termo.texto;
-      lista.append(dt, dd);
-    }
+    window.preencherGlossario(lista);
   })();
 </script>
 </body>

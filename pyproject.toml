@@ -14,6 +14,8 @@ dependencies = ["httpx>=0.27"]
 # cryptography permite ler o certificado mesmo quando a cadeia não valida.
 extras = ["tldextract>=5.1", "cryptography>=42.0"]
 web = ["fastapi>=0.115", "uvicorn[standard]>=0.30"]
+# Assistente com IA nos chats; sem ele (ou sem chave), os chats usam respostas por regra.
+ia = ["anthropic>=1.12"]
 dev = ["pytest>=8.0"]
 
 [project.scripts]

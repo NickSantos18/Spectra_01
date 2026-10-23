@@ -1,32 +1,16 @@
-/* Menu compartilhado do painel (web/parciais/menu.html): bloco da conta e
- * botões de sair. A conta pode aparecer em mais de um lugar (menu lateral,
- * barra do celular, gaveta), por isso os alvos são atributos data-*, não ids.
- * Todo texto vindo do servidor entra por textContent.
+/* Navegação compartilhada: destino após login e gaveta do celular.
+ * A conta e o botão de sair são controlados globalmente por conta.js.
  */
 
 (function () {
-  function preencherConta(usuario) {
-    const inicial = usuario.nome.trim().charAt(0).toUpperCase();
-    document.querySelectorAll("[data-conta-inicial]").forEach((el) => { el.textContent = inicial; });
-    document.querySelectorAll("[data-conta-nome]").forEach((el) => { el.textContent = usuario.nome; });
-    document.querySelectorAll("[data-conta]").forEach((el) => { el.hidden = false; });
-  }
-
-  async function sair() {
-    try {
-      await fetch("/api/auth/sair", { method: "POST" });
-    } finally {
-      window.location.href = "/inicio";
+  const proximo = sessionStorage.getItem("spectra-proximo");
+  if (proximo) {
+    sessionStorage.removeItem("spectra-proximo");
+    if (/^\/painel(?:\/|\?|$)/.test(proximo) && !/[\\\r\n]/.test(proximo) && location.pathname + location.search !== proximo) {
+      location.replace(proximo);
+      return;
     }
   }
-
-  fetch("/api/auth/eu")
-    .then((resposta) => resposta.json())
-    .then(({ usuario }) => { if (usuario) preencherConta(usuario); })
-    .catch(() => {});
-
-  document.querySelectorAll("[data-sair]").forEach((botao) => botao.addEventListener("click", sair));
-
   const gaveta = document.getElementById("gaveta-mais");
   const abridores = document.querySelectorAll("[data-abrir-mais]");
   if (gaveta && typeof gaveta.showModal === "function") {

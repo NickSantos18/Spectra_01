@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Comunidade · Spectra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/tokens.css">
+<link rel="stylesheet" href="/static/laudo.css">
+<link rel="stylesheet" href="/static/rodape.css">
+<link rel="stylesheet" href="/static/animacoes.css">
+<link rel="stylesheet" href="/static/comunidade.css">
+<link rel="icon" href="/static/logo-spectra-escuro.svg">
+<script src="/static/movimento.js"></script>
+<script src="/static/acessibilidade.js"></script>
+<script src="/static/animacoes.js"></script>
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js" defer integrity="sha384-WBRt9V/J/erVtkEuP91HUFRv9MvHzFiFOp4/zTDp4xkcMG7aOeIv2asTV4yxFLWa" crossorigin="anonymous"></script>
+</head>
+<body data-estado="seguro" data-pagina="__PAGINA_COMUNIDADE__" data-perfil-proprio="__PERFIL_PROPRIO__">
+<div class="fundo-fixo" aria-hidden="true"><canvas class="fundo-animado" data-efeito="__FUNDO_COMUNIDADE__"></canvas></div>
+<div class="app">
+<!--PARCIAL:menu-->
+<div class="corpo">
+<header class="barra hist-barra"><h1 id="titulo" class="hist-titulo">Comunidade</h1></header>
+<nav id="explorar-nav" class="explorar-nav" aria-label="Navegação do Explorar" hidden>
+  <a href="#feed" data-explorar="feed"><i data-lucide="layout-list" aria-hidden="true"></i><span>Feed</span></a>
+  <a href="#publicar" data-explorar="publicar"><i data-lucide="square-pen" aria-hidden="true"></i><span>Publicar</span></a>
+  <a href="#conexoes" data-explorar="conexoes"><i data-lucide="users" aria-hidden="true"></i><span>Conexões</span></a>
+  <a href="#conversas" data-explorar="conversas"><i data-lucide="messages-square" aria-hidden="true"></i><span>Conversas</span></a>
+  <a href="#desafios" data-explorar="desafios"><i data-lucide="gamepad-2" aria-hidden="true"></i><span>Desafios</span></a>
+</nav>
+<main class="social">
+<p id="aviso" role="status" aria-live="polite"></p>
+
+<section id="perfil" hidden>
+  <form id="form-perfil" class="social-card perfil-grade">
+    <div class="foto-controle"><img id="foto-preview" class="avatar-grande" alt="Sua foto de perfil" hidden><span id="foto-inicial" class="avatar-grande"></span>
+    <button type="button" id="alterar-foto">Alterar foto</button><input id="foto" type="file" accept="image/*" hidden><button type="button" id="ajustar-foto" hidden>Ajustar enquadramento</button><button type="button" id="remover-foto">Remover foto</button><small>Arraste e ajuste o zoom antes de aplicar a foto.</small></div>
+    <div class="social-form"><label for="nome">Nome</label><input id="nome" minlength="3" maxlength="120" required>
+    <label for="bio">Sobre você</label><textarea id="bio" maxlength="1000" rows="4" placeholder="Seus interesses em cibersegurança"></textarea>
+    <dl class="perfil-dados"><dt>E-mail</dt><dd id="email"></dd><dt>Identificador da conta</dt><dd id="identificador"></dd><dt>IP desta conexão</dt><dd id="ip"></dd><dt>Conta criada em</dt><dd id="criado"></dd></dl>
+    <small>Seu IP fica visível apenas para você. Ele pode mudar conforme a rede; no acesso local pode aparecer 127.0.0.1.</small>
+    <button type="submit">Salvar perfil</button></div>
+  </form>
+</section>
+<section id="perfil-membro" class="social-card membro-grade" hidden aria-labelledby="membro-nome">
+  <img id="membro-foto" class="avatar-grande" alt="" hidden><span id="membro-inicial" class="avatar-grande" aria-hidden="true"></span>
+  <div><h2 id="membro-nome"></h2><p id="membro-bio"></p><p id="membro-total" class="post-meta"></p><div class="post-acoes"><button id="membro-seguir" type="button" hidden>Seguir</button><a id="membro-editar" href="/painel/perfil" hidden>Editar meu perfil</a></div></div>
+</section>
+<section id="chat" class="chat-grade" hidden>
+ <aside class="social-card"><label for="busca">Suas conexões</label><input id="busca" maxlength="120" placeholder="Buscar nas suas conexões"><a href="/painel/explorar">Encontrar pessoas no Explorar</a><div id="contatos" class="contatos"></div></aside>
+ <div class="social-card conversa"><h2 id="contato-nome">Escolha uma pessoa</h2><div id="mensagens" class="mensagens" role="log" aria-label="Mensagens da conversa" aria-live="polite"></div>
+ <form id="form-mensagem" class="enviar"><label class="sr-only" for="mensagem">Mensagem</label><textarea id="mensagem" maxlength="4000" rows="2" required placeholder="Escreva sua mensagem" disabled></textarea><button id="enviar" disabled>Enviar</button></form></div>
+</section>
+<section id="publicacoes" hidden>
+ <h2 id="perfil-postagens" hidden>Publicações</h2>
+ <div class="social-card" id="convites" hidden><h2>Convidar especialista</h2><p>Crie um link válido por 7 dias e compartilhe com a pessoa convidada. Ela deve entrar com o e-mail informado.</p><form id="form-convite" class="enviar"><label class="sr-only" for="email-convite">E-mail do especialista</label><input id="email-convite" type="email" required placeholder="E-mail do especialista"><button>Criar convite</button></form><p id="link-convite" class="convite-link"></p></div>
+ <form id="form-publicacao" class="social-card social-form" hidden><h2 id="compor-titulo">Nova publicação</h2><label for="post-titulo">Título</label><input id="post-titulo" minlength="5" maxlength="180" required placeholder="Sobre o que vamos conversar?"><label for="post-texto">Conteúdo</label><textarea id="post-texto" minlength="10" maxlength="20000" rows="6" required placeholder="Compartilhe conhecimento sobre cibersegurança"></textarea>
+ <label for="post-midias">Adicionar fotos ou vídeos</label><input id="post-midias" type="file" accept="image/png,image/jpeg,image/webp,video/mp4,video/webm" multiple aria-describedby="midias-ajuda">
+ <small id="midias-ajuda">Até 4 arquivos. Fotos PNG, JPEG ou WebP de até 10 MB; vídeos MP4 ou WebM de até 40 MB. Compartilhe conteúdos sobre cibersegurança.</small><div id="midias-preview" class="midias-preview"></div>
+ <button type="submit">Publicar</button></form>
+ <p id="blog-info" hidden>Artigos de especialistas convidados. Os membros podem ler e participar com comentários.</p>
+ <div id="lista-publicacoes"></div>
+</section>
+<section id="explorar-conexoes" hidden>
+  <h2>Suas conexões</h2>
+  <div class="conexoes-grade"><article class="social-card"><h2>Seguindo <span id="total-seguindo"></span></h2><div id="lista-seguindo"></div></article><article class="social-card"><h2>Seguidores <span id="total-seguidores"></span></h2><div id="lista-seguidores"></div></article></div>
+</section>
+<section id="explorar-desafios" hidden>
+  <h2>Laboratório de cibersegurança</h2>
+  <p id="desafios-resumo" class="desafios-resumo" role="status"></p>
+  <div id="desafios-catalogo" class="desafios-grade"></div>
+  <article id="desafio-partida" class="social-card" hidden aria-labelledby="desafio-titulo"></article>
+</section>
+</main>
+<dialog id="editor-foto" class="editor-foto social" aria-labelledby="recorte-titulo" aria-describedby="recorte-ajuda">
+  <h2 id="recorte-titulo">Ajustar foto de perfil</h2>
+  <p id="recorte-ajuda">Arraste a foto ou use as setas do teclado para posicionar. Ajuste o zoom para escolher o enquadramento.</p>
+  <div class="recorte-area"><canvas id="recorte-canvas" width="512" height="512" tabindex="0" aria-label="Prévia da foto. Use as setas para mover o enquadramento."></canvas></div>
+  <div class="recorte-controle"><label for="recorte-zoom">Zoom</label><input id="recorte-zoom" type="range" min="1" max="4" step="0.01" value="1"><output id="recorte-valor" for="recorte-zoom">1.00×</output></div>
+  <div class="recorte-controle"><label for="recorte-horizontal">Horizontal</label><input id="recorte-horizontal" type="range" min="0" max="100" step="1" value="50"></div>
+  <div class="recorte-controle"><label for="recorte-vertical">Vertical</label><input id="recorte-vertical" type="range" min="0" max="100" step="1" value="50"></div>
+  <p class="post-meta">Aumente o zoom para liberar o movimento em todas as direções.</p>
+  <div class="recorte-acoes"><button id="recorte-redefinir" type="button">Centralizar</button><button id="recorte-cancelar" type="button">Cancelar</button><button id="recorte-aplicar" type="button">Aplicar foto</button></div>
+  <small>Depois de aplicar, clique em Salvar perfil para guardar a alteração.</small>
+</dialog>
+<!--PARCIAL:rodape-->
+</div></div>
+<!--PARCIAL:acessibilidade-->
+<script src="/static/menu.js"></script>
+<script src="/static/fundo.js" defer></script>
+<script src="/static/foto-editor.js"></script>
+<script src="/static/explorar.js"></script>
+<script src="/static/comunidade.js"></script>
+<script>document.addEventListener('DOMContentLoaded', () => { if (window.lucide) window.lucide.createIcons(); });</script>
+</body></html>

@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="/static/laudo.css">
 <link rel="stylesheet" href="/static/rodape.css">
 <link rel="stylesheet" href="/static/animacoes.css">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<link rel="icon" href="/static/logo-spectra-escuro.svg">
 <script src="/static/movimento.js"></script>
 <script src="/static/acessibilidade.js"></script>
 <script src="/static/animacoes.js"></script>
@@ -52,7 +52,7 @@
       <p class="kpi-valor esqueleto" id="kpi-risco">0</p>
     </article>
     <article class="quadro kpi cartao-vivo">
-      <p class="kpi-rotulo">Seguras</p>
+      <p class="kpi-rotulo" title="Análises sem sinais ou com risco baixo; não é garantia de segurança">Sem sinais / baixo risco</p>
       <p class="kpi-valor esqueleto" id="kpi-seguras">0%</p>
     </article>
   </section>
@@ -67,9 +67,21 @@
   </section>
 
   <section class="quadro vg-tempo" data-com-dados>
-    <header class="quadro-topo">
-      <h2 class="quadro-titulo">Últimos 30 dias</h2>
-      <span class="quadro-marca mono">análises e risco médio</span>
+    <header class="vg-tempo-topo">
+      <div class="vg-tempo-titulo">
+        <h2 class="quadro-titulo">Últimos 30 dias</h2>
+        <p class="vg-tempo-sub" id="vg-tempo-sub">Análises feitas por dia</p>
+      </div>
+      <div class="vg-metricas" role="group" aria-label="Métrica do gráfico">
+        <button type="button" class="vg-metrica" data-metrica="total" aria-pressed="true">
+          <span class="vg-metrica-rotulo">Análises</span>
+          <span class="vg-metrica-valor" id="vg-m-total">0</span>
+        </button>
+        <button type="button" class="vg-metrica" data-metrica="risco" aria-pressed="false">
+          <span class="vg-metrica-rotulo">Risco médio</span>
+          <span class="vg-metrica-valor" id="vg-m-risco">0</span>
+        </button>
+      </div>
     </header>
     <div class="quadro-corpo">
       <div class="grafico-caixa grafico-alto">
@@ -79,20 +91,22 @@
   </section>
 
   <section class="quadro vg-niveis" data-com-dados>
-    <header class="quadro-topo"><h2 class="quadro-titulo">Vereditos</h2></header>
+    <header class="quadro-topo">
+      <h2 class="quadro-titulo">Vereditos</h2>
+      <span class="quadro-marca mono">fatia de cada nível</span>
+    </header>
     <div class="quadro-corpo">
-      <div class="grafico-caixa">
-        <canvas id="g-niveis" role="img" aria-label="Distribuição de vereditos"></canvas>
-      </div>
+      <div id="g-niveis" role="img" aria-label="Distribuição de vereditos"></div>
     </div>
   </section>
 
   <section class="quadro vg-sinais" data-com-dados>
-    <header class="quadro-topo"><h2 class="quadro-titulo">Sinais mais frequentes</h2></header>
+    <header class="quadro-topo">
+      <h2 class="quadro-titulo">Sinais mais frequentes</h2>
+      <span class="quadro-marca mono">vezes · % das análises</span>
+    </header>
     <div class="quadro-corpo">
-      <div class="grafico-caixa">
-        <canvas id="g-sinais" role="img" aria-label="Sinais de risco mais frequentes"></canvas>
-      </div>
+      <ol class="barras" id="g-sinais" aria-label="Sinais de risco mais frequentes"></ol>
       <p class="vg-sinais-vazio" id="vg-sinais-vazio" hidden>Nenhum sinal de risco nas suas análises até agora.</p>
     </div>
   </section>
@@ -108,6 +122,7 @@
 
 <script src="/static/fundo.js" defer></script>
 <script src="/static/menu.js" defer></script>
+<script src="/static/graficos.js" defer></script>
 <script src="/static/visao-geral.js" defer></script>
 </body>
 </html>

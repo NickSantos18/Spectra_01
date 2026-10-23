@@ -14,11 +14,11 @@ const GLOSSARIO = {
   },
   tls: {
     titulo: "Certificado TLS",
-    texto: "O documento digital que prova, criptograficamente, que a conexão com aquele servidor está protegida. É o que o cadeado do navegador representa — não prova que o site é honesto, só que a conexão é privada.",
+    texto: "O documento digital que prova, criptograficamente, que a conexão com aquele servidor está protegida. É o que o cadeado do navegador representa não prova que o site é honesto, só que a conexão é privada.",
   },
   rdap: {
     titulo: "RDAP",
-    texto: "Registration Data Access Protocol — sucessor do WHOIS. Mostra quando um domínio foi registrado, quando vence e o status dele no registro.",
+    texto: "Registration Data Access Protocol sucessor do WHOIS. Mostra quando um domínio foi registrado, quando vence e o status dele no registro.",
   },
   dns: {
     titulo: "DNS",
@@ -26,7 +26,7 @@ const GLOSSARIO = {
   },
   spf: {
     titulo: "SPF",
-    texto: "Sender Policy Framework — registro DNS que lista quem tem permissão para enviar e-mail em nome de um domínio. Sem ele, é mais fácil falsificar remetente.",
+    texto: "Sender Policy Framework, registro DNS que lista quem tem permissão para enviar e-mail em nome de um domínio. Sem ele, é mais fácil falsificar remetente.",
   },
   dmarc: {
     titulo: "DMARC",
@@ -34,11 +34,11 @@ const GLOSSARIO = {
   },
   caa: {
     titulo: "CAA",
-    texto: "Certification Authority Authorization — registro DNS que limita quais autoridades certificadoras podem emitir certificado para aquele domínio.",
+    texto: "Certification Authority Authorization, registro DNS que limita quais autoridades certificadoras podem emitir certificado para aquele domínio.",
   },
   tld: {
     titulo: "TLD",
-    texto: "Top-Level Domain — a última parte de um domínio (.com, .br, .xyz). Algumas extensões são muito baratas ou gratuitas e por isso concentram mais golpes.",
+    texto: "Top-Level Domain, a última parte de um domínio (.com, .br, .xyz). Algumas extensões são muito baratas ou gratuitas e por isso concentram mais golpes.",
   },
   punycode: {
     titulo: "Punycode",
@@ -125,3 +125,17 @@ if (document.readyState === "loading") {
 
 window.GLOSSARIO = GLOSSARIO;
 window.montarTermosDeAjuda = montarTermosDeAjuda;
+
+/** Agrupa cada definição para manter espaço e divisória por tópico. */
+window.preencherGlossario = function(lista) {
+  for (const termo of Object.values(GLOSSARIO)) {
+    const grupo = document.createElement("div");
+    grupo.className = "glossario-topico";
+    const dt = document.createElement("dt");
+    dt.textContent = termo.titulo;
+    const dd = document.createElement("dd");
+    dd.textContent = termo.texto;
+    grupo.append(dt, dd);
+    lista.append(grupo);
+  }
+};

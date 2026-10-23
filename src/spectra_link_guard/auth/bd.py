@@ -218,6 +218,25 @@ def usuario_da_sessao(sessao_id: str) -> dict[str, Any] | None:
     return dict(linha) if linha else None
 
 
+def renovar_sessao(sessao_id: str, dias: int = DIAS_DE_SESSAO) -> bool:
+    """Empurra o vencimento de uma sessão ainda válida para ``dias`` a partir de agora.
+
+    Quem usa o painel não é deslogado no meio do caminho: só "Sair" encerra.
+    Devolve ``False`` se a sessão já não existe ou venceu (não ressuscita).
+    """
+    inicio = agora()
+    with conexao() as con:
+        cur = con.execute(
+            "UPDATE sessoes SET expira_em = ? WHERE id = ? AND expira_em > ?",
+            (
+                (inicio + timedelta(days=dias)).isoformat(timespec="seconds"),
+                sessao_id,
+                inicio.isoformat(timespec="seconds"),
+            ),
+        )
+        return cur.rowcount == 1
+
+
 def fechar_sessao(sessao_id: str) -> None:
     with conexao() as con:
         con.execute("DELETE FROM sessoes WHERE id = ?", (sessao_id,))

@@ -467,6 +467,26 @@ def _checar_marcas(ctx: ContextoURL) -> list[Achado]:
                 )
                 return achados
 
+    # Uma marca curta pode não coincidir com o domínio oficial completo:
+    # steeam.com não é parecido com steampowered.com, mas repete uma letra de Steam.
+    # Limitamos a letras repetidas e a marcas de pelo menos cinco caracteres
+    # para não tratar qualquer palavra curta parecida como tentativa de fraude.
+    nome = registravel.split('.', 1)[0]
+    for marca, oficiais in MARCAS_OFICIAIS.items():
+        if (len(marca) >= 5 and nome.isalpha() and 0 < len(nome) - len(marca) <= 2
+                and re.sub(r'(.)\1+', r'\1', nome) == re.sub(r'(.)\1+', r'\1', marca)):
+            achados.append(Achado(
+                codigo="marca_com_letra_repetida",
+                titulo=f"Nome parecido com '{marca}', com letras repetidas",
+                severidade=Severidade.ALTA,
+                detalhe=(f"O nome '{nome}' repete letras de '{marca}' e o endereço não está "
+                         "entre os domínios oficiais conhecidos. É um sinal de possível confusão "
+                         "de identidade, não uma confirmação de fraude."),
+                recomendacao=f"Confirme pelo endereço oficial: {', '.join(oficiais)}. Não informe credenciais antes de conferir.",
+                evidencia={'marca':marca, 'dominio_real':registravel, 'oficiais':list(oficiais)},
+            ))
+            return achados
+
     # (c) marca citada no subdomínio ou no caminho, mas o domínio é de terceiro
     contexto_texto = esqueleto_visual(".".join(ctx.subdominios) + " " + ctx.caminho)
     for marca, oficiais in MARCAS_OFICIAIS.items():
@@ -507,7 +527,7 @@ def _checar_iscas(ctx: ContextoURL) -> list[Achado]:
                 evidencia={"termos": encontradas},
             )
         )
-    caminho = ctx.caminho.lower()
+    caminho = unquote(ctx.caminho).lower()
     for ext in EXTENSOES_EXECUTAVEIS:
         if caminho.endswith(ext):
             achados.append(
@@ -672,14 +692,14 @@ def checklist_heuristico(ctx: ContextoURL, achados: list[Achado]) -> list[Criter
     )
 
     # 9) Imitação de marca conhecida (typosquatting, sósia visual ou marca no subdomínio)
-    imita_marca = bool(codigos & {"dominio_sosia", "typosquatting", "marca_em_subdominio"})
+    imita_marca = bool(codigos & {"dominio_sosia", "typosquatting", "marca_em_subdominio", "marca_com_letra_repetida"})
     linhas.append(
         CriterioChecklist(
             codigo="imitacao_de_marca",
             rotulo="Sem imitação de marca conhecida",
             passou=not imita_marca,
             motivo=(
-                "O domínio imita ou cita uma marca conhecida que não é a dona da página."
+                "O endereço apresenta semelhança ou referência a uma marca em domínio diferente dos oficiais conhecidos."
                 if imita_marca
                 else "Nenhuma semelhança com marcas conhecidas foi encontrada."
             ),

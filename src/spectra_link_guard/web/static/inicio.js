@@ -1,3 +1,7 @@
+// Preserva o destino de convites durante login e cadastro, restrito ao painel local.
+const destinoInformado = new URLSearchParams(location.search).get("proximo");
+const destinoAposLogin = destinoInformado && /^\/painel(?:\/|\?|$)/.test(destinoInformado) && !/[\\\r\n]/.test(destinoInformado) ? destinoInformado : "/painel";
+if (destinoInformado) sessionStorage.setItem("spectra-proximo", destinoAposLogin);
 /* Spectra — tela de entrada: modais de acesso e widget do assistente.
  *
  * JavaScript puro, sem dependência. Todo texto que vem de fora entra por
@@ -173,7 +177,7 @@ paineis.entrar.addEventListener("submit", async (evento) => {
 
     if (resp.ok) {
       // Sessão criada em cookie HttpOnly pelo servidor — nada é guardado aqui.
-      window.location.href = "/painel";
+      window.location.href = destinoAposLogin;
       return;
     }
     avisarNoForm(paineis.entrar, corpo.erro || corpo.detail || "Não foi possível entrar.");
@@ -233,7 +237,7 @@ paineis.cadastrar.addEventListener("submit", async (evento) => {
     const corpo = await resp.json();
 
     if (resp.status === 201) {
-      window.location.href = "/painel";
+      window.location.href = destinoAposLogin;
       return;
     }
     if (resp.status === 409) {
@@ -283,32 +287,32 @@ const sugestoes = $("chat-sugestoes");
 
 const BOAS_VINDAS = "Olá! Como posso te ajudar a navegar por esta página hoje?";
 
-// Respostas simuladas. Trocar pela API real — ver comentário em responder().
+// Respostas por regra: só entram quando a IA do servidor não está disponível
+// (sem chave configurada, rede fora). Os rótulos também viram as sugestões.
 const RESPOSTAS = [
   {
     gatilho: ["cadastr", "criar conta", "conta nova", "registr"],
     rotulo: "Como me cadastrar?",
     texto:
       "Clique em Cadastrar-se, no topo ou no meio da página. Você preenche nome, " +
-      "e-mail e senha, aceita os termos e recebe um link de confirmação por e-mail. " +
-      "A conta fica ativa depois que você clica nesse link.",
+      "e-mail e senha e já entra direto no painel. Se o servidor tiver login com " +
+      "Google configurado, dá para usar essa opção também.",
   },
   {
     gatilho: ["esqueci", "senha", "recuperar", "redefinir"],
     rotulo: "Esqueci minha senha",
     texto:
       "Abra Entrar, digite seu e-mail no campo e clique em “Esqueci minha senha”. " +
-      "Mandamos um link de redefinição para esse endereço. O link vale por 30 minutos " +
-      "e só pode ser usado uma vez.",
+      "O link de redefinição vai para esse endereço. Se ele não chegar, fale com o suporte.",
   },
   {
     gatilho: ["como funciona", "plataforma", "o que é", "produto", "spectra faz"],
     rotulo: "Como funciona a plataforma?",
     texto:
-      "Você cadastra o endereço da sua aplicação e o Spectra faz uma varredura. " +
-      "Cada falha encontrada vira uma ficha com três coisas: a requisição que provou " +
-      "o problema, o que ele custa em risco de negócio, e a correção pronta no seu " +
-      "framework. Se você conectar o repositório, dá para abrir o pull request direto daqui.",
+      "Você cola um link e o Spectra analisa sem abrir a página: a estrutura do " +
+      "endereço, o certificado, listas públicas de golpes e a idade do domínio. " +
+      "O resultado é um laudo com nota de risco de 0 a 100 e a explicação de cada " +
+      "sinal em português simples, mais o que fazer em seguida.",
   },
   {
     gatilho: ["preço", "custo", "quanto custa", "plano", "grátis"],
@@ -330,7 +334,7 @@ function balao(texto, autor) {
 
   bolha.textContent = texto;
   bolha.className =
-    "max-w-[85%] rounded-lg px-3.5 py-2.5 text-sm leading-relaxed " +
+    "max-w-[85%] whitespace-pre-wrap rounded-lg px-3.5 py-2.5 text-sm leading-relaxed " +
     (autor === "bot"
       ? "self-start bg-sup-2 text-txt-2 rounded-bl-sm"
       : "self-end bg-marca text-sobre-marca rounded-br-sm");
@@ -348,39 +352,83 @@ function digitando() {
   return bolha;
 }
 
-function responder(pergunta) {
-  // ╔══════════════════════════════════════════════════════════════════╗
-  // ║  INTEGRAR A API DO CHATBOT AQUI                                  ║
-  // ║                                                                  ║
-  // ║  const r = await fetch("/api/copilot", {                         ║
-  // ║    method: "POST",                                               ║
-  // ║    headers: { "Content-Type": "application/json" },              ║
-  // ║    body: JSON.stringify({ mensagem: pergunta, contexto: "landing" })
-  // ║  });                                                             ║
-  // ║  const { resposta } = await r.json();                            ║
-  // ║  return resposta;                                                ║
-  // ║                                                                  ║
-  // ║  Continue escrevendo a resposta com textContent (função balao):  ║
-  // ║  conteúdo gerado por LLM não deve ser injetado como HTML.        ║
-  // ╚══════════════════════════════════════════════════════════════════╝
+function responderPorRegra(pergunta) {
   const alvo = pergunta.toLowerCase();
   const achada = RESPOSTAS.find((r) => r.gatilho.some((g) => alvo.includes(g)));
   return achada ? achada.texto : PADRAO;
 }
 
-function enviar(texto) {
+// Conversa enviada à IA (/api/assistente), que responde em streaming.
+const historicoIA = [];
+// Vira falso no primeiro 503: daí em diante, só as regras locais.
+let iaDisponivel = true;
+let respondendo = false;
+
+/* Pede a resposta à IA e escreve na bolha conforme o texto chega.
+ * Devolve o texto completo, ou null quando é para usar as regras locais.
+ * O texto entra sempre por textContent: o que o modelo gera nunca vira HTML. */
+async function perguntarIA(bolha) {
+  const resp = await fetch("/api/assistente", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contexto: "inicio",
+      historico: historicoIA.slice(-16).map((m) => ({ papel: m.papel, texto: m.texto.slice(0, 8000) })),
+    }),
+  });
+  if (resp.status === 503) {
+    iaDisponivel = false;
+    return null;
+  }
+  if (resp.status === 429) {
+    const corpo = await resp.json().catch(() => ({}));
+    return corpo.erro || "Muitas perguntas em pouco tempo. Aguarde alguns minutos.";
+  }
+  if (!resp.ok || !resp.body) return null;
+
+  const leitor = resp.body.getReader();
+  const decodificador = new TextDecoder();
+  let texto = "";
+  for (;;) {
+    const { done, value } = await leitor.read();
+    if (done) break;
+    texto += decodificador.decode(value, { stream: true });
+    bolha.textContent = texto;
+    bolha.classList.remove("text-txt-3");
+    mensagens.scrollTop = mensagens.scrollHeight;
+  }
+  texto += decodificador.decode();
+  return texto.trim() ? texto : null;
+}
+
+async function enviar(texto) {
   const pergunta = texto.trim();
-  if (!pergunta) return;
+  if (!pergunta || respondendo) return;
 
   balao(pergunta, "eu");
   $("chat-campo").value = "";
+  historicoIA.push({ papel: "usuario", texto: pergunta });
 
+  respondendo = true;
+  // Leitor de tela espera a resposta terminar em vez de ler cada pedaço.
+  mensagens.setAttribute("aria-busy", "true");
   const espera = digitando();
-  setTimeout(() => {
-    espera.textContent = responder(pergunta);
-    espera.classList.remove("text-txt-3");
-    mensagens.scrollTop = mensagens.scrollHeight;
-  }, 450);
+  let resposta = null;
+  try {
+    if (iaDisponivel) resposta = await perguntarIA(espera);
+  } catch {
+    resposta = null;  // rede fora: as regras locais respondem
+  }
+  if (resposta === null) {
+    if (!iaDisponivel) await new Promise((r) => setTimeout(r, 450));
+    resposta = responderPorRegra(pergunta);
+  }
+  espera.textContent = resposta;
+  espera.classList.remove("text-txt-3");
+  historicoIA.push({ papel: "assistente", texto: resposta });
+  mensagens.scrollTop = mensagens.scrollHeight;
+  mensagens.removeAttribute("aria-busy");
+  respondendo = false;
 }
 
 function montarSugestoes() {
@@ -444,12 +492,13 @@ if (motivo && MOTIVOS[motivo]) {
   if (motivo === "entre_primeiro") abrirModal("entrar");
 }
 
-// O botão do Google só é oferecido se o servidor tiver as credenciais.
+// O botão fica visível nas duas abas; sem configuração, informa a indisponibilidade.
 fetch("/api/auth/provedores")
   .then((r) => r.json())
   .then(({ google }) => {
     if (google) return;
-    $("botao-google").hidden = true;
+    $("botao-google").setAttribute("aria-disabled", "true");
+    $("botao-google").addEventListener("click", (evento) => evento.preventDefault());
     $("google-indisponivel").hidden = false;
   })
   .catch(() => {});
@@ -462,7 +511,7 @@ fetch("/api/auth/eu")
     for (const botao of document.querySelectorAll("[data-abrir]")) {
       botao.textContent = "Abrir painel";
       botao.dataset.abrir = "";
-      botao.addEventListener("click", () => { window.location.href = "/painel"; }, true);
+      botao.addEventListener("click", () => { window.location.href = destinoAposLogin; }, true);
     }
   })
   .catch(() => {});

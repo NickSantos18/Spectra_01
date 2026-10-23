@@ -169,6 +169,40 @@ def test_sessao_vencida_nao_vale(cliente):
     assert bd.usuario_da_sessao(vencida) is None
 
 
+def test_sessao_em_uso_se_renova(cliente):
+    """Vencimento deslizante: quem usa o painel não é deslogado sozinho."""
+    cadastrar(cliente)
+    sessao_id = seguranca.abrir_assinado(cliente.cookies.get("spectra_sessao"))
+    with bd.conexao() as con:
+        con.execute("UPDATE sessoes SET expira_em = ? WHERE id = ?",
+                    ((bd.agora() + bd.timedelta(hours=1)).isoformat(timespec="seconds"), sessao_id))
+
+    resp = cliente.get("/api/auth/eu")
+    assert resp.json()["usuario"]["email"] == CONTA["email"]
+    assert "max-age" in resp.headers["set-cookie"].lower()
+    with bd.conexao() as con:
+        expira = con.execute("SELECT expira_em FROM sessoes WHERE id = ?", (sessao_id,)).fetchone()[0]
+    assert expira > (bd.agora() + bd.timedelta(days=bd.DIAS_DE_SESSAO - 1)).isoformat()
+
+
+def test_sessao_vencida_nao_se_renova():
+    usuario = bd.criar_usuario(nome="X", email="x@exemplo.com")
+    vencida = bd.abrir_sessao(usuario["id"], dias=-1)
+    assert not bd.renovar_sessao(vencida)
+    assert bd.usuario_da_sessao(vencida) is None
+
+
+def test_entrada_devolve_ao_painel_quem_tem_sessao(cliente):
+    """Só o botão Sair tira a pessoa de dentro."""
+    cadastrar(cliente)
+    resp = cliente.get("/inicio", follow_redirects=False)
+    assert resp.status_code == 303
+    assert resp.headers["location"] == "/painel"
+
+    cliente.post("/api/auth/sair")
+    assert cliente.get("/inicio", follow_redirects=False).status_code == 200
+
+
 def test_cookie_e_httponly_e_samesite(cliente):
     cabecalho = cadastrar(cliente).headers["set-cookie"].lower()
     assert "httponly" in cabecalho

@@ -1,54 +1,25 @@
 <aside class="trilho">
-  <a class="chancela" href="/inicio">
-    <span class="chancela-marca" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-      </svg>
-    </span>
-    <span class="chancela-texto">
-      <span class="chancela-nome">SPECTRA</span>
-      <span class="chancela-tipo">laudo de link</span>
-    </span>
+  <a class="chancela" href="/painel">
+    <span class="spectra-logo-menu"><img class="marca-escura" src="/static/logo-spectra-escuro.svg" alt="Spectra"><img class="marca-clara" src="/static/logo-spectra-claro.svg" alt="Spectra"></span>
+
   </a>
 
   <nav class="menu" aria-label="Navegação principal">
-    <a class="menu-item" href="/painel" data-menu="verificar">
-      <i data-lucide="search-check" class="menu-icone" aria-hidden="true"></i><span class="menu-rotulo">Verificar</span>
-    </a>
-    <a class="menu-item" href="/painel/visao-geral" data-menu="visao-geral">
-      <i data-lucide="layout-dashboard" class="menu-icone" aria-hidden="true"></i><span class="menu-rotulo">Visão geral</span>
-    </a>
-    <a class="menu-item" href="/painel/historico" data-menu="historico">
-      <i data-lucide="history" class="menu-icone" aria-hidden="true"></i><span class="menu-rotulo">Histórico</span>
-    </a>
-    <a class="menu-item" href="/painel/aprender" data-menu="aprender">
-      <i data-lucide="book-open" class="menu-icone" aria-hidden="true"></i><span class="menu-rotulo">Aprender</span>
-    </a>
+    <a class="menu-item" href="/painel" data-menu="verificar"><i data-lucide="search-check" class="menu-icone" aria-hidden="true"></i><span class="menu-rotulo">Verificar</span></a>
+    <a class="menu-item" href="/painel/visao-geral" data-menu="visao-geral"><i data-lucide="layout-dashboard" class="menu-icone" aria-hidden="true"></i><span class="menu-rotulo">Visão Geral</span></a>
+    <a class="menu-item" href="/painel/historico" data-menu="historico"><i data-lucide="history" class="menu-icone" aria-hidden="true"></i><span class="menu-rotulo">Histórico</span></a>
+    <a class="menu-item" href="/painel/explorar" data-menu="explorar"><i data-lucide="compass" class="menu-icone" aria-hidden="true"></i><span class="menu-rotulo">Explorar</span></a>
+    <a class="menu-item" href="/painel/blog" data-menu="blog"><i data-lucide="newspaper" class="menu-icone" aria-hidden="true"></i><span class="menu-rotulo">Blog</span></a>
+    <a class="menu-item" href="/painel/forum" data-menu="forum"><i data-lucide="messages-square" class="menu-icone" aria-hidden="true"></i><span class="menu-rotulo">Fórum</span></a>
+    <a class="menu-item" href="/painel/aprender" data-menu="aprender"><i data-lucide="book-open" class="menu-icone" aria-hidden="true"></i><span class="menu-rotulo">Aprender</span></a>
   </nav>
-
-  <div class="trilho-base">
-    <div class="conta" data-conta hidden>
-      <span class="conta-inicial" data-conta-inicial aria-hidden="true"></span>
-      <span class="conta-texto"><span class="conta-nome" data-conta-nome></span></span>
-      <button type="button" class="conta-sair" data-sair>
-        <i data-lucide="log-out" aria-hidden="true"></i><span class="conta-sair-rotulo">Sair</span>
-      </button>
-    </div>
-  </div>
 </aside>
 
 <div class="topo-movel">
-  <a class="chancela" href="/inicio">
-    <span class="chancela-marca" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-      </svg>
-    </span>
-    <span class="chancela-nome">SPECTRA</span>
+  <a class="chancela" href="/painel">
+    <span class="spectra-logo-menu"><img class="marca-escura" src="/static/logo-spectra-escuro.svg" alt="Spectra"><img class="marca-clara" src="/static/logo-spectra-claro.svg" alt="Spectra"></span>
+
   </a>
-  <button type="button" class="topo-conta" data-abrir-mais aria-controls="gaveta-mais" aria-expanded="false" aria-label="Abrir o menu da conta">
-    <span class="conta-inicial" data-conta-inicial aria-hidden="true"></span>
-  </button>
 </div>
 
 <nav class="barra-abas" aria-label="Navegação rápida">
@@ -56,7 +27,7 @@
     <i data-lucide="search-check" aria-hidden="true"></i><span>Verificar</span>
   </a>
   <a class="aba-item" href="/painel/visao-geral" data-menu="visao-geral">
-    <i data-lucide="layout-dashboard" aria-hidden="true"></i><span>Visão geral</span>
+    <i data-lucide="layout-dashboard" aria-hidden="true"></i><span>Visão Geral</span>
   </a>
   <a class="aba-item" href="/painel/historico" data-menu="historico">
     <i data-lucide="history" aria-hidden="true"></i><span>Histórico</span>
@@ -74,15 +45,9 @@
     </button>
   </div>
   <nav class="gaveta-menu" aria-label="Outras páginas">
-    <a class="gaveta-item" href="/painel/aprender" data-menu="aprender">
-      <i data-lucide="book-open" aria-hidden="true"></i>Aprender
-    </a>
+    <a class="gaveta-item" href="/painel/explorar" data-menu="explorar"><i data-lucide="compass" class="menu-icone" aria-hidden="true"></i><span class="menu-rotulo">Explorar</span></a>
+    <a class="gaveta-item" href="/painel/blog" data-menu="blog"><i data-lucide="newspaper" class="menu-icone" aria-hidden="true"></i><span class="menu-rotulo">Blog</span></a>
+    <a class="gaveta-item" href="/painel/forum" data-menu="forum"><i data-lucide="messages-square" class="menu-icone" aria-hidden="true"></i><span class="menu-rotulo">Fórum</span></a>
+    <a class="gaveta-item" href="/painel/aprender" data-menu="aprender"><i data-lucide="book-open" class="menu-icone" aria-hidden="true"></i><span class="menu-rotulo">Aprender</span></a>
   </nav>
-  <div class="gaveta-conta" data-conta hidden>
-    <span class="conta-inicial" data-conta-inicial aria-hidden="true"></span>
-    <span class="conta-nome" data-conta-nome></span>
-    <button type="button" class="conta-sair" data-sair>
-      <i data-lucide="log-out" aria-hidden="true"></i><span>Sair</span>
-    </button>
-  </div>
 </dialog>

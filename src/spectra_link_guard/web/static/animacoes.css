@@ -123,7 +123,7 @@ button:not(.a11y-botao):not(:disabled):active,
 :root[data-movimento="off"]::view-transition-old(*),
 :root[data-movimento="off"]::view-transition-new(*) { animation: none !important; }
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(*),
-  ::view-transition-old(*),
-  ::view-transition-new(*) { animation: none !important; }
+  :root:not([data-movimento="on"])::view-transition-group(*),
+  :root:not([data-movimento="on"])::view-transition-old(*),
+  :root:not([data-movimento="on"])::view-transition-new(*) { animation: none !important; }
 }

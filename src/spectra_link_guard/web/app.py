@@ -17,6 +17,7 @@ por requisição (campo ``offline`` do corpo), mas não é o padrão.
 from __future__ import annotations
 
 import asyncio
+import logging
 import re
 import time
 from collections import deque
@@ -24,10 +25,10 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from threading import Lock
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import FastAPI, HTTPException, Path as ParamPath, Request, Response
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -36,7 +37,7 @@ from ..analisador import ConfiguracaoLinkGuard, LinkGuard
 from ..auth import bd as bd_auth
 from ..auth import router as router_auth
 from ..auth import usuario_atual
-from . import analises
+from . import analises, assistente, comunidade, explorar, desafios
 
 ESTATICOS = Path(__file__).parent / "static"
 
@@ -44,6 +45,7 @@ ESTATICOS = Path(__file__).parent / "static"
 _ATIVOS_BASE = (
     "tokens.css", "rodape.css", "animacoes.css",
     "movimento.js", "acessibilidade.js", "animacoes.js",
+    "conta.css", "conta.js",
 )
 
 #: Ativos das telas com menu lateral (painel).
@@ -88,7 +90,11 @@ class _Limitador:
 
 
 limitador = _Limitador()
+#: O chat da página inicial é público e cada pergunta custa uma chamada ao
+#: modelo: freio próprio, separado do da análise.
+limitador_chat = _Limitador(maximo=40)
 guard = LinkGuard()
+registro = logging.getLogger("spectra.web")
 
 
 def _usuario_ou_401(request: Request) -> dict[str, Any]:
@@ -119,6 +125,9 @@ app = FastAPI(
 
 
 app.include_router(router_auth, tags=["acesso"])
+app.include_router(comunidade.router, tags=["comunidade"])
+app.include_router(explorar.router, tags=["explorar"])
+app.include_router(desafios.router, tags=["desafios"])
 
 
 class PedidoAnalise(BaseModel):
@@ -195,6 +204,62 @@ async def remover_do_historico(
     return Response(status_code=204)
 
 
+class MensagemChat(BaseModel):
+    papel: Literal["usuario", "assistente"]
+    texto: str = Field(min_length=1, max_length=8000)
+
+
+class PedidoAssistente(BaseModel):
+    contexto: Literal["inicio", "laudo"] = "inicio"
+    historico: list[MensagemChat] = Field(min_length=1, max_length=20)
+    laudo: dict[str, Any] | None = None
+
+
+@app.post("/api/assistente", summary="Conversa com o assistente (IA, em streaming)")
+async def conversar(pedido: PedidoAssistente, request: Request) -> StreamingResponse:
+    """Responde em texto puro, pedaço a pedaço.
+
+    503 quando não há IA configurada: o navegador cai nas respostas por regra.
+    """
+    if not assistente.disponivel():
+        raise HTTPException(status_code=503, detail="Assistente com IA não configurado.")
+
+    ip = request.client.host if request.client else "desconhecido"
+    if not limitador_chat.permitido(ip):
+        raise HTTPException(
+            status_code=429,
+            detail="Muitas perguntas em pouco tempo. Aguarde alguns minutos.",
+        )
+
+    gerador = assistente.responder(
+        pedido.contexto,
+        [m.model_dump() for m in pedido.historico],
+        pedido.laudo if pedido.contexto == "laudo" else None,
+    )
+    # O primeiro pedaço é esperado aqui: chave inválida, cota estourada ou
+    # rede fora viram um status de erro de verdade, e não um 200 truncado.
+    try:
+        primeiro = await anext(gerador, "")
+    except Exception as erro:
+        registro.warning("assistente falhou antes de responder: %s", erro)
+        raise HTTPException(status_code=502, detail="O assistente não respondeu agora.")
+
+    async def corpo():
+        yield primeiro
+        try:
+            async for pedaco in gerador:
+                yield pedaco
+        except Exception as erro:
+            registro.warning("assistente caiu no meio da resposta: %s", erro)
+            yield "\n\n(A resposta foi interrompida. Tente de novo.)"
+
+    return StreamingResponse(
+        corpo(),
+        media_type="text/plain; charset=utf-8",
+        headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
+    )
+
+
 @app.get("/api/saude", summary="Estado do serviço e dos provedores")
 async def saude() -> dict[str, Any]:
     cfg = guard.config
@@ -209,6 +274,7 @@ async def saude() -> dict[str, Any]:
             "virustotal": bool(cfg.chave_vt),
             "phishtank": bool(cfg.chave_phishtank),
         },
+        "assistente_ia": assistente.disponivel(),
     }
 
 
@@ -226,15 +292,23 @@ async def revalidar_estaticos(request: Request, proximo):
     edição no CSS aparece no primeiro F5, sem precisar limpar o cache.
     """
     resposta = await proximo(request)
+    if request.url.path.startswith(("/api/perfil", "/api/chat", "/api/comunidade", "/api/blog", "/api/publicacoes", "/api/usuarios", "/api/midias", "/api/conexoes", "/api/desafios")):
+        resposta.headers["Cache-Control"] = "no-store"
     if request.url.path == "/" or request.url.path.startswith("/static/"):
         resposta.headers["Cache-Control"] = "no-cache"
     return resposta
 
 
-def _pagina(arquivo: str, *ativos: str, menu: str | None = None) -> HTMLResponse:
+def _pagina(arquivo: str, *ativos: str, menu: str | None = None, perfil_proprio: bool = False) -> HTMLResponse:
     """Serve uma página: encaixa os parciais, marca o item ativo do menu e
     injeta ?v=<mtime> nos ativos que ela referencia (cache-busting)."""
     html = (ESTATICOS / arquivo).read_text(encoding="utf-8")
+    html = html.replace('__PAGINA_COMUNIDADE__', menu or '')
+    html = html.replace('__PERFIL_PROPRIO__', 'true' if perfil_proprio else 'false')
+    html = html.replace("__FUNDO_COMUNIDADE__", {"perfil": "energia-perfil", "chat": "conversas", "blog": "ondas", "forum": "forum", "explorar": "explorar"}.get(menu, ""))
+    html = html.replace("</head>", '<link rel="stylesheet" href="/static/marca-fundo.css?v=' + _carimbo("marca-fundo.css") + '"></head>')
+    html = html.replace('</head>', '<link rel="stylesheet" href="/static/conta.css"><script src="/static/conta.js"></script></head>')
+    html = re.sub(r'(<body\b[^>]*>)', lambda m: m.group(1)+(PARCIAIS/'conta.html').read_text(encoding='utf-8'), html, count=1)
     html = _MARCADOR_PARCIAL.sub(
         lambda marcador: (PARCIAIS / f"{marcador.group(1)}.html").read_text(encoding="utf-8"),
         html,
@@ -261,9 +335,14 @@ async def raiz() -> RedirectResponse:
 
 
 @app.get("/inicio", include_in_schema=False)
-async def inicio() -> HTMLResponse:
-    """Porta de entrada: hero, acesso e assistente."""
-    return _pagina("inicio.html", *_ATIVOS_BASE, "fundo.js", "caminhos.js", "inicio.js", "cubos.js")
+async def inicio(request: Request) -> Response:
+    """Porta de entrada: hero, acesso e assistente.
+
+    Quem já entrou volta para o painel: a única saída é o botão "Sair".
+    """
+    if usuario_atual(request.cookies.get("spectra_sessao")) is not None:
+        return RedirectResponse("/painel", status_code=303)
+    return _pagina("inicio.html", *_ATIVOS_BASE, "fundo.js", "caminhos.js", "inicio.js", "inicio-rolagem.css", "inicio-rolagem.js")
 
 
 @app.get("/painel", include_in_schema=False)
@@ -283,7 +362,8 @@ async def painel_visao_geral(request: Request) -> Response:
     if usuario_atual(request.cookies.get("spectra_sessao")) is None:
         return RedirectResponse("/inicio?erro=entre_primeiro", status_code=303)
     return _pagina(
-        "visao-geral.html", *_ATIVOS_PAINEL, "fundo.js", "visao-geral.js", menu="visao-geral",
+        "visao-geral.html", *_ATIVOS_PAINEL, "fundo.js", "graficos.js", "visao-geral.js",
+        menu="visao-geral",
     )
 
 
@@ -292,7 +372,26 @@ async def painel_historico(request: Request) -> Response:
     """Histórico das análises do usuário."""
     if usuario_atual(request.cookies.get("spectra_sessao")) is None:
         return RedirectResponse("/inicio?erro=entre_primeiro", status_code=303)
-    return _pagina("historico.html", *_ATIVOS_PAINEL, "fundo.js", "historico.js", menu="historico")
+    return _pagina(
+        "historico.html", *_ATIVOS_PAINEL, "fundo.js", "graficos.js", "historico.js", menu="historico",
+    )
+
+
+@app.get("/painel/perfil", include_in_schema=False)
+@app.get("/painel/explorar", include_in_schema=False)
+@app.get("/painel/chat", include_in_schema=False)
+@app.get("/painel/blog", include_in_schema=False)
+@app.get("/painel/forum", include_in_schema=False)
+async def pagina_comunidade(request: Request) -> Response:
+    if usuario_atual(request.cookies.get("spectra_sessao")) is None:
+        destino = request.url.path
+        if request.url.query:
+            destino += "?" + request.url.query
+        from urllib.parse import quote
+        return RedirectResponse("/inicio?erro=entre_primeiro&proximo=" + quote(destino, safe=""), status_code=303)
+    if request.url.path == '/painel/chat':
+        return RedirectResponse('/painel/explorar#conversas', status_code=303)
+    return _pagina("comunidade.html", *_ATIVOS_PAINEL, "fundo.js", "foto-editor.js", "explorar.js", "comunidade.js", "comunidade.css", menu=request.url.path.rsplit("/", 1)[-1], perfil_proprio=request.url.path=='/painel/perfil' and not request.query_params.get('usuario'))
 
 
 @app.get("/painel/aprender", include_in_schema=False)

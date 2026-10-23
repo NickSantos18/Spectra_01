@@ -159,9 +159,19 @@ async def sair(resposta: Response, spectra_sessao: str | None = Cookie(default=N
 
 
 @router.get("/api/auth/eu", summary="Quem está logado")
-async def eu(spectra_sessao: str | None = Cookie(default=None)) -> dict[str, Any]:
+async def eu(resposta: Response, spectra_sessao: str | None = Cookie(default=None)) -> dict[str, Any]:
+    """Toda tela do painel chama esta rota: é aqui que a sessão se renova.
+
+    Vencimento deslizante — enquanto a pessoa usa o painel, a sessão (no banco
+    e no cookie) ganha mais DIAS_DE_SESSAO. Só o botão "Sair" encerra.
+    """
     usuario = usuario_atual(spectra_sessao)
-    return {"usuario": bd.publico(usuario) if usuario else None}
+    if usuario is None:
+        return {"usuario": None}
+    sessao_id = seguranca.abrir_assinado(spectra_sessao or "")
+    if sessao_id and await asyncio.to_thread(bd.renovar_sessao, sessao_id):
+        _gravar_sessao(resposta, sessao_id)
+    return {"usuario": bd.publico(usuario)}
 
 
 class PedidoRecuperacao(BaseModel):

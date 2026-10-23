@@ -25,6 +25,7 @@ ROTULOS_SINAIS: dict[str, str] = {
     "dominio_punycode": "Domínio em punycode",
     "dominio_sosia": "Domínio sósia de marca",
     "typosquatting": "Typosquatting",
+    "marca_com_letra_repetida": "Nome parecido com marca conhecida",
     "marca_em_subdominio": "Marca em domínio de terceiro",
     "palavras_isca": "Palavras típicas de golpe",
     "download_executavel": "Download de executável",
