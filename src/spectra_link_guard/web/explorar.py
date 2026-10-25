@@ -6,6 +6,8 @@ from datetime import timedelta
 from fastapi import APIRouter, HTTPException, Request, Response
 from ..auth import bd
 from .comunidade import exigir, data
+from .midias import validar_imagem, ImagemOcupada
+import asyncio
 
 router = APIRouter()
 bd.registrar_esquema("""
@@ -61,12 +63,21 @@ async def upload(request: Request):
     raw = b''.join(partes)
     if not identificar(raw, mime):
         raise HTTPException(415, 'O conteúdo do arquivo não corresponde ao formato informado.')
+    if mime.startswith('image/'):
+        try: raw=await asyncio.to_thread(validar_imagem,raw,mime)
+        except ImagemOcupada as exc: raise HTTPException(429,str(exc))
+        except ValueError: raise HTTPException(415,'Imagem inválida ou muito grande.')
+        tamanho=len(raw)
+        if tamanho>limite: raise HTTPException(413,'Imagem processada excede o limite.')
     novo = uuid.uuid4().hex
     with bd.conexao() as con:
+        con.execute('BEGIN IMMEDIATE')
         con.execute("DELETE FROM midias WHERE criado_em<? AND NOT EXISTS(SELECT 1 FROM publicacao_midias p WHERE p.midia=midias.id)", ((bd.agora()-timedelta(days=1)).isoformat(timespec='seconds'),))
         usados = con.execute('SELECT COALESCE(SUM(length(arquivo)),0) FROM midias WHERE usuario_id=?',(u['id'],)).fetchone()[0]
         if usados + tamanho > 200 * 1024 * 1024:
             raise HTTPException(413, 'Sua conta atingiu 200 MB de mídias. Exclua publicações antigas para liberar espaço.')
+        total=con.execute('SELECT COALESCE(SUM(length(arquivo)),0) FROM midias').fetchone()[0]
+        if total+tamanho>1024*1024*1024: raise HTTPException(507,'Armazenamento temporariamente indisponível.')
         con.execute('INSERT INTO midias VALUES (?,?,?,?,?)',(novo,u['id'],mime,raw,data()))
     return {'id':novo, 'url':'/api/midias/'+novo, 'tipo':'video' if mime.startswith('video/') else 'foto'}
 

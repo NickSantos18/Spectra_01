@@ -7,3 +7,29 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
   </button>
 </div>
+<dialog class="perfil-cofre" data-perfil-cofre aria-label="Abrir perfil" aria-describedby="cofre-instrucao cofre-alternativa">
+  <button class="perfil-cofre-cancelar" type="button" data-cofre-cancelar>Cancelar <span aria-hidden="true">×</span></button>
+  <div class="perfil-cofre-conteudo">
+  <div class="perfil-cofre-palco">
+    <div class="perfil-cofre-foto" data-cofre-foto aria-hidden="true"></div>
+    <button class="perfil-cofre-cadeado" data-cofre-cadeado type="button" aria-label="Encaixar a chave no cadeado" aria-disabled="true">
+      <svg viewBox="0 0 240 280" fill="none" aria-hidden="true">
+        <path class="perfil-cofre-arco" d="M78 113V77a42 42 0 0 1 84 0v36"/>
+        <rect class="perfil-cofre-corpo" x="50" y="110" width="140" height="110" rx="9"/>
+        <path class="perfil-cofre-detalhe" d="M66 124h108M66 206h108"/>
+        <g data-cofre-fechadura class="perfil-cofre-fechadura"><circle cx="120" cy="153" r="10"/><path d="m115 160-3 20h16l-3-20"/></g>
+        <circle class="perfil-cofre-alvo" cx="120" cy="160" r="31"/>
+      </svg>
+    </button>
+    <div class="perfil-cofre-fragmentos" data-cofre-fragmentos aria-hidden="true"></div>
+    <div class="perfil-cofre-onda" aria-hidden="true"></div>
+  <button class="perfil-cofre-chave" data-cofre-chave type="button" aria-label="Selecionar chave; depois ative o cadeado" aria-pressed="false" disabled>
+    <svg viewBox="0 0 112 52" fill="none" aria-hidden="true"><path d="M12 26h57M23 26v12M37 26v9"/><circle cx="84" cy="26" r="16"/><circle class="perfil-cofre-chave-miolo" cx="84" cy="26" r="7"/></svg>
+  </button>
+  </div>
+  <div class="perfil-cofre-instrucoes">
+    <p id="cofre-instrucao" data-cofre-mensagem role="status" aria-live="polite">Arraste a chave até a fechadura.</p>
+    <p id="cofre-alternativa">Ou selecione a chave e depois o cadeado, com toque ou teclado.</p>
+  </div>
+  </div>
+</dialog>

@@ -24,6 +24,7 @@ CAMINHO_BD = Path(os.getenv("SPECTRA_BD", "dados/spectra.db"))
 
 #: Quanto tempo uma sessão vale sem novo login.
 DIAS_DE_SESSAO = 14
+DIAS_ABSOLUTOS = 30
 
 _ESQUEMA = """
 CREATE TABLE IF NOT EXISTS usuarios (
@@ -180,6 +181,11 @@ def marcar_acesso(usuario_id: str) -> None:
         )
 
 
+def atualizar_senha(usuario_id, senha_hash):
+    with conexao() as con:
+        con.execute('UPDATE usuarios SET senha_hash=? WHERE id=?',(senha_hash,usuario_id))
+
+
 # --------------------------------------------------------------------------- #
 # Sessões
 # --------------------------------------------------------------------------- #
@@ -212,8 +218,8 @@ def usuario_da_sessao(sessao_id: str) -> dict[str, Any] | None:
         linha = con.execute(
             """SELECT u.* FROM sessoes s
                JOIN usuarios u ON u.id = s.usuario_id
-               WHERE s.id = ? AND s.expira_em > ?""",
-            (sessao_id, agora().isoformat(timespec="seconds")),
+               WHERE s.id = ? AND s.expira_em > ? AND s.criado_em > ?""",
+            (sessao_id, agora().isoformat(timespec="seconds"), (agora()-timedelta(days=DIAS_ABSOLUTOS)).isoformat(timespec='seconds')),
         ).fetchone()
     return dict(linha) if linha else None
 
@@ -226,14 +232,12 @@ def renovar_sessao(sessao_id: str, dias: int = DIAS_DE_SESSAO) -> bool:
     """
     inicio = agora()
     with conexao() as con:
-        cur = con.execute(
-            "UPDATE sessoes SET expira_em = ? WHERE id = ? AND expira_em > ?",
-            (
-                (inicio + timedelta(days=dias)).isoformat(timespec="seconds"),
-                sessao_id,
-                inicio.isoformat(timespec="seconds"),
-            ),
-        )
+        linha=con.execute('SELECT criado_em,expira_em FROM sessoes WHERE id=?',(sessao_id,)).fetchone()
+        if not linha: return False
+        limite=datetime.fromisoformat(linha['criado_em'])+timedelta(days=DIAS_ABSOLUTOS)
+        if limite<=inicio or datetime.fromisoformat(linha['expira_em'])<=inicio: return False
+        fim=min(inicio+timedelta(days=dias),limite).isoformat(timespec='seconds')
+        cur=con.execute('UPDATE sessoes SET expira_em=? WHERE id=?',(fim,sessao_id))
         return cur.rowcount == 1
 
 

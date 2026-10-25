@@ -38,6 +38,9 @@ from ..auth import bd as bd_auth
 from ..auth import router as router_auth
 from ..auth import usuario_atual
 from . import analises, assistente, comunidade, explorar, desafios
+from .protecao import ProtecaoHTTP, NONCE
+from ..auth import protecao as protecao_auth
+from threading import BoundedSemaphore
 
 ESTATICOS = Path(__file__).parent / "static"
 
@@ -45,7 +48,7 @@ ESTATICOS = Path(__file__).parent / "static"
 _ATIVOS_BASE = (
     "tokens.css", "rodape.css", "animacoes.css",
     "movimento.js", "acessibilidade.js", "animacoes.js",
-    "conta.css", "conta.js",
+    "conta.css", "conta.js", "perfil-cofre.css", "perfil-cofre.js",
 )
 
 #: Ativos das telas com menu lateral (painel).
@@ -95,6 +98,7 @@ limitador = _Limitador()
 limitador_chat = _Limitador(maximo=40)
 guard = LinkGuard()
 registro = logging.getLogger("spectra.web")
+_CONEXOES=BoundedSemaphore(6)
 
 
 def _usuario_ou_401(request: Request) -> dict[str, Any]:
@@ -109,11 +113,14 @@ def _usuario_ou_401(request: Request) -> dict[str, Any]:
 async def ciclo_de_vida(_: FastAPI):
     """Prepara o banco na subida e limpa sessões vencidas."""
     bd_auth.preparar()
+    protecao_auth.validar_configuracao()
     bd_auth.limpar_sessoes_vencidas()
     yield
 
 
 app = FastAPI(
+    docs_url=None,
+    redoc_url=None,
     lifespan=ciclo_de_vida,
     title="Spectra Link Guard",
     version=__version__,
@@ -122,6 +129,14 @@ app = FastAPI(
         "Não realiza invasão, varredura de portas nem exploração de falhas."
     ),
 )
+app.add_middleware(ProtecaoHTTP)
+
+
+@app.get('/docs', include_in_schema=False)
+async def documentacao():
+    from fastapi.openapi.docs import get_swagger_ui_html
+    resposta = get_swagger_ui_html(openapi_url='/openapi.json', title='Spectra — API', swagger_favicon_url='/static/logo-spectra-escuro.svg')
+    return HTMLResponse(resposta.body.decode().replace('<script', f'<script nonce="{NONCE.get()}"'))
 
 
 app.include_router(router_auth, tags=["acesso"])
@@ -153,7 +168,10 @@ async def analisar(pedido: PedidoAnalise, request: Request) -> dict[str, Any]:
         )
         relatorio = await LinkGuard(config).analisar(pedido.url)
     else:
-        relatorio = await guard.analisar(pedido.url)
+        if not _CONEXOES.acquire(blocking=False):
+            raise HTTPException(429,'Muitas análises em andamento. Tente novamente.')
+        try: relatorio = await guard.analisar(pedido.url)
+        finally: _CONEXOES.release()
 
     # Sem sessão (CLI, testes, integração) a análise funciona, mas não é salva.
     usuario = usuario_atual(request.cookies.get("spectra_sessao"))
@@ -280,7 +298,7 @@ async def saude() -> dict[str, Any]:
 
 @app.exception_handler(HTTPException)
 async def erro_json(request: Request, exc: HTTPException) -> JSONResponse:
-    return JSONResponse(status_code=exc.status_code, content={"erro": exc.detail})
+    return JSONResponse(status_code=exc.status_code, content={"erro": exc.detail},headers=exc.headers)
 
 
 @app.middleware("http")
@@ -296,6 +314,8 @@ async def revalidar_estaticos(request: Request, proximo):
         resposta.headers["Cache-Control"] = "no-store"
     if request.url.path == "/" or request.url.path.startswith("/static/"):
         resposta.headers["Cache-Control"] = "no-cache"
+    # Cada resposta recebe nonce próprio, inclusive os scripts inline existentes.
+    # A composição dos parciais ocorre em _pagina; o nonce é inserido por ela.
     return resposta
 
 
@@ -307,7 +327,7 @@ def _pagina(arquivo: str, *ativos: str, menu: str | None = None, perfil_proprio:
     html = html.replace('__PERFIL_PROPRIO__', 'true' if perfil_proprio else 'false')
     html = html.replace("__FUNDO_COMUNIDADE__", {"perfil": "energia-perfil", "chat": "conversas", "blog": "ondas", "forum": "forum", "explorar": "explorar"}.get(menu, ""))
     html = html.replace("</head>", '<link rel="stylesheet" href="/static/marca-fundo.css?v=' + _carimbo("marca-fundo.css") + '"></head>')
-    html = html.replace('</head>', '<link rel="stylesheet" href="/static/conta.css"><script src="/static/conta.js"></script></head>')
+    html = html.replace('</head>', '<link rel="stylesheet" href="/static/conta.css"><link rel="stylesheet" href="/static/perfil-cofre.css"><script src="/static/conta.js"></script><script src="/static/perfil-cofre.js"></script></head>')
     html = re.sub(r'(<body\b[^>]*>)', lambda m: m.group(1)+(PARCIAIS/'conta.html').read_text(encoding='utf-8'), html, count=1)
     html = _MARCADOR_PARCIAL.sub(
         lambda marcador: (PARCIAIS / f"{marcador.group(1)}.html").read_text(encoding="utf-8"),
@@ -317,6 +337,7 @@ def _pagina(arquivo: str, *ativos: str, menu: str | None = None, perfil_proprio:
         html = html.replace(f'data-menu="{menu}"', f'data-menu="{menu}" aria-current="page"')
     for ativo in ativos:
         html = html.replace(f"/static/{ativo}", f"/static/{ativo}?v={_carimbo(ativo)}")
+    if NONCE.get(): html=html.replace('<script',f'<script nonce="{NONCE.get()}"')
     return HTMLResponse(html)
 
 
@@ -412,6 +433,11 @@ async def privacidade() -> HTMLResponse:
 async def termos() -> HTMLResponse:
     """Termos de Uso — texto modelo, editável em static/termos.html."""
     return _pagina("termos.html", *_ATIVOS_BASE, "laudo.css", menu="termos")
+
+@app.get('/redefinir-senha',include_in_schema=False)
+@app.get('/confirmar-email',include_in_schema=False)
+async def acesso_seguro():
+    return HTMLResponse((ESTATICOS/'acesso-seguro.html').read_text(encoding='utf-8'))
 
 
 @app.get("/v2", include_in_schema=False)

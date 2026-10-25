@@ -1,0 +1,7 @@
+packages: ['.']
+nodeLinker: hoisted
+virtualStoreType: project
+packageImportMethod: copy
+storeDir: .pnpm-store
+overrides:
+  postcss-selector-parser: 7.1.6

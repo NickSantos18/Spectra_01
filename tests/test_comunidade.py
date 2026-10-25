@@ -1,6 +1,12 @@
 """Isolamento de conversas, perfil privado e autorização do blog."""
 from fastapi.testclient import TestClient
 from spectra_link_guard.web.app import app
+from spectra_link_guard.auth import bd
+
+
+def confirmar(email):
+    with bd.conexao() as c:
+        c.execute('UPDATE usuarios SET email_verificado=1 WHERE email=?', (email,))
 
 
 def conta(email, nome="Pessoa Teste"):
@@ -48,6 +54,8 @@ def test_forum_e_convite_de_especialista(monkeypatch):
     editor, _ = conta('editor@example.com')
     autor, _ = conta('autor@example.com')
     outro, _ = conta('outro@example.com')
+    confirmar('editor@example.com')
+    confirmar('autor@example.com')
     post={'titulo':'Dicas de segurança', 'texto':'Como se proteger contra phishing.'}
     assert autor.post('/api/comunidade/blog', json=post).status_code == 403
     assert autor.post('/api/blog/convites', json={'email':'outro@example.com'}).status_code == 403
@@ -91,6 +99,7 @@ def test_paginas_exigem_login():
 def test_explorar_agrega_posts_e_estado_seguindo(monkeypatch):
     monkeypatch.setenv('SPECTRA_EDITOR_EMAILS','editor@example.com')
     autor, aid = conta('editor@example.com')
+    confirmar('editor@example.com')
     leitor, lid = conta('leitor@example.com')
     for tipo in ('blog','forum'):
         assert autor.post('/api/comunidade/'+tipo, json={'titulo':'Publicação de teste','texto':'Conteúdo para explorar e seguir autores.'}).status_code == 201

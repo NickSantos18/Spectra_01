@@ -18,15 +18,19 @@ import asyncio
 import os
 import sqlite3
 import time
+import hmac
+from datetime import datetime,timezone
+from threading import BoundedSemaphore
+from urllib.parse import urlsplit
 from collections import deque
 from threading import Lock
 from typing import Any
 
-from fastapi import APIRouter, Cookie, HTTPException, Request, Response
+from fastapi import APIRouter, Cookie, HTTPException, Request, Response, BackgroundTasks
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, EmailStr, Field
 
-from . import bd, google, seguranca
+from . import bd, google, seguranca, protecao,fluxos,correio
 
 router = APIRouter()
 
@@ -35,6 +39,12 @@ COOKIE_ESTADO = "spectra_oauth_state"
 
 #: Em produção (HTTPS) marque como 1 para o cookie não trafegar em claro.
 COOKIE_SEGURO = os.getenv("SPECTRA_COOKIE_SEGURO", "0") == "1"
+_SENHAS=BoundedSemaphore(2)
+
+async def trabalho_senha(funcao,*args):
+    if not _SENHAS.acquire(blocking=False): raise HTTPException(429,'Muitas autenticações em andamento. Tente novamente.')
+    try: return await asyncio.to_thread(funcao,*args)
+    finally: _SENHAS.release()
 
 #: Tentativas de login por IP antes de travar, e por quanto tempo.
 _MAX_TENTATIVAS = 8
@@ -79,7 +89,7 @@ def _gravar_sessao(resposta: Response, sessao_id: str) -> None:
         max_age=bd.DIAS_DE_SESSAO * 24 * 3600,
         httponly=True,
         samesite="lax",
-        secure=COOKIE_SEGURO,
+        secure=protecao.cookie_seguro(),
         path="/",
     )
 
@@ -110,7 +120,8 @@ class PedidoLogin(BaseModel):
 
 @router.post("/api/auth/cadastrar", status_code=201, summary="Cria uma conta")
 async def cadastrar(pedido: PedidoCadastro, resposta: Response) -> dict[str, Any]:
-    senha_hash = await asyncio.to_thread(seguranca.gerar_hash, pedido.senha)
+    if len(pedido.nome.strip())<3: raise HTTPException(422,'Informe seu nome.')
+    senha_hash = await trabalho_senha(seguranca.gerar_hash, pedido.senha)
     try:
         usuario = await asyncio.to_thread(
             bd.criar_usuario, nome=pedido.nome, email=pedido.email, senha_hash=senha_hash
@@ -127,6 +138,8 @@ async def cadastrar(pedido: PedidoCadastro, resposta: Response) -> dict[str, Any
 @router.post("/api/auth/entrar", summary="Entra com e-mail e senha")
 async def entrar(pedido: PedidoLogin, request: Request, resposta: Response) -> dict[str, Any]:
     ip = _ip(request)
+    await asyncio.to_thread(protecao.limitar,request,'login-ip',8,600)
+    await asyncio.to_thread(protecao.limitar,request,'login-conta',20,600,conta=str(pedido.email).lower())
     if not freio.permitido(ip):
         raise HTTPException(
             status_code=429,
@@ -134,12 +147,15 @@ async def entrar(pedido: PedidoLogin, request: Request, resposta: Response) -> d
         )
 
     usuario = await asyncio.to_thread(bd.buscar_por_email, pedido.email)
-    confere = await asyncio.to_thread(
+    confere = await trabalho_senha(
         seguranca.conferir_senha, pedido.senha, usuario["senha_hash"] if usuario else None
     )
     if not usuario or not confere:
         # Mesma mensagem nos dois casos, de propósito.
         raise HTTPException(status_code=401, detail="E-mail ou senha não conferem.")
+    if seguranca.precisa_atualizar(usuario['senha_hash']):
+        novo=await trabalho_senha(seguranca.gerar_hash,pedido.senha)
+        await asyncio.to_thread(bd.atualizar_senha,usuario['id'],novo)
 
     freio.liberar(ip)
     sessao = await asyncio.to_thread(bd.abrir_sessao, usuario["id"])
@@ -154,7 +170,7 @@ async def sair(resposta: Response, spectra_sessao: str | None = Cookie(default=N
         sessao_id = seguranca.abrir_assinado(spectra_sessao)
         if sessao_id:
             await asyncio.to_thread(bd.fechar_sessao, sessao_id)
-    resposta.delete_cookie(COOKIE_SESSAO, path="/")
+    resposta.delete_cookie(COOKIE_SESSAO, path="/",secure=protecao.cookie_seguro(),httponly=True,samesite='lax')
     return {"estado": "sessao encerrada"}
 
 
@@ -179,13 +195,42 @@ class PedidoRecuperacao(BaseModel):
 
 
 @router.post("/api/auth/recuperar", summary="Pede o link de redefinição")
-async def recuperar(pedido: PedidoRecuperacao) -> dict[str, str]:
-    # TODO: gerar token de uso único com validade curta e enviar por e-mail.
-    # A resposta é intencionalmente idêntica exista ou não a conta.
+async def recuperar(pedido: PedidoRecuperacao, tarefas: BackgroundTasks) -> dict[str, str]:
+    if not correio.configurado():
+        raise HTTPException(503,'Recuperação por e-mail ainda não configurada. Entre com Google, se sua conta já estiver conectada.')
+    tarefas.add_task(correio.solicitar,str(pedido.email).lower(),'redefinir')
     return {
         "estado": "enviado",
-        "mensagem": f"Se houver conta para {pedido.email}, o link chega em alguns minutos.",
+        "mensagem": "Se houver uma conta, você receberá as instruções de recuperação.",
     }
+
+@router.post('/api/auth/verificar-email')
+async def verificar_email(request: Request,tarefas: BackgroundTasks):
+    u=usuario_atual(request.cookies.get(COOKIE_SESSAO))
+    if not u: raise HTTPException(401,'Entre na sua conta.')
+    if not correio.configurado(): raise HTTPException(503,'Envio de e-mail ainda não configurado.')
+    tarefas.add_task(correio.solicitar,u['email'],'verificar')
+    return {'mensagem':'Se necessário, enviaremos as instruções para seu e-mail.'}
+
+class PedidoToken(BaseModel):
+    token: str=Field(min_length=40,max_length=100)
+
+class PedidoNovaSenha(PedidoToken):
+    senha: str=Field(min_length=8,max_length=200)
+
+@router.post('/api/auth/confirmar-email')
+async def confirmar_email(pedido: PedidoToken):
+    if not await asyncio.to_thread(fluxos.consumir,pedido.token,'verificar'):
+        raise HTTPException(400,'Link inválido, expirado ou já utilizado.')
+    return {'mensagem':'E-mail confirmado. Você já pode voltar ao perfil.'}
+
+@router.post('/api/auth/redefinir-senha')
+async def redefinir_senha(pedido: PedidoNovaSenha,resposta: Response):
+    novo=await trabalho_senha(seguranca.gerar_hash,pedido.senha)
+    if not await asyncio.to_thread(fluxos.consumir,pedido.token,'redefinir',novo):
+        raise HTTPException(400,'Link inválido, expirado ou já utilizado.')
+    resposta.delete_cookie(COOKIE_SESSAO,path='/',secure=protecao.cookie_seguro(),httponly=True,samesite='lax')
+    return {'mensagem':'Senha alterada. Entre novamente; as sessões anteriores foram encerradas.'}
 
 
 # --------------------------------------------------------------------------- #
@@ -195,79 +240,63 @@ async def recuperar(pedido: PedidoRecuperacao) -> dict[str, str]:
 
 @router.get("/api/auth/provedores", summary="Quais formas de entrar estão ativas")
 async def provedores() -> dict[str, bool]:
-    return {"senha": True, "google": google.configurado()}
+    return {"senha": True, "google": google.configurado(),"email":correio.configurado()}
 
 
-@router.get("/auth/google", include_in_schema=False)
-async def google_iniciar() -> RedirectResponse:
-    """Manda o navegador para o Google, guardando o `state` num cookie."""
-    if not google.configurado():
-        return RedirectResponse("/inicio?erro=google_indisponivel", status_code=303)
-
-    estado = seguranca.token_aleatorio()
-    resposta = RedirectResponse(google.url_de_autorizacao(estado), status_code=303)
-    # O `state` volta na URL; comparamos com este cookie para saber que o
-    # pedido saiu daqui, e não de um site de terceiro (CSRF no OAuth).
-    resposta.set_cookie(
-        COOKIE_ESTADO,
-        seguranca.assinar(estado),
-        max_age=600,
-        httponly=True,
-        samesite="lax",
-        secure=COOKIE_SEGURO,
-        path="/",
-    )
+@router.get('/auth/google',include_in_schema=False)
+async def google_iniciar(request: Request):
+    if not google.configurado(): return RedirectResponse('/inicio?erro=google_indisponivel',status_code=303)
+    await asyncio.to_thread(protecao.limitar,request,'google-inicio',15,600)
+    alvo=urlsplit(google.redirect_uri())
+    canonica=f'{alvo.scheme}://{alvo.netloc}'
+    if protecao.origem(str(request.base_url))!=protecao.origem(canonica):
+        return RedirectResponse(canonica+'/auth/google'+('?vincular=1' if request.query_params.get('vincular')=='1' else ''),status_code=303)
+    usuario_id=None
+    if request.query_params.get('vincular')=='1':
+        u=usuario_atual(request.cookies.get(COOKIE_SESSAO))
+        if not u or not u.get('ultimo_acesso') or (bd.agora()-datetime.fromisoformat(u['ultimo_acesso'])).total_seconds()>600:
+            return RedirectResponse('/inicio?erro=google_reautenticar',status_code=303)
+        usuario_id=u['id']
+    state,nonce,verificador=await asyncio.to_thread(fluxos.iniciar_google,usuario_id)
+    resposta=RedirectResponse(google.url_de_autorizacao(state,nonce,verificador),status_code=303)
+    resposta.set_cookie(COOKIE_ESTADO,seguranca.assinar(state),max_age=600,httponly=True,samesite='lax',secure=protecao.cookie_seguro(),path='/')
     return resposta
 
-
-@router.get("/auth/google/callback", include_in_schema=False)
-async def google_retorno(
-    request: Request,
-    code: str | None = None,
-    state: str | None = None,
-    error: str | None = None,
-) -> RedirectResponse:
-    esperado = seguranca.abrir_assinado(request.cookies.get(COOKIE_ESTADO, ""))
-
-    if error or not code:
-        return RedirectResponse("/inicio?erro=google_cancelado", status_code=303)
-    if not state or not esperado or state != esperado:
-        return RedirectResponse("/inicio?erro=google_estado", status_code=303)
-
-    try:
-        perfil = await google.trocar_codigo(code)
-    except Exception:
-        return RedirectResponse("/inicio?erro=google_falhou", status_code=303)
-
-    usuario = await asyncio.to_thread(bd.buscar_por_google, perfil["sub"])
-    if not usuario:
-        # Sem o Google atestar o e-mail, ele é só uma afirmação de quem está do
-        # outro lado: vincular por ele entregaria a conta de quem tem esse
-        # e-mail aqui, e criar conta "reservaria" o e-mail de outra pessoa.
-        if not perfil["email_verificado"]:
-            return RedirectResponse("/inicio?erro=google_email_nao_verificado", status_code=303)
-
-        # Já existe conta com este e-mail? Vincula em vez de duplicar.
-        usuario = await asyncio.to_thread(bd.buscar_por_email, perfil["email"])
-        if usuario:
-            await asyncio.to_thread(
-                bd.vincular_google, usuario["id"], perfil["sub"],
-                email_verificado=perfil["email_verificado"],
-            )
-            usuario = await asyncio.to_thread(bd.buscar_por_id, usuario["id"])
-        else:
-            usuario = await asyncio.to_thread(
-                bd.criar_usuario,
-                nome=perfil["nome"],
-                email=perfil["email"],
-                google_sub=perfil["sub"],
-                email_verificado=perfil["email_verificado"],
-            )
-
-    sessao = await asyncio.to_thread(bd.abrir_sessao, usuario["id"])
-    await asyncio.to_thread(bd.marcar_acesso, usuario["id"])
-
-    resposta = RedirectResponse("/painel", status_code=303)
-    _gravar_sessao(resposta, sessao)
-    resposta.delete_cookie(COOKIE_ESTADO, path="/")
+@router.get('/auth/google/callback',include_in_schema=False)
+async def google_retorno(request: Request,code: str|None=None,state: str|None=None,error: str|None=None):
+    def voltar(destino):
+        resposta=RedirectResponse(destino,status_code=303)
+        resposta.delete_cookie(COOKIE_ESTADO,path='/',httponly=True,samesite='lax',secure=protecao.cookie_seguro())
+        return resposta
+    esperado=seguranca.abrir_assinado(request.cookies.get(COOKIE_ESTADO,''))
+    if error or not code: return voltar('/inicio?erro=google_cancelado')
+    if not state or not state.isascii() or len(state)>100 or len(code)>2048 or not esperado or not hmac.compare_digest(state,esperado):
+        return voltar('/inicio?erro=google_estado')
+    fluxo=await asyncio.to_thread(fluxos.consumir_google,state)
+    if not fluxo: return voltar('/inicio?erro=google_estado')
+    try: perfil=await google.trocar_codigo(code,fluxo['nonce'],fluxo['verificador'])
+    except Exception: return voltar('/inicio?erro=google_falhou')
+    if not perfil.get('email_verificado'): return voltar('/inicio?erro=google_email_nao_verificado')
+    usuario=await asyncio.to_thread(bd.buscar_por_google,perfil['sub'])
+    if fluxo['usuario_id']:
+        atual=usuario_atual(request.cookies.get(COOKIE_SESSAO))
+        if (not atual or atual['id']!=fluxo['usuario_id'] or atual['email']!=perfil['email'] or
+            (usuario and usuario['id']!=atual['id']) or (atual['google_sub'] and atual['google_sub']!=perfil['sub'])):
+            return voltar('/inicio?erro=google_vinculo_invalido')
+        try: await asyncio.to_thread(bd.vincular_google,atual['id'],perfil['sub'],email_verificado=True)
+        except sqlite3.IntegrityError: return voltar('/inicio?erro=google_vinculo_invalido')
+        usuario=await asyncio.to_thread(bd.buscar_por_id,atual['id'])
+    elif not usuario:
+        existente=await asyncio.to_thread(bd.buscar_por_email,perfil['email'])
+        if existente: return voltar('/inicio?erro=google_vinculo_necessario')
+        try:
+            usuario=await asyncio.to_thread(bd.criar_usuario,nome=perfil['nome'],email=perfil['email'],google_sub=perfil['sub'],email_verificado=True)
+        except sqlite3.IntegrityError: return voltar('/inicio?erro=google_vinculo_necessario')
+    if usuario['email']!=perfil['email']: return voltar('/inicio?erro=google_vinculo_invalido')
+    anterior=seguranca.abrir_assinado(request.cookies.get(COOKIE_SESSAO,''))
+    if anterior: await asyncio.to_thread(bd.fechar_sessao,anterior)
+    sessao=await asyncio.to_thread(bd.abrir_sessao,usuario['id'])
+    await asyncio.to_thread(bd.marcar_acesso,usuario['id'])
+    resposta=voltar('/painel')
+    _gravar_sessao(resposta,sessao)
     return resposta

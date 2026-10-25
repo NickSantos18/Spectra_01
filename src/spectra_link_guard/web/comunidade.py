@@ -10,7 +10,8 @@ from datetime import timedelta
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from ..auth import bd, usuario_atual
+from ..auth import bd, usuario_atual, protecao, google, correio
+from .midias import validar_imagem, ImagemOcupada
 
 router = APIRouter()
 bd.registrar_esquema("""
@@ -45,18 +46,21 @@ def exigir(request):
     if not u:
         raise HTTPException(401, "Entre na sua conta para continuar.")
     if request.method != "GET":
-        origem = request.headers.get("origin")
-        if origem and origem != str(request.base_url).rstrip("/"):
+        if not protecao.origem_permitida(request):
             raise HTTPException(403, "Origem inválida.")
     return u
 
 
 def editor(u):
+    if not u.get('email_verificado'): return False
+    ids=[v.strip() for v in os.getenv('SPECTRA_EDITOR_IDS','').split(',') if v.strip()]
+    if u['id'] in ids: return True
     emails = os.getenv("SPECTRA_EDITOR_EMAILS", "").lower().split(",")
     return u["email"] in [e.strip() for e in emails if e.strip()]
 
 
 def pode_publicar(u):
+    if not u.get('email_verificado'): return False
     with bd.conexao() as con:
         especialista = con.execute("SELECT 1 FROM especialistas WHERE email = ?", (u["email"],)).fetchone()
     return editor(u) or bool(especialista)
@@ -79,7 +83,8 @@ def perfil(request: Request):
         p = con.execute("SELECT bio, foto FROM perfis WHERE usuario_id = ?", (u["id"],)).fetchone()
     return {**bd.publico(u), **(dict(p) if p else {"bio": "", "foto": ""}),
             "ip": request.client.host if request.client else "Indisponível",
-            "editor": editor(u), "pode_publicar": pode_publicar(u)}
+            "editor": editor(u), "pode_publicar": pode_publicar(u),
+            "google_disponivel":google.configurado(),"email_disponivel":correio.configurado()}
 
 
 @router.get("/api/usuarios/{identificador}/perfil")
@@ -108,11 +113,10 @@ def salvar_perfil(p: Perfil, request: Request):
             if not p.foto.startswith("data:image/png;base64,"):
                 raise ValueError()
             raw = base64.b64decode(p.foto.split(",", 1)[1], validate=True)
-            if raw[:8] != b"\x89PNG\r\n\x1a\n" or len(raw) < 24:
-                raise ValueError()
-            w, h = struct.unpack(">II", raw[16:24])
-            if not (0 < w <= 512 and 0 < h <= 512):
-                raise ValueError()
+            raw=validar_imagem(raw,'image/png',max_dimensao=512)
+            p.foto='data:image/png;base64,'+base64.b64encode(raw).decode()
+        except ImagemOcupada as exc:
+            raise HTTPException(429,str(exc))
         except (ValueError, struct.error):
             raise HTTPException(422, "Use uma imagem PNG de até 512 × 512 pixels.")
     with bd.conexao() as con:
@@ -287,6 +291,8 @@ class Aceite(BaseModel):
 @router.post("/api/blog/aceitar")
 def aceitar(p: Aceite, request: Request):
     u = exigir(request)
+    if not u.get('email_verificado'):
+        raise HTTPException(403,'Confirme seu e-mail antes de aceitar o convite.')
     chave = hashlib.sha256(p.token.encode()).hexdigest()
     with bd.conexao() as con:
         convite = con.execute("SELECT * FROM convites_blog WHERE hash=? AND usado=0 AND expira_em>?", (chave,data())).fetchone()

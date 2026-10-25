@@ -1,14 +1,4 @@
-"""Hash de senha e assinatura do cookie de sessão.
-
-Sem dependência externa: `hashlib.scrypt` e `hmac` da biblioteca padrão dão
-conta e evitam trazer bcrypt/argon2 só por isto. As duas decisões que importam:
-
-* **scrypt, não SHA.** SHA-256 de senha é quebrado por força bruta em GPU. O
-  scrypt é deliberadamente lento e caro em memória — os parâmetros abaixo
-  levam ~100 ms por verificação, que é o ponto.
-* **Comparação em tempo constante.** `compare_digest` em vez de `==`, para o
-  tempo da resposta não revelar quantos bytes bateram.
-"""
+"""Argon2id para senhas novas; migração de scrypt no login; cookies com HMAC."""
 
 from __future__ import annotations
 
@@ -16,36 +6,44 @@ import hashlib
 import hmac
 import os
 import secrets
+import binascii
+from argon2 import PasswordHasher
+from argon2.exceptions import VerificationError, InvalidHashError
 from base64 import urlsafe_b64decode, urlsafe_b64encode
 
-#: Parâmetros do scrypt. N=2^14 é o piso recomendado para uso interativo.
+#: Parâmetros antigos mantidos somente para compatibilidade de registros.
 _N = 2 ** 14
 _R = 8
 _P = 1
 _TAMANHO_CHAVE = 32
 _TAMANHO_SAL = 16
+_ARGON = PasswordHasher(time_cost=2, memory_cost=19456, parallelism=1)
+_HASH_FICTICIO = _ARGON.hash(secrets.token_urlsafe(32))
 
 
 def gerar_hash(senha: str) -> str:
-    """Devolve ``scrypt$N$r$p$sal_hex$chave_hex`` — os parâmetros junto.
+    """Devolve um hash Argon2id com sal aleatório e parâmetros no registro.
 
     Guardar os parâmetros no próprio registro permite aumentar o custo depois
     sem invalidar as senhas já cadastradas.
     """
-    sal = secrets.token_bytes(_TAMANHO_SAL)
-    chave = hashlib.scrypt(
-        senha.encode("utf-8"), salt=sal, n=_N, r=_R, p=_P, dklen=_TAMANHO_CHAVE
-    )
-    return f"scrypt${_N}${_R}${_P}${sal.hex()}${chave.hex()}"
+    return _ARGON.hash(senha)
 
 
 def conferir_senha(senha: str, guardado: str | None) -> bool:
     """Confere a senha contra o hash. ``False`` para conta sem senha."""
     if not guardado:
+        try: _ARGON.verify(_HASH_FICTICIO, senha)
+        except VerificationError: pass
         return False
+    if guardado.startswith('$argon2id$'):
+        try: return _ARGON.verify(guardado,senha)
+        except (VerificationError,InvalidHashError): return False
     try:
         algoritmo, n, r, p, sal_hex, chave_hex = guardado.split("$")
         if algoritmo != "scrypt":
+            return False
+        if (int(n),int(r),int(p)) not in {(16384,8,1),(16384,8,5),(32768,8,3),(65536,8,2),(131072,8,1)} or len(chave_hex)!=64 or len(sal_hex)!=32:
             return False
         chave = hashlib.scrypt(
             senha.encode("utf-8"),
@@ -54,10 +52,16 @@ def conferir_senha(senha: str, guardado: str | None) -> bool:
             r=int(r),
             p=int(p),
             dklen=len(chave_hex) // 2,
+            maxmem=256*1024*1024,
         )
     except (ValueError, TypeError):
         return False
     return hmac.compare_digest(chave.hex(), chave_hex)
+
+
+def precisa_atualizar(guardado):
+    if not guardado or not guardado.startswith('$argon2id$'): return True
+    return _ARGON.check_needs_rehash(guardado)
 
 
 # --------------------------------------------------------------------------- #
@@ -101,12 +105,14 @@ def assinar(valor: str) -> str:
 def abrir_assinado(token: str) -> str | None:
     """Devolve o valor se a assinatura confere, senão ``None``."""
     try:
+        if not isinstance(token,str) or len(token)>4096: return None
         parte, marca = token.split(".", 1)
         valor = _de_b64(parte).decode("utf-8")
+        assinatura = _de_b64(marca)
         esperada = hmac.new(_segredo(), valor.encode("utf-8"), hashlib.sha256).digest()
-    except (ValueError, UnicodeDecodeError):
+    except (ValueError, UnicodeDecodeError, binascii.Error):
         return None
-    return valor if hmac.compare_digest(_de_b64(marca), esperada) else None
+    return valor if hmac.compare_digest(assinatura, esperada) else None
 
 
 def token_aleatorio(bytes_: int = 24) -> str:

@@ -29,6 +29,11 @@
     }
     if(pagina==='perfil'){
       if(perfilVisitado){await mostrarMembro();return;}
+      el('email-estado').textContent=eu.email_verificado?'E-mail confirmado.':'Seu e-mail ainda não foi confirmado.';
+      el('confirmar-email').hidden=eu.email_verificado||!eu.email_disponivel;
+      el('confirmar-email').onclick=executar(async()=>{el('confirmar-email').disabled=true;try{const r=await api('/api/auth/verificar-email','POST');aviso(r.mensagem);}finally{el('confirmar-email').disabled=false;}});
+      el('conectar-google').hidden=eu.tem_google||!eu.google_disponivel;
+      el('google-estado').textContent=eu.tem_google?'Sua conta Google está conectada.':eu.google_disponivel?'Para conectar, use a mesma conta de e-mail do perfil. É necessário ter entrado há menos de dez minutos.':'Login com Google aguardando configuração do serviço.';
       el('perfil').hidden=false;foto=eu.foto;fotoOriginal=foto||null;el('nome').value=eu.nome;el('bio').value=eu.bio;el('email').textContent=eu.email;el('identificador').textContent=eu.id;el('ip').textContent=eu.ip;el('criado').textContent=horario(eu.criado_em);preview();
       el('publicacoes').hidden=false;el('perfil-postagens').hidden=false;el('perfil-postagens').textContent='Minhas publicações';await publicacoes();
     }else if(pagina==='chat'){el('chat').hidden=false;await contatos();}

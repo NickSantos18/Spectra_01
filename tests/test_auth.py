@@ -43,7 +43,7 @@ def test_hash_nunca_repete_para_a_mesma_senha():
 
 
 def test_hash_guarda_os_parametros():
-    assert seguranca.gerar_hash("x" * 12).startswith("scrypt$16384$8$1$")
+    assert seguranca.gerar_hash("x" * 12).startswith("$argon2id$v=19$m=19456,t=2,p=1$")
 
 
 def test_senha_errada_nao_confere():
@@ -135,7 +135,7 @@ def test_freio_trava_apos_muitas_tentativas(cliente):
     assert travado.status_code == 429
 
 
-def test_login_certo_zera_o_freio(cliente):
+def test_login_certo_nao_remove_limite_persistente(cliente):
     cadastrar(cliente)
     cliente.post("/api/auth/sair")
     for _ in range(5):
@@ -143,7 +143,7 @@ def test_login_certo_zera_o_freio(cliente):
     assert cliente.post("/api/auth/entrar", json={"email": CONTA["email"], "senha": CONTA["senha"]}).status_code == 200
     for _ in range(5):
         cliente.post("/api/auth/entrar", json={"email": CONTA["email"], "senha": "errada"})
-    assert cliente.post("/api/auth/entrar", json={"email": CONTA["email"], "senha": "errada"}).status_code == 401
+    assert cliente.post("/api/auth/entrar", json={"email": CONTA["email"], "senha": "errada"}).status_code == 429
 
 
 # --------------------------------------------------------------------------- #
@@ -219,7 +219,10 @@ def test_painel_abre_com_sessao(cliente):
 # --------------------------------------------------------------------------- #
 
 
-def test_recuperacao_responde_igual_exista_ou_nao_a_conta(cliente):
+def test_recuperacao_responde_igual_exista_ou_nao_a_conta(cliente, monkeypatch):
+    from spectra_link_guard.auth import correio
+    monkeypatch.setattr(correio, 'configurado', lambda: True)
+    monkeypatch.setattr(correio, 'solicitar', lambda *args: None)
     cadastrar(cliente)
     com = cliente.post("/api/auth/recuperar", json={"email": CONTA["email"]})
     sem = cliente.post("/api/auth/recuperar", json={"email": "ninguem@exemplo.com"})
@@ -252,14 +255,15 @@ def test_callback_sem_codigo_volta_com_erro(cliente):
 
 def _retorno_do_google(cliente, monkeypatch, perfil):
     """Simula a volta do Google com `state` válido e o perfil informado."""
-    from spectra_link_guard.auth import google
+    from spectra_link_guard.auth import google, fluxos
 
-    async def perfil_falso(_codigo):
+    async def perfil_falso(_codigo, _nonce, _verificador):
         return perfil
 
     monkeypatch.setattr(google, "trocar_codigo", perfil_falso)
-    cliente.cookies.set("spectra_oauth_state", seguranca.assinar("estado-ok"))
-    return cliente.get("/auth/google/callback?code=abc&state=estado-ok", follow_redirects=False)
+    state, _, _ = fluxos.iniciar_google()
+    cliente.cookies.set("spectra_oauth_state", seguranca.assinar(state))
+    return cliente.get('/auth/google/callback', params={'code':'abc','state':state}, follow_redirects=False)
 
 
 def _perfil(email_verificado: bool) -> dict:
@@ -292,16 +296,16 @@ def test_google_com_email_nao_verificado_nao_cria_conta(cliente, monkeypatch):
     assert bd.buscar_por_email(CONTA["email"]) is None
 
 
-def test_google_com_email_verificado_vincula_conta_existente(cliente, monkeypatch):
+def test_google_nao_vincula_conta_existente_automaticamente(cliente, monkeypatch):
     bd.criar_usuario(nome=CONTA["nome"], email=CONTA["email"], senha_hash="x")
 
     resp = _retorno_do_google(cliente, monkeypatch, _perfil(email_verificado=True))
 
-    assert resp.headers["location"] == "/painel"
+    assert resp.headers["location"] == "/inicio?erro=google_vinculo_necessario"
     conta = bd.buscar_por_email(CONTA["email"])
-    assert conta["google_sub"] == "google-123"
-    assert conta["email_verificado"] == 1
-    assert cliente.get("/api/auth/eu").json()["usuario"]["id"] == conta["id"]
+    assert conta["google_sub"] is None
+    assert conta["email_verificado"] == 0
+    assert cliente.get("/api/auth/eu").json()["usuario"] is None
 
 
 def test_vincular_google_so_marca_verificado_se_o_google_confirmou():

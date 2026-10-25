@@ -272,6 +272,10 @@ $("esqueci").addEventListener("click", async () => {
       body: JSON.stringify({ email }),
     });
     const corpo = await resp.json();
+    if (!resp.ok) {
+      avisarNoForm(paineis.entrar, corpo.erro || "Recuperação indisponível. Tente novamente mais tarde.");
+      return;
+    }
     avisarNoForm(paineis.entrar, corpo.mensagem || "Pedido registrado.");
   } catch (erro) {
     avisarNoForm(paineis.entrar, `Sem resposta do servidor: ${erro.message}`);
@@ -475,6 +479,9 @@ document.addEventListener("keydown", (evento) => {
 /* ══════════════════════════════════════════════ estado vindo do servidor */
 
 const MOTIVOS = {
+  google_vinculo_necessario: 'Já existe uma conta com este e-mail. Entre com sua senha e conecte o Google no seu perfil.',
+  google_vinculo_invalido: 'Não foi possível conectar esta conta Google. Use a mesma conta de e-mail do perfil.',
+  google_reautenticar: 'Entre novamente com sua senha e conecte o Google pelo perfil em até dez minutos.',
   entre_primeiro: "Entre na sua conta para abrir o painel.",
   google_indisponivel: "O login com Google não está configurado neste servidor.",
   google_cancelado: "Login com Google cancelado.",

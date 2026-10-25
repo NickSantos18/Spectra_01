@@ -52,6 +52,36 @@ async function verificarLaudo(){
   console.log('Erros de interface, rede e resposta diferenciados; nova tentativa recupera o laudo.');
 }
 
+async function verificarAcesso(){
+  await js("fetch('/api/auth/sair',{method:'POST'}).then(r=>{if(!r.ok)throw Error('Logout falhou')})");
+  await command('Page.navigate',{url:'http://127.0.0.1:8012/inicio'});
+  await ready("document.readyState==='complete'&&typeof abrirModal==='function'");
+  assert.equal(await js("getComputedStyle(document.getElementById('modal')).display"),'none');
+  for(const aba of ['entrar','cadastrar']){
+    await js(`document.querySelector('.inicio-acoes [data-abrir="${aba}"]').click()`);
+    assert.equal(await js("getComputedStyle(document.getElementById('modal')).display"),'flex');
+    assert.equal(await js(`document.getElementById('painel-${aba}').hidden`),false);
+    assert.ok(await js("document.getElementById('modal-caixa').getBoundingClientRect().width>300"));
+    await js("document.getElementById('fechar-modal').click()");
+  }
+  assert.equal(await js("document.getElementById('botao-google').getAttribute('aria-disabled')"),'true');
+  await js("abrirModal('entrar');document.getElementById('entrar-email').value='visual@example.com';document.getElementById('esqueci').click()");
+  await ready("document.getElementById('painel-entrar').textContent.includes('Recuperação por e-mail ainda não configurada')");
+  for(const largura of [390,1440]){
+    await command('Emulation.setDeviceMetricsOverride',{width:largura,height:900,deviceScaleFactor:1,mobile:largura<600});
+    assert.equal(await js('document.documentElement.scrollWidth<=innerWidth'),true);
+    const shot=await command('Page.captureScreenshot',{format:'png'});
+    fs.writeFileSync(path.join(temp,'acesso-'+largura+'.png'),Buffer.from(shot.data,'base64'));
+  }
+  for(const pagina of ['confirmar-email','redefinir-senha']){
+    await command('Page.navigate',{url:'http://127.0.0.1:8012/'+pagina});
+    await ready("document.getElementById('acesso-mensagem')?.textContent.includes('Link incompleto')");
+    assert.equal(await js('document.documentElement.scrollWidth<=innerWidth'),true);
+  }
+  assert.deepEqual(erros,[]);
+  console.log('Acesso com CSP: CSS local, modais, aviso Google, recuperação indisponível, links incompletos e celular: OK. Capturas: '+temp);
+}
+
 async function verificarGraficos(){
   const urls=['https://example.com/a','https://example.com/b','https://example.com/c','https://example.com/d','https://bit.ly/abc','https://bit.ly/def','https://steeam.com/','https://itau.seguro.top/login/senha/verificar','https://bradesc0.com.br/'];
   for(const url of urls)await js(`fetch('/api/analisar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:${JSON.stringify(url)},offline:true})}).then(r=>{if(!r.ok)throw Error('Falha ao preparar dados')})`);
@@ -101,7 +131,7 @@ async function verificarInicio(){
     window.scrollTo({top:h.getBoundingClientRect().top+scrollY+(h.offsetHeight-palco.offsetHeight)*.3,behavior:'instant'});
     function quadro(agora){valores.push({p:Number(h.dataset.progresso),y:scrollY});if(agora-comeco>650)resolve(valores);else requestAnimationFrame(quadro)}requestAnimationFrame(quadro);
   })`);
-  assert.ok(new Set(amostras.filter(a=>a.p>.005&&a.p<.295).map(a=>a.p)).size>=4,'A roda deve produzir posições intermediárias');
+  assert.ok(new Set(amostras.filter(a=>a.p>.005&&a.p<.295).map(a=>a.p)).size>=4,'A roda deve produzir posições intermediárias: '+JSON.stringify(amostras));
   assert.ok(amostras.at(-1).p>.299,'A suavização deve alcançar o destino sem atraso prolongado');
   assert.ok(amostras.every((a,i)=>i===0||a.p>=amostras[i-1].p),'O movimento deve ser monotônico');
   assert.ok(amostras.every(a=>a.y===amostras[0].y),'A suavização não pode interceptar a rolagem nativa');
@@ -203,107 +233,104 @@ async function verificarLogos(){
 async function verificarPerfil(){
   await command('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'no-preference'}]});
   await js("localStorage.setItem('spectra:movimento','on')");
-  const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aR1cAAAAASUVORK5CYII=';
+  const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4////fwAJ+wP9KobjigAAAABJRU5ErkJggg==';
   await js(`fetch('/api/perfil',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({nome:'Pessoa Visual',bio:'Teste do perfil',foto:${JSON.stringify(png)}})}).then(r=>{if(!r.ok)throw Error('Perfil falhou')})`);
+  async function origem(comFoto=true){
+    await command('Page.navigate',{url:'http://127.0.0.1:8012/painel/explorar'});
+    await ready("location.pathname==='/painel/explorar'&&document.body.classList.contains('com-conta')&&"+(comFoto?"!!document.querySelector('.conta-avatar img')":"document.querySelector('.conta-avatar').textContent==='P'"));
+  }
+  async function abrir(){
+    await js("document.querySelector('[data-perfil-acesso]').click()");
+    await ready("document.documentElement.dataset.perfilTransicao==='aguardando'");
+    assert.equal(await js("document.querySelector('[data-perfil-cofre]').open"),true);
+    assert.equal(await js("location.pathname"),'/painel/explorar');
+  }
+  const captura=async nome=>{const shot=await command('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(temp,nome+'.png'),Buffer.from(shot.data,'base64'));};
   for(const pagina of ['/painel','/painel/visao-geral','/painel/historico','/painel/explorar','/painel/blog','/painel/forum','/painel/aprender','/privacidade','/termos']){
     await command('Page.navigate',{url:'http://127.0.0.1:8012'+pagina});
-    await ready(`location.pathname===${JSON.stringify(pagina)}&&document.body.classList.contains('com-conta')&&!!document.querySelector('.conta-avatar img')`);
-    assert.equal(await js("document.querySelectorAll('.trilho [href=\"/painel/perfil\"]').length"),0);
-    assert.equal(await js("document.querySelectorAll('.gaveta-menu [data-menu=perfil]').length"),0);
-    assert.equal(await js("(()=>{const r=document.querySelector('.conta-superior').getBoundingClientRect();return r.top>=0&&r.top<20&&document.documentElement.clientWidth-r.right<25})()"),true,pagina);
-    assert.equal(await js("getComputedStyle(document.querySelector('.conta-avatar')).borderRadius"),'0px');
-    assert.equal(await js('document.documentElement.scrollWidth<=innerWidth'),true);
+    await ready(`location.pathname===${JSON.stringify(pagina)}&&document.body.classList.contains('com-conta')`);
+    assert.equal(await js("document.querySelectorAll('[data-perfil-cofre]').length"),1,pagina);
+    assert.equal(await js('document.documentElement.scrollWidth<=innerWidth'),true,pagina);
   }
-  await command('Page.navigate',{url:'http://127.0.0.1:8012/painel/explorar'});await ready("location.pathname==='/painel/explorar'&&document.body.classList.contains('com-conta')");
-  const origem=await js("(()=>{const r=document.querySelector('.conta-avatar').getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2}})()");
-  assert.ok(origem.x>1000);
-  await command('Performance.enable');
-  await command('Emulation.setCPUThrottlingRate',{rate:4});
+  await origem();
+  const avatarOrigem=await js("(()=>{const r=document.querySelector('.conta-avatar').getBoundingClientRect();return {x:r.left,y:r.top,width:r.width}})()");
   await js("document.querySelector('[data-perfil-acesso]').click()");
-  assert.equal(await js("document.documentElement.dataset.perfilTransicao"),'arredondando');
-  await ready("location.pathname==='/painel/perfil'&&document.documentElement.dataset.perfilTransicao==='deslocando'");
-  await ready("(()=>{const animacoes=document.getAnimations().filter(a=>a.effect.pseudoElement?.startsWith('::view-transition-'));if(!animacoes.length)return false;animacoes.forEach(a=>{a.pause();a.currentTime=350});return true})()");
-  const metricsAntes=await command('Performance.getMetrics');
-  assert.equal(await js("document.documentElement.classList.contains('perfil-transicao-nativa')"),true);
-  assert.equal(await js("getComputedStyle(document.documentElement,'::view-transition-old(root)').animationName"),'perfil-tela-sair');
-  assert.equal(await js("getComputedStyle(document.documentElement,'::view-transition-new(root)').animationName"),'perfil-tela-entrar');
-  assert.equal(await js("getComputedStyle(document.documentElement,'::view-transition-group(perfil-foto)').animationDuration"),'1.25s');
-  assert.equal(await js("document.getAnimations().filter(a=>a.effect.pseudoElement==='::view-transition-group(perfil-foto)').every(a=>a.effect.getKeyframes().every(f=>f.transform&&!('width' in f)&&!('height' in f)))"),true);
-  assert.equal(await js("getComputedStyle(document.documentElement,'::view-transition-old(root)').opacity"),'1');
-  assert.equal(await js("getComputedStyle(document.documentElement,'::view-transition-new(root)').opacity"),'0');
-  assert.ok(Math.abs(await js("parseFloat(document.documentElement.style.getPropertyValue('--perfil-origem-x'))")-origem.x)<2);
-  const transicao=await command('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(temp,'perfil-transicao.png'),Buffer.from(transicao.data,'base64'));
-  await js("document.getAnimations().filter(a=>a.effect.pseudoElement?.startsWith('::view-transition-')).forEach(a=>a.currentTime=1050)");
-  const chegada=await command('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(temp,'perfil-chegada.png'),Buffer.from(chegada.data,'base64'));
-  await js("document.getAnimations().filter(a=>a.effect.pseudoElement?.startsWith('::view-transition-')).forEach(a=>a.play())");
-  await ready("!document.documentElement.dataset.perfilTransicao&&!document.getElementById('perfil').hidden&&document.body.classList.contains('com-conta')");
-  assert.equal(await js("getComputedStyle(document.body).visibility"),'visible');
-  assert.equal(await js("document.querySelectorAll('.perfil-morph').length"),0);
-  const metricsDepois=await command('Performance.getMetrics');
-  const layouts=metricsDepois.metrics.find(m=>m.name==='LayoutCount').value-metricsAntes.metrics.find(m=>m.name==='LayoutCount').value;
-  assert.ok(layouts<12,'Layouts durante o movimento: '+layouts);
-  await command('Emulation.setCPUThrottlingRate',{rate:1});
-  console.log('Tela anterior preservada; perfil e fundo revelados juntos na chegada. CPU 4x; layouts: '+layouts);
-  assert.equal(await js("getComputedStyle(document.querySelector('[data-perfil-acesso]')).display"),'none');
-  assert.equal(await js("getComputedStyle(document.getElementById('foto-preview')).visibility"),'visible');
-  assert.equal(await js("document.getAnimations().some(a=>a.effect?.getKeyframes().some(f=>f.clipPath))"),false);
-  const desktop=await command('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(temp,'perfil-desktop.png'),Buffer.from(desktop.data,'base64'));
-  console.log('Conta no alto a direita em nove paginas; quadrado vira circulo e se desloca ate o avatar grande: OK');
-  // O caso da gravação: inicial no lugar da foto, com tema escuro.
-  await js("fetch('/api/perfil',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({nome:'Pessoa Visual',bio:'Teste do perfil',foto:''})}).then(r=>{if(!r.ok)throw Error('Perfil falhou')});localStorage.setItem('spectra:tema','escuro')");
-  await command('Page.navigate',{url:'http://127.0.0.1:8012/painel/explorar'});
-  await ready("location.pathname==='/painel/explorar'&&document.body.classList.contains('com-conta')&&document.querySelector('.conta-avatar').textContent==='P'");
-  await js("document.querySelector('[data-perfil-acesso]').click()");
-  await ready("(()=>{if(location.pathname!=='/painel/perfil')return false;const a=document.getAnimations().filter(a=>a.effect.pseudoElement?.startsWith('::view-transition-'));if(!a.length)return false;a.forEach(a=>{a.pause();a.currentTime=350});return true})()");
-  const inicialVoo=await command('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(temp,'perfil-inicial-transicao.png'),Buffer.from(inicialVoo.data,'base64'));
-  assert.equal(await js("document.getAnimations().some(a=>a.effect.pseudoElement==='::view-transition-group(perfil-letra)'&&a.effect.getKeyframes().every(f=>f.transform&&!('width' in f)&&!('height' in f)))"),true);
-  assert.equal(await js("getComputedStyle(document.querySelector('.perfil-morph')).backgroundColor===getComputedStyle(document.getElementById('foto-inicial')).backgroundColor"),true);
-  await js("document.getAnimations().filter(a=>a.effect.pseudoElement?.startsWith('::view-transition-')).forEach(a=>a.currentTime=1050)");
-  const inicialChegada=await command('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(temp,'perfil-inicial-chegada.png'),Buffer.from(inicialChegada.data,'base64'));
-  await js("document.getAnimations().filter(a=>a.effect.pseudoElement?.startsWith('::view-transition-')).forEach(a=>a.play())");
-  await ready("!document.documentElement.dataset.perfilTransicao&&document.body.classList.contains('com-conta')");
-  assert.equal(await js("document.getElementById('foto-inicial').textContent"),'P');
-  assert.equal(await js("getComputedStyle(document.getElementById('foto-inicial')).visibility"),'visible');
-  console.log('Inicial sem foto no tema escuro: trajeto e chegada capturados; sem troca brusca de cor no encaixe.');
-  // O botão também deve animar quando a própria página de perfil já está aberta.
-  await js("document.querySelector('[data-perfil-acesso]').click()");
-  assert.equal(await js("document.documentElement.dataset.perfilTransicao"),'arredondando');
-  await ready("document.documentElement.dataset.perfilTransicao==='deslocando'");
-  await ready("!document.documentElement.dataset.perfilTransicao&&document.body.classList.contains('com-conta')");
-  // Uma escolha explícita de movimento ligado prevalece sobre o sistema.
-  await command('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
-  await command('Page.navigate',{url:'http://127.0.0.1:8012/painel/explorar'});
-  await ready("location.pathname==='/painel/explorar'&&document.body.classList.contains('com-conta')");
-  assert.equal(await js("document.documentElement.dataset.movimento"),'on');
-  await js("document.querySelector('[data-perfil-acesso]').click()");
-  assert.equal(await js("document.documentElement.dataset.perfilTransicao"),'arredondando');
-  await ready("location.pathname==='/painel/perfil'&&document.documentElement.dataset.perfilTransicao==='deslocando'");
-  await ready("!document.documentElement.dataset.perfilTransicao&&document.body.classList.contains('com-conta')");
-  await command('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'no-preference'}]});
-  console.log('Repeticao no perfil e escolha explicita de movimento ligado com sistema em reduce: OK');
+  await ready("document.documentElement.dataset.perfilTransicao==='abertura'");
+  await js("document.getAnimations().filter(a=>a.effect.target?.closest?.('[data-perfil-cofre],.perfil-cofre-voo')).forEach(a=>{a.pause();a.currentTime=0})");
+  const avatarVoo=await js("(()=>{const r=document.querySelector('.perfil-cofre-voo').getBoundingClientRect();return {x:r.left,y:r.top,width:r.width}})()");
+  assert.ok(Math.abs(avatarOrigem.x-avatarVoo.x)<1&&Math.abs(avatarOrigem.y-avatarVoo.y)<1&&Math.abs(avatarOrigem.width-avatarVoo.width)<1,'A foto deve iniciar no botao real.');
+  await js("document.getAnimations().filter(a=>a.effect.target?.closest?.('[data-perfil-cofre],.perfil-cofre-voo')).forEach(a=>a.currentTime=470)");
+  assert.equal(await js("document.querySelector('[data-cofre-foto] img').src"),png);
+  await captura('cofre-01-foto');
+  await js("document.getAnimations().filter(a=>a.effect.target?.closest?.('[data-perfil-cofre],.perfil-cofre-voo')).forEach(a=>a.play())");
+  await ready("document.documentElement.dataset.perfilTransicao==='aguardando'");
+  await captura('cofre-02-cadeado');
+  assert.equal(await js("document.querySelector('[data-cofre-pular],.perfil-cofre-cabecalho')===null"),true);
+  assert.equal(await js("(()=>{const d=document.querySelector('[data-perfil-cofre]').getBoundingClientRect(),s=document.querySelector('.trilho').getBoundingClientRect();return d.left>=s.right&&!!document.elementFromPoint(s.left+20,s.top+180)?.closest('.trilho')})()"),true,'A barra lateral deve permanecer visivel e acessivel.');
+  assert.equal(await js("(()=>{const a=document.querySelector('.perfil-cofre-palco').getBoundingClientRect(),b=document.querySelector('.perfil-cofre-instrucoes').getBoundingClientRect();return b.top-a.bottom>=8&&b.top-a.bottom<=24})()"),true);
+  assert.equal(await js("getComputedStyle(document.querySelector('[data-perfil-cofre]')).backgroundColor===getComputedStyle(document.body).backgroundColor"),true);
+  await command('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});
+  await command('Input.dispatchKeyEvent',{type:'keyUp',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});
+  await ready("!document.querySelector('[data-perfil-cofre]').open&&!document.documentElement.dataset.perfilTransicao");
+  assert.equal(await js("document.activeElement===document.querySelector('[data-perfil-acesso]')"),true);
+  await abrir();
+  const pontos=await js("(()=>{const a=document.querySelector('[data-cofre-chave]').getBoundingClientRect(),b=document.querySelector('[data-cofre-fechadura]').getBoundingClientRect();return {x:a.left+a.width*.75,y:a.top+a.height/2,alvoX:b.left+b.width/2,alvoY:b.top+b.height/2}})()");
+  await command('Input.dispatchMouseEvent',{type:'mousePressed',x:pontos.x,y:pontos.y,button:'left',clickCount:1});
+  await command('Input.dispatchMouseEvent',{type:'mouseMoved',x:40,y:350,button:'left',buttons:1});
+  await command('Input.dispatchMouseEvent',{type:'mouseReleased',x:40,y:350,button:'left',clickCount:1});
+  assert.equal(await js("document.documentElement.dataset.perfilTransicao"),'aguardando');
+  await command('Input.dispatchMouseEvent',{type:'mousePressed',x:pontos.x,y:pontos.y,button:'left',clickCount:1});
+  for(let i=1;i<=8;i++)await command('Input.dispatchMouseEvent',{type:'mouseMoved',x:pontos.x+(pontos.alvoX-pontos.x)*i/8,y:pontos.y+(pontos.alvoY-pontos.y)*i/8,button:'left',buttons:1});
+  await command('Input.dispatchMouseEvent',{type:'mouseReleased',x:pontos.alvoX,y:pontos.alvoY,button:'left',clickCount:1});
+  await ready("document.documentElement.dataset.perfilTransicao==='fragmentando'");
+  await js("document.querySelector('[data-perfil-cofre]').getAnimations({subtree:true}).forEach(a=>{a.pause();a.currentTime=200})");
+  await captura('cofre-03-fragmentos');
+  await js("document.querySelector('[data-perfil-cofre]').getAnimations({subtree:true}).forEach(a=>a.play())");
+  await ready("location.pathname==='/painel/perfil'&&!document.documentElement.classList.contains('perfil-cofre-chegando')&&!document.getElementById('perfil').hidden");
+  assert.equal(await js("document.getElementById('nome').value"),'Pessoa Visual');
+  assert.equal(await js("sessionStorage.getItem('spectra:perfil-cofre')"),null);
+  await captura('cofre-04-perfil');
+  // Teclado: a chave e o cadeado são botões reais e não exigem arrasto.
+  await origem();await abrir();
+  assert.equal(await js("document.activeElement===document.querySelector('[data-cofre-chave]')"),true);
+  await command('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r',unmodifiedText:'\r'});
+  await command('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
+  assert.equal(await js("document.querySelector('[data-cofre-chave]').getAttribute('aria-pressed')"),'true');
+  await command('Input.dispatchKeyEvent',{type:'keyDown',key:'Tab',code:'Tab',windowsVirtualKeyCode:9,modifiers:8});
+  await command('Input.dispatchKeyEvent',{type:'keyUp',key:'Tab',code:'Tab',windowsVirtualKeyCode:9,modifiers:8});
+  assert.equal(await js("document.activeElement===document.querySelector('[data-cofre-cadeado]')"),true);
+  await command('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r',unmodifiedText:'\r'});
+  await command('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
+  await ready("location.pathname==='/painel/perfil'&&!document.documentElement.dataset.perfilTransicao");
   await command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
-  await command('Page.navigate',{url:'http://127.0.0.1:8012/painel/explorar'});await ready("document.body.classList.contains('com-conta')&&document.querySelector('[data-explorar=feed][aria-current=page]')");
-  assert.equal(await js("document.getElementById('explorar-nav').getBoundingClientRect().top>=document.querySelector('.conta-superior').getBoundingClientRect().bottom"),true);
-  assert.equal(await js('document.documentElement.scrollWidth<=innerWidth'),true);
-  const mobile=await command('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(temp,'perfil-mobile.png'),Buffer.from(mobile.data,'base64'));
-  // Sem transição entre documentos na origem, o recorte local continua funcionando.
-  await js("const estilo=document.createElement('style');estilo.textContent='@view-transition { navigation: none; }';document.head.append(estilo);document.querySelector('[data-perfil-acesso]').click()");
-  await ready("location.pathname==='/painel/perfil'&&document.documentElement.dataset.perfilTransicao==='deslocando'");
-  await ready("!document.documentElement.dataset.perfilTransicao&&document.body.classList.contains('com-conta')");
-  assert.equal(await js("getComputedStyle(document.body).visibility"),'visible');
-  await command('Page.navigate',{url:'http://127.0.0.1:8012/painel/explorar'});await ready("location.pathname==='/painel/explorar'&&document.body.classList.contains('com-conta')");
-  await command('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
+  await command('Emulation.setTouchEmulationEnabled',{enabled:true});
+  await js("localStorage.setItem('spectra:tema','claro')");
+  await origem();await abrir();await captura('cofre-05-celular-claro');
+  assert.equal(await js("(()=>{const b=document.querySelector('.barra-abas').getBoundingClientRect(),d=document.querySelector('[data-perfil-cofre]').getBoundingClientRect();return d.bottom<=b.top&&!!document.elementFromPoint(b.left+20,b.top+20)?.closest('.barra-abas')})()"),true);
+  const toque=await js("(()=>{const a=document.querySelector('[data-cofre-chave]').getBoundingClientRect(),b=document.querySelector('[data-cofre-fechadura]').getBoundingClientRect();return {x:a.left+a.width*.75,y:a.top+a.height/2,alvoX:b.left+b.width/2,alvoY:b.top+b.height/2}})()");
+  await command('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:toque.x,y:toque.y}]});
+  await command('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:toque.alvoX,y:toque.alvoY}]});
+  await command('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  await ready("location.pathname==='/painel/perfil'&&!document.documentElement.dataset.perfilTransicao");
+  await js("fetch('/api/perfil',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({nome:'Pessoa Visual',bio:'Teste sem foto',foto:''})}).then(r=>{if(!r.ok)throw Error('Perfil sem foto falhou')})");
+  await origem(false);await abrir();
+  assert.equal(await js("document.querySelector('[data-cofre-foto]').textContent"),'P');
+  await js("document.querySelector('[data-cofre-cancelar]').click()");
+  await ready("location.pathname==='/painel/explorar'&&!document.documentElement.dataset.perfilTransicao");
+  await abrir();
+  await js("document.querySelector('.barra-abas a[href=\"/painel/historico\"]').click()");
+  await ready("location.pathname==='/painel/historico'&&!document.documentElement.dataset.perfilTransicao");
+  // Preferência reduzida: acesso direto e sem cena bloqueando a página.
+  await origem(false);
   await js("localStorage.setItem('spectra:movimento','off');document.documentElement.dataset.movimento='off';document.querySelector('[data-perfil-acesso]').click()");
-  await ready("location.pathname==='/painel/perfil'&&document.body.classList.contains('com-conta')");
-  assert.equal(await js("!!document.querySelector('.perfil-morph')||!!document.documentElement.dataset.perfilTransicao"),false);
-  await ready("document.querySelector('[data-ativar-transicao]')!==null");
-  await js("document.querySelector('[data-ativar-transicao]').click()");
-  assert.equal(await js("document.documentElement.dataset.perfilTransicao"),'arredondando');
-  await ready("document.documentElement.dataset.perfilTransicao==='deslocando'");
-  await ready("!document.documentElement.dataset.perfilTransicao&&document.body.classList.contains('com-conta')");
-  assert.equal(await js("document.documentElement.dataset.movimento"),'on');
+  await ready("location.pathname==='/painel/perfil'&&!document.getElementById('perfil').hidden");
+  assert.equal(await js("document.querySelector('[data-perfil-cofre]').open"),false);
+  assert.equal(await js("document.documentElement.dataset.perfilTransicao||null"),null);
+  await js("localStorage.setItem('spectra:movimento','on');localStorage.setItem('spectra:tema','escuro')");
+  await command('Emulation.setTouchEmulationEnabled',{enabled:false});
+  await command('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
   assert.deepEqual(erros,[]);
-  console.log('Celular sem sobreposicao, fallback, movimento reduzido e foto da conta: OK. Capturas: '+temp);
+  console.log('Perfil: voo desde o botao, barra lateral acessivel, espacamento, arrasto, teclado, toque, cancelar, navegacao e movimento reduzido: OK. Capturas: '+temp);
 }
 
 (async()=>{
@@ -317,6 +344,7 @@ async function verificarPerfil(){
   await command('Page.navigate',{url:'http://127.0.0.1:8012/inicio'});await ready("location.pathname==='/inicio'&&document.readyState!=='loading'");
   await js(`fetch('/api/auth/cadastrar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nome:'Pessoa Visual',email:'visual@example.com',senha:'SenhaTeste123!'})}).then(r=>{if(!r.ok)throw Error('Cadastro falhou')})`);
   if(process.argv.includes('--laudo')){await verificarLaudo();return;}
+  if(process.argv.includes('--acesso')){await verificarAcesso();return;}
   if(process.argv.includes('--graficos')){await verificarGraficos();return;}
   if(process.argv.includes('--perfil')){await verificarPerfil();return;}
   if(process.argv.includes('--logos')){await verificarLogos();return;}
@@ -329,7 +357,7 @@ async function verificarPerfil(){
   assert.equal(await js("Math.abs(document.getElementById('explorar-nav').getBoundingClientRect().width-document.querySelector('.corpo').getBoundingClientRect().width)<2"),true);
   await js("document.querySelector('[data-explorar=publicar]').click()");await ready("!document.getElementById('form-publicacao').hidden");
   await js("document.getElementById('post-titulo').value='Imagem de teste';document.getElementById('post-texto').value='Discussao sobre seguranca digital com uma foto de teste.'");
-  const png=path.join(temp,'teste.png');fs.writeFileSync(png,Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aR1cAAAAASUVORK5CYII=','base64'));
+  const png=path.join(temp,'teste.png');fs.writeFileSync(png,Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4////fwAJ+wP9KobjigAAAABJRU5ErkJggg==','base64'));
   const dom=await command('DOM.getDocument');const field=await command('DOM.querySelector',{nodeId:dom.root.nodeId,selector:'#post-midias'});
   await command('DOM.setFileInputFiles',{nodeId:field.nodeId,files:[png]});await ready("document.querySelectorAll('.midia-previa').length===1");
   await js("document.querySelector('#form-publicacao button[type=submit]').click()");

@@ -44,6 +44,11 @@
     <small>Seu IP fica visível apenas para você. Ele pode mudar conforme a rede; no acesso local pode aparecer 127.0.0.1.</small>
     <button type="submit">Salvar perfil</button></div>
   </form>
+  <div class="social-card" id="acesso-conta"><h2>Acesso à conta</h2><p id="email-estado"></p>
+    <button type="button" id="confirmar-email" hidden>Confirmar meu e-mail</button>
+    <a href="/auth/google?vincular=1" id="conectar-google" hidden>Conectar minha conta Google</a>
+    <p id="google-estado"></p>
+  </div>
 </section>
 <section id="perfil-membro" class="social-card membro-grade" hidden aria-labelledby="membro-nome">
   <img id="membro-foto" class="avatar-grande" alt="" hidden><span id="membro-inicial" class="avatar-grande" aria-hidden="true"></span>

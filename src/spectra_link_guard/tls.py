@@ -1,12 +1,12 @@
 """Etapa 2 — Checagem de protocolo e do certificado TLS.
 
-ESCOPO: esta etapa faz **um único handshake TLS** com o host, na porta que a
-própria URL indica, e lê os dados que o servidor apresenta publicamente — os
+ESCOPO: esta etapa faz handshake TLS com destinos públicos na porta 443
+e lê os dados que o servidor apresenta publicamente — os
 mesmos que o cadeado do navegador mostra a qualquer visitante.
 
 O que ela **não** faz, por decisão de projeto:
   * não envia requisição HTTP, não baixa conteúdo, não segue redirecionamentos;
-  * não varre portas (só a porta do link, 443 por padrão);
+  * não varre portas (permite somente 443 e bloqueia destinos internos);
   * não testa cifras fracas, renegociação, Heartbleed nem qualquer outra
     condição que exija sondagem repetida do servidor;
   * não envia credenciais nem dados do usuário.
@@ -25,6 +25,7 @@ from datetime import datetime, timezone
 
 from .models import Achado, CertificadoTLS, Severidade
 from .sintaxe import ContextoURL
+from .saida import resolver_publico, conectar, DestinoBloqueado
 
 try:  # opcional: permite ler o certificado mesmo quando a cadeia não valida
     from cryptography import x509
@@ -57,7 +58,7 @@ def _data_openssl(valor: str | None) -> datetime | None:
         return None
 
 
-def _handshake(host: str, porta: int, timeout: float, verificar: bool) -> tuple[dict | None, bytes | None, str | None, str | None]:
+def _handshake(host: str, porta: int, timeout: float, verificar: bool, destinos=None) -> tuple[dict | None, bytes | None, str | None, str | None]:
     """Executa o handshake e devolve (cert_dict, cert_der, versao_tls, cifra).
 
     Bloqueante de propósito — é chamado dentro de ``asyncio.to_thread``.
@@ -66,7 +67,7 @@ def _handshake(host: str, porta: int, timeout: float, verificar: bool) -> tuple[
     if not verificar:
         contexto.check_hostname = False
         contexto.verify_mode = ssl.CERT_NONE
-    with socket.create_connection((host, porta), timeout=timeout) as bruto:
+    with conectar(destinos or resolver_publico(host,porta),timeout) as bruto:
         with contexto.wrap_socket(bruto, server_hostname=host) as tls:
             cert_dict = tls.getpeercert() or None
             cert_der = tls.getpeercert(binary_form=True)
@@ -111,10 +112,14 @@ async def inspecionar_tls(ctx: ContextoURL, timeout: float = 6.0) -> Certificado
     host = ctx.host_ascii
 
     try:
+        destinos=await asyncio.to_thread(resolver_publico,host,porta)
         cert_dict, der, versao, cifra = await asyncio.to_thread(
-            _handshake, host, porta, timeout, True
+            _handshake, host, porta, timeout, True, destinos
         )
         info.cadeia_valida = True
+    except DestinoBloqueado as exc:
+        info.erro=f'Destino bloqueado: {exc}'
+        return info
     except ssl.SSLCertVerificationError as exc:
         # Cadeia inválida: refazemos sem verificação apenas para *ler* o
         # certificado que o servidor já nos entregou e explicar o problema.
@@ -122,7 +127,7 @@ async def inspecionar_tls(ctx: ContextoURL, timeout: float = 6.0) -> Certificado
         info.erro = str(exc.verify_message or exc)
         try:
             cert_dict, der, versao, cifra = await asyncio.to_thread(
-                _handshake, host, porta, timeout, False
+                _handshake, host, porta, timeout, False, destinos
             )
         except (OSError, ssl.SSLError) as exc2:
             info.erro = f"{info.erro} / {exc2}"

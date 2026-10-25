@@ -15,36 +15,8 @@
 .com-conta[data-pagina=explorar] .explorar-nav{padding-right:var(--conta-reserva);min-height:64px}
 .com-conta>header{padding-right:var(--conta-reserva);min-height:64px}
 .com-conta>header [data-abrir]{display:none}
-.perfil-morph{position:fixed;z-index:90;pointer-events:none;overflow:hidden;background:var(--primaria);color:var(--sobre-primaria);display:grid;place-items:center;box-shadow:0 0 0 1px var(--primaria-clara),0 0 22px rgb(var(--primaria-rgb) / .3);font-family:"Hanken Grotesk",system-ui,sans-serif;font-weight:700}
-.perfil-morph>*{width:100%;height:100%;object-fit:cover;display:grid;place-items:center}
-.perfil-morph .perfil-glifo{display:block;width:max-content;height:auto;line-height:1}
 body[data-perfil-proprio=true] .conta-acesso{display:none}
 body[data-perfil-proprio=true].com-conta{--conta-reserva:70px}
-html.perfil-avatar-entrada #perfil{opacity:0}
-html.perfil-avatar-voando #foto-preview,html.perfil-avatar-voando #foto-inicial{visibility:hidden}
-html[data-perfil-transicao] .caminho,html[data-perfil-transicao] .foto-controle::before,html[data-perfil-transicao] .foto-controle::after,html[data-perfil-transicao] .rodape-fundo{animation-play-state:paused}
-.perfil-morph{contain:layout paint style;backface-visibility:hidden;box-shadow:none}
-/* Uma única captura conserva a tela anterior e inclui o fundo do perfil.
-   O avatar é a única superfície que se desloca entre os documentos. */
-html.perfil-transicao-nativa *{view-transition-name:none!important}
-html.perfil-transicao-nativa .perfil-morph{view-transition-name:perfil-foto!important;box-shadow:none}
-html.perfil-transicao-nativa .perfil-glifo{view-transition-name:perfil-letra!important}
-html.perfil-transicao-nativa::view-transition{pointer-events:none}
-html.perfil-transicao-nativa::view-transition-group(root){animation:none!important;z-index:0}
-html.perfil-transicao-nativa::view-transition-old(root){animation:perfil-tela-sair 1250ms linear both!important;mix-blend-mode:normal}
-html.perfil-transicao-nativa::view-transition-new(root){animation:perfil-tela-entrar 1250ms linear both!important;mix-blend-mode:normal}
-html.perfil-transicao-nativa::view-transition-group(perfil-foto){animation:perfil-avatar-voar 1250ms cubic-bezier(.45,0,.2,1) both!important;width:var(--perfil-largura);height:var(--perfil-altura);transform-origin:0 0;will-change:transform;border-radius:50%;overflow:hidden;z-index:1}
-html.perfil-transicao-nativa::view-transition-old(perfil-foto),html.perfil-transicao-nativa::view-transition-new(perfil-foto){animation-duration:1250ms!important;height:100%;object-fit:fill;mix-blend-mode:plus-lighter}
-html.perfil-transicao-nativa::view-transition-group(perfil-letra){animation:perfil-letra-voar 1250ms cubic-bezier(.45,0,.2,1) both!important;width:var(--perfil-letra-largura);height:var(--perfil-letra-altura);transform-origin:0 0;will-change:transform;z-index:2}
-html.perfil-transicao-nativa::view-transition-old(perfil-letra),html.perfil-transicao-nativa::view-transition-new(perfil-letra){animation-duration:1250ms!important;height:100%;object-fit:fill;mix-blend-mode:plus-lighter}
-@keyframes perfil-tela-sair{from{opacity:1}to{opacity:1}}
-@keyframes perfil-tela-entrar{0%,64%{opacity:0}100%{opacity:1}}
-@keyframes perfil-avatar-voar{from{transform:translate3d(var(--perfil-inicio-x),var(--perfil-inicio-y),0) scale(var(--perfil-escala-x),var(--perfil-escala-y))}to{transform:translate3d(var(--perfil-fim-x),var(--perfil-fim-y),0) scale(1,1)}}
-@keyframes perfil-letra-voar{from{transform:translate3d(var(--perfil-letra-inicio-x),var(--perfil-letra-inicio-y),0) scale(var(--perfil-letra-escala-x),var(--perfil-letra-escala-y))}to{transform:translate3d(var(--perfil-letra-fim-x),var(--perfil-letra-fim-y),0) scale(1,1)}}
-.conta-aviso-movimento{padding:16px;margin-bottom:22px;border:1px solid var(--linha-forte);border-left:3px solid var(--primaria-clara);background:var(--base-2);color:var(--texto-2);font-family:"Inter",system-ui,sans-serif;font-size:.82rem}
-.conta-aviso-movimento p{margin:0 0 12px;line-height:1.6}.conta-aviso-movimento button{margin:0 10px 6px 0;padding:10px 12px;background:var(--primaria);color:var(--sobre-primaria);border:1px solid var(--primaria);border-radius:0;cursor:pointer;font:inherit}
-.conta-aviso-movimento button:last-child{background:var(--base-3);color:var(--texto-2);border-color:var(--linha-forte)}
-.conta-aviso-movimento button:focus-visible{outline:2px solid var(--primaria-clara);outline-offset:2px}
 @media(max-width:1050px) and (min-width:600px){.conta-nome-superior{max-width:96px}.com-conta{--conta-reserva:225px}}
 @media(max-width:599px){
   .conta-superior{height:44px;top:calc(4px + env(safe-area-inset-top));right:calc(8px + env(safe-area-inset-right));padding:3px;gap:2px}

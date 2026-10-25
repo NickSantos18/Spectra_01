@@ -2,7 +2,26 @@
 
 Módulo de **análise passiva de risco de links**, para proteção ao consumidor.
 Recebe uma URL e devolve um laudo explicando, em português simples, por que
-aquele endereço é ou não confiável.
+aquele endereço apresenta sinais de risco e quais verificações foram possíveis.
+O resultado não comprova, sozinho, que um site seja seguro.
+
+## Alterações desta atualização — 25/10/2026
+
+- **Perfil interativo:** a foto parte do botão superior e se transforma em cadeado no centro da área de conteúdo. A pessoa arrasta a chave para abrir o perfil; a barra lateral continua disponível. Há suporte a toque, teclado, cancelamento e movimento reduzido. A sequência visual foi preservada durante a etapa de segurança.
+- **Autenticação:** senhas novas usam Argon2id; hashes scrypt anteriores são migrados no login correto. Sessões têm limite absoluto de 30 dias, e cookies malformados são recusados sem derrubar a API.
+- **Login com Google:** integração com código de autorização, PKCE, nonce e validação do ID token pelo SDK oficial. Contas existentes exigem vínculo explícito pelo próprio perfil, após login recente e com o mesmo e-mail.
+- **Confirmação e recuperação:** links de uso único, validade de 20 minutos e tokens armazenados por hash. Redefinir a senha encerra as sessões anteriores.
+- **Proteção do servidor:** bloqueio de destinos internos/especiais nas consultas TLS, somente porta 443, limites persistentes de uso, validação de origem, limites de corpo e de operações simultâneas.
+- **Uploads e navegador:** validação completa e recodificação de imagens, cotas de armazenamento, CSP com nonce, cabeçalhos de proteção e `no-store` para conteúdo privado. O Tailwind da entrada agora é CSS compilado localmente.
+- **Privilégios:** acesso editorial e aceite de convites exigem e-mail verificado; editores também podem ser configurados pelo identificador da conta.
+- **Documentação e reprodução:** exemplos de ambiente sem credenciais, versões Python registradas, lockfile do CSS, testes de regressão e guias de configuração.
+
+**Google e envio de e-mail precisam de configuração:** o código está implementado, mas o login Google depende de um cliente OAuth, e confirmação/recuperação dependem de SMTP. Sem essas credenciais, a interface informa a indisponibilidade. Nenhum segredo ou banco local acompanha esta atualização.
+
+Documentação complementar: [ativar Google e SMTP](docs/CONFIGURAR-GOOGLE.md), [correções, testes e limites conhecidos](docs/SEGURANCA-APLICADA.md), [perfil e comunidade](docs/comunidade.md) e [próximas verificações de links](docs/pericia-links-proximos-passos.md).
+
+**Validação em 25/10/2026:** 273 testes Python e nove testes JavaScript aprovados.
+A suíte Python emite uma advertência de depreciação do TestClient/HTTPX, sem falhas.
 
 ---
 
@@ -22,16 +41,17 @@ Todo o tráfego gerado é **menor** do que o de abrir o link no navegador: um
 baixar conteúdo. Esse handshake é opcional — com
 `ConfiguracaoLinkGuard(verificar_tls=False)` a análise fica 100% offline.
 
-Nenhuma das operações se enquadra na conduta descrita no **Art. 154-A do Código
-Penal** (Lei 12.737/2012, "Lei Carolina Dieckmann"): não há invasão de
-dispositivo, não há violação de mecanismo de segurança e não há obtenção de
+O escopo do analisador não inclui invasão, exploração de falhas ou obtenção de
 dados não públicos. Os dados consultados são: (a) a própria URL informada pelo
 usuário, (b) o certificado que o servidor apresenta publicamente a qualquer
 visitante e (c) vereditos já publicados por Google Safe Browsing, VirusTotal e
 PhishTank.
 
-Sobre privacidade: nenhum dado do usuário é armazenado. O cache de reputação
-guarda apenas o hash SHA-256 da URL consultada, em memória, por 15 minutos.
+Sobre privacidade: o cache de reputação guarda o hash SHA-256 da URL consultada
+em memória por 15 minutos. A aplicação web também armazena no SQLite contas,
+sessões, perfis, histórico de análises, mensagens, publicações e anexos. URLs
+podem conter informações sensíveis; considere isso ao registrar ou compartilhar
+um laudo. O banco e os backups locais são ignorados pelo Git.
 
 ---
 
@@ -64,23 +84,29 @@ Acesso e banco:
 export SPECTRA_BD=dados/spectra.db    # arquivo SQLite (padrão)
 export SPECTRA_SEGREDO=...            # chave de assinatura do cookie
 export SPECTRA_COOKIE_SEGURO=1        # só em HTTPS
+export SPECTRA_AMBIENTE=producao
+export SPECTRA_ORIGEM_PUBLICA=https://seu-dominio.com
 ```
 
-**`SPECTRA_SEGREDO` é obrigatório em produção.** Sem ele o servidor gera uma
-chave nova a cada processo: seguro, mas derruba todas as sessões a cada
-reinício e não funciona com mais de uma réplica.
+**Produção exige `SPECTRA_SEGREDO` aleatório com pelo menos 32 caracteres e
+`SPECTRA_ORIGEM_PUBLICA` em HTTPS.** O servidor recusa uma configuração de
+produção incompatível. Em desenvolvimento, se o segredo estiver ausente,
+gera uma chave temporária por processo; isso encerra as sessões a cada reinício.
 
-Login com Google (opcional — sem as três, o botão some da tela):
+Login com Google (opcional — sem configuração, o botão explica a indisponibilidade):
 
 ```bash
 export SPECTRA_GOOGLE_CLIENT_ID=...apps.googleusercontent.com
 export SPECTRA_GOOGLE_CLIENT_SECRET=...
-export SPECTRA_GOOGLE_REDIRECT=http://localhost:8000/auth/google/callback
+export SPECTRA_GOOGLE_REDIRECT=https://seu-dominio.com/auth/google/callback
 ```
 
 No Google Cloud Console → Credenciais → ID do cliente OAuth (aplicativo da
 Web), o valor de `SPECTRA_GOOGLE_REDIRECT` precisa estar cadastrado em "URIs de
 redirecionamento autorizados", idêntico, incluindo o esquema.
+
+Para configurar primeiro no computador, siga [CONFIGURAR-GOOGLE.md](docs/CONFIGURAR-GOOGLE.md).
+O guia usa `http://127.0.0.1:8000` em desenvolvimento e explica também o SMTP.
 
 Sem chave, o provedor devolve `nao_configurado` e a análise segue com as etapas
 1 e 2. As chaves nunca aparecem no relatório nem em log.
@@ -134,24 +160,39 @@ pip install -e ".[extras,web]"
 ```
 
 ```bash
-python -m uvicorn spectra_link_guard.web.app:app --reload --port 8000
+python -m uvicorn spectra_link_guard.web.app:app --reload --host 127.0.0.1 --port 8000 --env-file .env --no-access-log
 ```
 
-Depois abra **<http://localhost:8000>**.
+Antes de iniciar, copie `.env.example` para `.env` e substitua `SPECTRA_SEGREDO`
+por um valor aleatório. No Windows, a instalação completa pode ser feita assim:
+
+```powershell
+python -m venv .venv
+.venv/Scripts/python.exe -m pip install -e ".[extras,web,dev]"
+Copy-Item .env.example .env
+# Gere uma chave e salve o resultado em SPECTRA_SEGREDO no .env:
+.venv/Scripts/python.exe -c "import secrets; print(secrets.token_urlsafe(48))"
+.venv/Scripts/python.exe -m uvicorn spectra_link_guard.web.app:app --host 127.0.0.1 --port 8000 --env-file .env --no-access-log
+```
+
+O comando `Copy-Item` é para uma instalação nova; preserve um `.env` existente.
+Depois abra **<http://127.0.0.1:8000>**. Use o mesmo endereço ao configurar
+o retorno do Google; `localhost` e `127.0.0.1` não compartilham cookies.
+O CSS compilado acompanha o código, sem exigir Node para executar o servidor.
 
 | Endereço | O que é |
 | --- | --- |
-| `http://localhost:8000/` | Redireciona para `/inicio` — não há mais painel na raiz |
-| `http://localhost:8000/inicio` | Porta de entrada: hero, login/cadastro, Google, assistente |
-| `http://localhost:8000/painel` | Verificar um link. Exige sessão; sem ela volta para `/inicio` |
-| `http://localhost:8000/painel/visao-geral` | Dashboard: indicadores e gráficos das suas análises |
-| `http://localhost:8000/painel/historico` | Histórico com busca, filtro e exclusão |
-| `http://localhost:8000/painel/aprender` | Guia de phishing e glossário |
+| `http://127.0.0.1:8000/` | Redireciona para `/inicio` — não há mais painel na raiz |
+| `http://127.0.0.1:8000/inicio` | Porta de entrada: hero, login/cadastro, Google, assistente |
+| `http://127.0.0.1:8000/painel` | Verificar um link. Exige sessão; sem ela volta para `/inicio` |
+| `http://127.0.0.1:8000/painel/visao-geral` | Dashboard: indicadores e gráficos das suas análises |
+| `http://127.0.0.1:8000/painel/historico` | Histórico com busca, filtro e exclusão |
+| `http://127.0.0.1:8000/painel/aprender` | Guia de phishing e glossário |
 | `POST /api/auth/cadastrar` | `{nome, email, senha}` → cria conta e abre sessão |
 | `POST /api/auth/entrar` | `{email, senha}` → abre sessão (cookie HttpOnly) |
 | `POST /api/auth/sair` | Revoga a sessão no servidor |
 | `GET /auth/google` | Início do OAuth 2.0 com o Google |
-| `http://localhost:8000/docs` | Documentação interativa da API (Swagger) |
+| `http://127.0.0.1:8000/docs` | Documentação interativa da API (Swagger) |
 | `POST /api/analisar` | `{"url": "...", "offline": false}` → relatório JSON completo |
 | `GET /api/painel` | Indicadores do usuário logado (401 sem sessão) |
 | `GET /api/painel/historico` | Todas as análises do usuário (até 500) |
@@ -160,10 +201,11 @@ Depois abra **<http://localhost:8000>**.
 | `DELETE /api/painel` | Apaga todo o seu histórico |
 | `GET /api/saude` | Versão e quais provedores de reputação estão configurados |
 
-O endpoint tem limite de 30 análises por IP a cada 5 minutos (janela em memória,
-em [`web/app.py`](src/spectra_link_guard/web/app.py)) — ele consome cota de APIs
-de terceiros e abre uma conexão TLS por chamada. Com várias réplicas, troque por
-Redis ou pelo rate limit do proxy reverso.
+O endpoint tem limite de 30 análises por IP a cada 5 minutos, com contador
+persistente no SQLite e um freio adicional em memória. Há também limites
+específicos para cadastro, autenticação, recuperação, mensagens e uploads.
+Processos no mesmo banco compartilham o contador persistente; múltiplas máquinas
+precisam de um limitador compartilhado e proteção no proxy.
 
 **Privacidade do histórico:** cada usuário só vê o próprio histórico, que
 fica no SQLite (tabela `analises`, até 500 por conta, apagadas junto com a
@@ -218,7 +260,7 @@ src/spectra_link_guard/
 ├── rede.py         etapa 4 — RDAP do domínio e do IP + resolução DNS
 ├── auth/
 │   ├── bd.py         SQLite: usuários e sessões
-│   ├── seguranca.py  scrypt + assinatura do cookie
+│   ├── seguranca.py  Argon2id, migração de scrypt e assinatura do cookie
 │   ├── google.py     OAuth 2.0 (fluxo de código)
 │   └── rotas.py      /api/auth/* e /auth/google
 ├── pontuacao.py    agregação em nota 0-100 e nível
@@ -339,8 +381,9 @@ com `offline: true`. A suíte não abre nenhuma conexão de rede.
 
 ## Acesso
 
-Senhas com **scrypt** (`hashlib`, N=2^14), sal por senha e comparação em tempo
-constante. O hash nunca sai do servidor — `bd.publico()` recorta o registro
+Senhas novas com **Argon2id** (19 MiB, duas iterações, paralelismo 1), com sal
+aleatório. Os hashes scrypt anteriores são migrados no próximo login correto.
+O hash nunca sai do servidor — `bd.publico()` recorta o registro
 antes de qualquer resposta, e há teste travando os campos devolvidos.
 
 A sessão vive no banco, não só no cookie: sem isso "Sair" não revogaria nada.
@@ -351,8 +394,15 @@ sessão pelo `document.cookie`.
 Login errado devolve **a mesma mensagem** para senha incorreta e para conta
 inexistente. Dizer qual dos dois falhou transforma a tela de login numa
 ferramenta de descoberta de e-mails válidos. Mesma lógica na recuperação de
-senha, que responde igual exista ou não a conta.
+senha, que responde igual exista ou não a conta quando o envio SMTP está configurado.
+Sem SMTP, o endpoint informa indisponibilidade. Tokens de confirmação e recuperação
+expiram em 20 minutos, são guardados por hash e consumidos uma única vez.
 
-O `state` do OAuth vai num cookie assinado e é conferido no retorno — sem isso,
-um site de terceiro conseguiria disparar o fluxo e ligar a conta do Google dele
-à sessão de outra pessoa.
+OAuth usa `state` assinado, contexto de uso único no servidor, nonce e PKCE S256.
+O SDK oficial verifica o ID token do Google. Contas existentes precisam entrar
+com senha e vincular explicitamente o mesmo e-mail pelo perfil.
+
+As APIs têm limites persistentes, validação de origem e limite de corpo. Conteúdo
+privado usa `no-store`; as páginas recebem CSP com nonce. Em produção, cookies
+Secure e HSTS são obrigatórios. A sessão tem 14 dias de validade deslizante e
+30 dias de duração máxima. Consulte [as correções e pendências](docs/SEGURANCA-APLICADA.md).

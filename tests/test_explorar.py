@@ -1,9 +1,13 @@
 import base64
+from io import BytesIO
+from PIL import Image
 from fastapi.testclient import TestClient
 from spectra_link_guard.web.app import app, PARCIAIS
 from spectra_link_guard.web.desafios import JOGOS
 
-PNG=base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aR1cAAAAASUVORK5CYII=')
+_png=BytesIO()
+Image.new('RGBA',(1,1),(255,255,255,255)).save(_png,format='PNG',optimize=True)
+PNG=_png.getvalue()
 
 
 def conta(email):
@@ -41,14 +45,16 @@ def test_midias_ownership_publicacao_range_e_exclusao():
     ident=r.json()['id']
     feed=b.get('/api/comunidade/explorar').json()
     assert feed[0]['midias'][0]['url']==url
-    arquivo=b.get(url);assert arquivo.content==PNG
+    arquivo=b.get(url)
+    Image.open(BytesIO(arquivo.content)).verify()
+    guardado=arquivo.content
     assert arquivo.headers['x-content-type-options']=='nosniff'
     faixa=b.get(url,headers={'Range':'bytes=2-5'})
-    assert faixa.status_code==206 and faixa.content==PNG[2:6]
-    assert b.get(url,headers={'Range':'bytes=-4'}).content==PNG[-4:]
+    assert faixa.status_code==206 and faixa.content==guardado[2:6]
+    assert b.get(url,headers={'Range':'bytes=-4'}).content==guardado[-4:]
     assert b.get(url,headers={'Range':'bytes=99999-'}).status_code==416
     assert b.get(url,headers={'Range':'bytes='+'9'*100+'-'}).status_code==416
-    assert b.head(url).headers['content-length']==str(len(PNG))
+    assert b.head(url).headers['content-length']==str(len(guardado))
     assert a.post('/api/comunidade/forum',json=post).status_code==403
     assert a.delete('/api/publicacoes/'+ident).status_code==200
     assert b.get(url).status_code==404 and a.get(url).status_code==404

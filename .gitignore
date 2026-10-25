@@ -8,6 +8,8 @@ dist/
 .pytest_tmp*/
 .ruff_cache/
 .env
+node_modules/
+.pnpm-store/
 
 # banco local de desenvolvimento
 dados/
